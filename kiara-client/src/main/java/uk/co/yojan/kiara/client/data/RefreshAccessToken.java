@@ -2,14 +2,18 @@ package uk.co.yojan.kiara.client.data;
 
 import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
 @Generated("org.jsonschema2pojo")
 public class RefreshAccessToken {
 
+  @SerializedName("access_token")
   @Expose
   private String accessToken;
+  @SerializedName("token_type")
   @Expose
   private String tokenType;
+  @SerializedName("expires_in")
   @Expose
   private Integer expiresIn;
 
@@ -36,5 +40,4 @@ public class RefreshAccessToken {
   public void setExpiresIn(Integer expiresIn) {
     this.expiresIn = expiresIn;
   }
-
 }

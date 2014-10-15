@@ -9,21 +9,13 @@ import java.util.Collection;
 
 public interface KiaraApiInterface {
 
-  // Authentication
-  @GET("/auth")
-  public AuthorizationCodeGrant authorizeCode(String code);
-
-  @GET("/auth/refresh")
-  public RefreshAccessToken refreshAccessToken(String refreshToken);
-
-
-  @GET("/users/{userId}/")
+  @GET("/users/{userId}")
   public User getUser(@Path("userId") String userId);
 
-  @DELETE("/users/{userId}/")
+  @DELETE("/users/{userId}")
   public Response deleteUser(@Path("userId") String userId);
 
-  @POST("/users/")
+  @POST("/users")
   public Response createUser(@Body User user);
 
   @PUT("/users/{userId}")
