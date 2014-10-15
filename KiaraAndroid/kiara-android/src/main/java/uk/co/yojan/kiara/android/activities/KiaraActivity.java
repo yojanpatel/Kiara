@@ -1,10 +1,9 @@
 package uk.co.yojan.kiara.android.activities;
 
 import android.app.Activity;
+import android.widget.Toast;
 import com.squareup.otto.Bus;
 import uk.co.yojan.kiara.android.KiaraApplication;
-
-import java.util.Date;
 
 /**
  * Base Activity class which performs functionality common to all activities
@@ -43,5 +42,13 @@ public class KiaraActivity extends Activity {
 
   public long getTimestamp() {
     return System.currentTimeMillis();
+  }
+
+  public void toast(String text) {
+    Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+  }
+
+  public void toast(String text, boolean lengthShort) {
+    Toast.makeText(this, text, lengthShort ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();
   }
 }

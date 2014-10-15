@@ -14,7 +14,7 @@ import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.events.AuthCodeGrantRequestEvent;
+import uk.co.yojan.kiara.android.events.AuthCodeGrantRequest;
 import uk.co.yojan.kiara.android.events.AuthCodeGrantResponse;
 import uk.co.yojan.kiara.android.events.RefreshAccessTokenRequest;
 import uk.co.yojan.kiara.android.events.RefreshAccessTokenResponse;
@@ -33,16 +33,20 @@ public class MainActivity extends KiaraActivity
     setContentView(R.layout.activity_main);
 
     sharedPreferences = EncryptedSharedPreferences.getPrefs(this, Constants.PREFERENCE_STRING, Context.MODE_PRIVATE);
-
     if(accessExpired()) {
       // If refreshToken exists, we can use that to get another access token.
+      Log.d(LOG, "Access Token has expired.");
       String refreshToken = sharedPreferences.getString(Constants.REFRESH_TOKEN, null);
       if (refreshToken != null) {
+        Log.d(LOG, "Requesting Access Token refresh using the refresh token.");
         getBus().post(new RefreshAccessTokenRequest(refreshToken));
       } else {
+        Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
         SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
             new String[]{"user-read-private", "streaming"}, null, this);
       }
+    } else {
+      finishLoading();
     }
   }
 
@@ -60,7 +64,8 @@ public class MainActivity extends KiaraActivity
     if(uri != null) {
       AuthenticationResponse response = SpotifyAuthentication.parseOauthResponse(uri);
       String code = response.getCode();
-      getBus().post(new AuthCodeGrantRequestEvent(code));
+      Log.d(LOG, "Code: " + code);
+      getBus().post(new AuthCodeGrantRequest(code));
     }
   }
 
@@ -77,13 +82,14 @@ public class MainActivity extends KiaraActivity
   }
 
   public boolean accessExpired() {
-    return (sharedPreferences.getLong(Constants.ACCESS_TOKEN, 0L) < getTimestamp());
+    return (sharedPreferences.getLong(Constants.ACCESS_DEADLINE, 0L) < getTimestamp());
   }
 
   // Event Bus listeners.
 
   @Subscribe
   public void onAuthCodeGrantComplete(AuthCodeGrantResponse event) {
+    Log.d(LOG, "AuthCodeGrant flow complete.");
     sharedPreferences.edit()
         .putString(Constants.ACCESS_TOKEN, event.getAccessToken())
         .putLong(Constants.ACCESS_DEADLINE, getTimestamp() + (1000 * (event.getExpiresIn() - 60)))
@@ -103,6 +109,7 @@ public class MainActivity extends KiaraActivity
 
   private void finishLoading() {
     // UI change, intent triggered for next screen.
+    toast("Authenticated.");
   }
 
 

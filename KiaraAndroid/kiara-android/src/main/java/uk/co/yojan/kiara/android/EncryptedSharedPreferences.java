@@ -1,40 +1,21 @@
 package uk.co.yojan.kiara.android;
 
-import java.util.Map;
-import java.util.Set;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.provider.Settings;
+import android.provider.Settings.Secure;
+import android.util.Base64;
+import android.util.Log;
+import uk.co.yojan.kiara.android.Constants;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
+import java.util.Map;
+import java.util.Set;
 
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.provider.Settings;
-import android.provider.Settings.Secure;
-import android.util.Base64;
-import android.util.Log;
-
-
-/**
- * Thanks to emmby at http://stackoverflow.com/questions/785973/what-is-the-most-appropriate-way-to-store-user-settings-in-android-application/6393502#6393502
- * This class has the following additions over the original:
- *  additional logic for handling the case for when the preferences were not originally encrypted, but now are.
- *  The secret key is no longer hard coded, but defined at runtime based on the individual device.
- *  The benefit is that if one device is compromised, it now only affects that device.
- *
- * Simply replace your own SharedPreferences object in this one, and any data you read/write will be automatically encrypted and decrypted.
- *
- * Updated usage:
- *    ObscuredSharedPreferences prefs = ObscuredSharedPreferences.getPrefs(this, MY_APP_NAME, Context.MODE_PRIVATE);
- *    //to get data
- *    prefs.getString("foo", null);
- *    //to store data
- *    prefs.edit().putString("foo","bar").commit();
- */
 public class EncryptedSharedPreferences implements SharedPreferences {
   protected static final String UTF8 = "UTF-8";
   private static char[] PBE_PASSWORD = null;
@@ -58,7 +39,6 @@ public class EncryptedSharedPreferences implements SharedPreferences {
   /**
    * Accessor to grab the preferences in a singleton.  This stores the reference in a singleton so it can be accessed repeatedly with
    * no performance penalty
-   * @param c - the context used to access the preferences.
    * @return
    */
   public synchronized static EncryptedSharedPreferences getPrefs(Context c, String appName, int contextMode) {

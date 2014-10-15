@@ -3,10 +3,10 @@ package uk.co.yojan.kiara.android.events;
 /**
  * Event for Authorization Code Grant Flow for Spotify.
  */
-public class AuthCodeGrantRequestEvent {
+public class AuthCodeGrantRequest {
   private String code;
 
-  public AuthCodeGrantRequestEvent(String code) {
+  public AuthCodeGrantRequest(String code) {
     this.code = code;
   }
 

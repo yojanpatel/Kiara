@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.android;
+package uk.co.yojan.kiara.android.test;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
