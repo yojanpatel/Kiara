@@ -30,9 +30,4 @@ public class KiaraClient {
     }
     return spotifyAuthApi;
   }
-
-  public static void main(String[] args) {
-    String s = "AQDJ4nlhW_-nnM_FfmRuZbM7zGTt_stgtNo1B9nLef-lCFA1QVh2G6bulJ38a3VBQgjwetO64luvGketZY3d05lYCa3jWHij0zrXWF5Oird46PMQ_ck1GB1iom--LYth0TKGfpglAT9ky0e8c2mWmBK2BKRPLkBZSUUVJLn33AS-AeJFj3ZU3eb92h3Q3hyf0oJ1uYj9myhggSrtYXx6xrFbDaY";
-    System.out.println(getSpotifyAuth().authorizeCode(s));
-  }
 }
