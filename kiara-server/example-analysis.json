@@ -1,0 +1,100 @@
+{
+	"meta":
+		{
+			"analyzer_version":"3.2.2",
+			"platform":"Linux", "detailed_status":"OK",
+			"filename":"filename.pcm",
+			"artist":"",
+			"album":"",
+			"title":"",
+			"genre":"",
+			"bitrate":0,
+			"sample_rate":0,
+			"seconds":0,
+			"status_code":0,
+			"timestamp":1403909062,
+			"analysis_time":8.89000
+		},
+
+	"track":
+		{
+			"num_samples":6113132,
+			"duration":277.23955,
+			"sample_md5":"2ccb9538bd7e6fc54e50b1f6c721449f",
+			"decoder":"ffmpeg",
+			"decoder_version":"FFmpeg SVN-r0.5.10-4:0.5.10-1",
+			"offset_seconds":0,
+			"window_seconds":0,
+			"analysis_sample_rate":22050,
+			"analysis_channels":1,
+			"end_of_fade_in":3.58748,
+			"start_of_fade_out":261.45669,
+			"loudness":-7.058, "tempo":74.930,
+			"tempo_confidence":0.199,
+			"time_signature":4,
+			"time_signature_confidence":0.973,
+			"key":11,
+			"key_confidence":0.436,
+			"mode":0, "mode_confidence":0.663,
+			"codestring":"eJxVnAmnCNMQNS",
+			"echoprint_version":4.12,
+			"synchstring":"Q4uS",
+			"synch_version":1.00,
+			"rhythmstring":"eJyVXAmyGzmuvIl_vb",
+			"rhythm_version":1.00
+		},
+
+	"bars":[
+		{
+			"start":264.38125,
+			"duration":3.20223,
+			"confidence":0.000
+		}
+	],
+
+	"beats":[
+		{
+			"start":3.94133,
+			"duration":0.82940,
+			"confidence":0.688
+		}
+	], 
+
+	"tatums":[
+		{
+			"start":3.94133,
+			"duration":0.55294,
+			"confidence":0.688
+		}
+	],
+
+	"sections":[
+		{
+			"start":0.00000,
+			"duration":12.04525,
+			"tempo_confidenceidence":1.000,
+			"loudness":-22.377,
+			"tempo":74.300,
+			"tempo_confidence":0.451,
+			"key":2,
+			"key_confidence":0.000,
+			"mode":1,
+			"mode_confidence":0.000,
+			"time_signature":4,
+			"time_signature_confidence":1.000
+		}
+	],
+
+	"segments":[
+		{
+			"start":0.00000,
+			"duration":3.12884,
+			"confidence":0.000,
+			"loudness_start":-60.000,
+			"loudness_max_time":0.00000,
+			"loudness_max":-60.000,
+			"pitches":[0.577, 0.527, 0.598, 0.455, 0.433, 0.484, 0.911, 1.000, 0.561, 0.499, 0.500, 0.751],
+			"timbre":[0.000, 171.130, 9.469, -28.480, 57.491, -50.067, 14.833, 5.359, -27.228, 0.973, -10.640, -7.228]
+		}
+	]
+}
