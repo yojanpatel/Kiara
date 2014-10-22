@@ -13,27 +13,37 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 public class GetSongAnalysisTask implements DeferredTask {
 
   private String spotifyId;
+  private String artist;
+  private String title;
 
-  public GetSongAnalysisTask(String spotifyId) {
+  public GetSongAnalysisTask(String spotifyId, String artist, String title) {
     this.spotifyId = spotifyId;
+    this.artist = artist;
+    this.title = title;
   }
 
   private static final Logger log = Logger.getLogger(GetSongAnalysisTask.class.getName());
 
   /**
-   * When an object implementing interface <code>Runnable</code> is used
+   * When an object implementing interface Runnable is used
    * to create a thread, starting the thread causes the object's
-   * <code>run</code> method to be called in that separately executing
+   * run method to be called in that separately executing
    * thread.
-   * <p/>
-   * The general contract of the method <code>run</code> is that it may
+   *
+   * The general contract of the method run is that it may
    * take any action whatsoever.
    *
-   * @see Thread#run()
    */
   @Override
   public void run() {
     SongAnalysis songAnalysis = EchoNestApi.getSongAnalysis(spotifyId);
+
+    // As a fallback, search EchoNest with the artist and title name of the song.
+    // This often works for obscure or new tracks.
+    if(songAnalysis == null) {
+      log.info("Failed to search with the Spotify Id, trying to search using artist name and title.");
+      songAnalysis = EchoNestApi.getSongAnalysis(artist, title);
+    }
     songAnalysis.setId(spotifyId);
     SongData songData = songAnalysis.getSongData();
     songData.setSpotifyId(spotifyId);

@@ -29,7 +29,6 @@ public class Song {
   private String albumName;
   private String imageURL;
 
-  private SongAnalysis analysis;
   private Key<SongAnalysis> analysisKey;
 
   /* A factory method to create an instance of a Song populated with values
@@ -45,10 +44,11 @@ public class Song {
       .setArtist(track.getArtists().get(0).getName())
       .setSongName(track.getName())
       .setAlbumName(track.getAlbum().getName())
-      .setImageURL(track.getAlbum().getImages().get(0).getUrl());
+      .setImageURL(track.getAlbum().getImages().get(0).getUrl())
+      .setAnalysisKey(Key.create(SongAnalysis.class, spotifyId));
 
     // Add a new task to the TaskQueue fetch analysis from EchoNest and persist.
-    TaskManager.fetchAnalysis(spotifyId);
+    TaskManager.fetchAnalysis(spotifyId, sm.getArtist(), sm.getSongName());
 
     return sm;
   }
@@ -112,6 +112,14 @@ public class Song {
     return this;
   }
 
+  public Key<SongAnalysis> getAnalysisKey() {
+    return analysisKey;
+  }
+
+  public void setAnalysisKey(Key<SongAnalysis> analysisKey) {
+    this.analysisKey = analysisKey;
+  }
+
   public Song copyFrom(Song from) {
     setSpotifyId(from.getSpotifyId());
     setSongName(from.getSongName());
@@ -122,13 +130,6 @@ public class Song {
   }
 
   public SongAnalysis getAnalysis() {
-    if(analysis == null) {
-      log.info("Fetching meta-data from EchoNest. Please wait...");
-      analysis = EchoNestApi.getSongMetaData(spotifyId);
-      analysis.setId(spotifyId);
-      analysisKey = Key.create(SongAnalysis.class, spotifyId);
-      ofy().save().entities(this, analysis);
-    }
-    return analysis;
+    return ofy().load().key(analysisKey).now();
   }
 }

@@ -49,11 +49,10 @@ public class SongResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/search")
-  public String searchSong(@QueryParam("artist") String artist,
+  public SongAnalysis searchSong(@QueryParam("artist") String artist,
                            @QueryParam("title") String song) {
     return EchoNestApi.searchSong(artist, song);
   }
-
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)

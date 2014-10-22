@@ -7,13 +7,16 @@ import uk.co.yojan.kiara.server.models.SongData;
 import uk.co.yojan.kiara.server.models.SongAnalysis;
 import uk.co.yojan.kiara.server.serializers.SongDataDeserializer;
 import uk.co.yojan.kiara.server.serializers.SongMetaDataDeserializer;
+import uk.co.yojan.kiara.server.serializers.SongSearchDeserializer;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 
@@ -26,6 +29,10 @@ public class EchoNestApi {
   private static Gson gson = new GsonBuilder()
       .registerTypeAdapter(SongAnalysis.class, new SongMetaDataDeserializer())
       .registerTypeAdapter(SongData.class, new SongDataDeserializer())
+      .create();
+
+  private static Gson searchGson = new GsonBuilder()
+      .registerTypeAdapter(SongAnalysis.class, new SongSearchDeserializer())
       .create();
 
   public static String get(URL url) {
@@ -69,13 +76,19 @@ public class EchoNestApi {
     }
   }
 
-  public static String searchSong(String artist, String song) {
-    String getQuery = query
-        + param("format", "json")
-        + param("artist", artist)
-        + param("title", song)
-        + param("bucket", "audio_summary")
-        + param("results", "1");
+  public static String searchSongJson(String artist, String song) {
+    String getQuery = null;
+    try {
+      getQuery = query
+          + param("format", "json")
+          + param("artist", URLEncoder.encode(artist, StandardCharsets.UTF_8.toString()))
+          + param("title", URLEncoder.encode(song, StandardCharsets.UTF_8.toString()))
+          + param("bucket", "audio_summary")
+          + param("results", "1");
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      return null;
+    }
     try {
       URL url = new URL(baseURL + "/song/search" + getQuery);
       return get(url);
@@ -83,6 +96,15 @@ public class EchoNestApi {
       e.printStackTrace();
     }
     return null;
+  }
+
+  public static SongAnalysis searchSong(String artist, String song) {
+    String analysisJSON = searchSongJson(artist, song);
+    if(analysisJSON == null || analysisJSON.isEmpty()) {
+      return null;
+    } else {
+      return searchGson.fromJson(analysisJSON, SongAnalysis.class);
+    }
   }
 
   // Get the EchoNest analysis results for a song identified by spotifyId.
@@ -107,13 +129,24 @@ public class EchoNestApi {
 
   public static SongAnalysis getSongAnalysis(String spotifyId) {
     SongAnalysis songAnalysis = getSongMetaData(spotifyId);
+
+    if(songAnalysis == null)
+      return null;
+
     SongData songData = getSongData(songAnalysis);
     songAnalysis.setSongData(songData);
     return songAnalysis;
   }
 
-  public static void deferSongAnalysis(String spotifyId) {
+  public static SongAnalysis getSongAnalysis(String artist, String title) {
+    SongAnalysis songAnalysis = searchSong(artist, title);
 
+    if(songAnalysis == null)
+      return null;
+
+    SongData songData = getSongData(songAnalysis);
+    songAnalysis.setSongData(songData);
+    return songAnalysis;
   }
 
   private static String songUri(String spotifyId) {

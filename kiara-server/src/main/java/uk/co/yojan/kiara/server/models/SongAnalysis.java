@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
 
 /**
  * A data class representing the results of audio meta-date analysis
@@ -28,6 +29,8 @@ public class SongAnalysis {
   @SerializedName("audio_md5")
   @Expose private String audioMd5;
 
+  @Ignore private SongData songData;
+
 
   // Audio Summary.
   boolean audioSummary = false;
@@ -49,10 +52,6 @@ public class SongAnalysis {
   @Expose private String analysisUrl;
 
 
-  // In-depth Analysis.
-  boolean inDepthAnalysis = false;
-  private SongData songData;
-
 //  @Expose private List<Bar> bars = new ArrayList<Bar>();
 //  @Expose private List<Beat> beats = new ArrayList<Beat>();
 //  @Expose private List<Tatum> tatums = new ArrayList<Tatum>();
@@ -73,14 +72,6 @@ public class SongAnalysis {
 
   public void setAudioSummary(boolean audioSummary) {
     this.audioSummary = audioSummary;
-  }
-
-  public boolean isInDepthAnalysis() {
-    return inDepthAnalysis;
-  }
-
-  public void setInDepthAnalysis(boolean inDepthAnalysis) {
-    this.inDepthAnalysis = inDepthAnalysis;
   }
 
   public String getId() {

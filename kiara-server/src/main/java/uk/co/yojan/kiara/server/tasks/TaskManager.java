@@ -22,9 +22,11 @@ public class TaskManager {
     return taskQueue;
   }
 
-  public static void fetchAnalysis(String spotifyId) {
+  public static void fetchAnalysis(String spotifyId, String artist, String title) {
     log.info("Adding new GetSongAnalysisTask to the task queue for id: " + spotifyId);
-    GetSongAnalysisTask task = new GetSongAnalysisTask(spotifyId);
-    getQueue().add(TaskOptions.Builder.withPayload(task).taskName("FetchAnalysis-" + spotifyId));
+    GetSongAnalysisTask task = new GetSongAnalysisTask(spotifyId, artist, title);
+    getQueue().add(TaskOptions.Builder
+        .withPayload(task)
+        .taskName("FetchAnalysis-" + spotifyId));
   }
 }
