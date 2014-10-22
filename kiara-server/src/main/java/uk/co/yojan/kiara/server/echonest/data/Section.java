@@ -3,7 +3,12 @@ package uk.co.yojan.kiara.server.echonest.data;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class Section {
+import java.io.Serializable;
+
+public class Section implements Serializable {
+
+  private static final long serialVersionUID = 1L;
+
   @Expose
   private Double start;
   @Expose

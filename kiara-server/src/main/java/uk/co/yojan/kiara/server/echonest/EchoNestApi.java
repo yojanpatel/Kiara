@@ -3,7 +3,7 @@ package uk.co.yojan.kiara.server.echonest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import uk.co.yojan.kiara.server.ApiConstants;
-import uk.co.yojan.kiara.server.echonest.data.SongData;
+import uk.co.yojan.kiara.server.models.SongData;
 import uk.co.yojan.kiara.server.models.SongAnalysis;
 import uk.co.yojan.kiara.server.serializers.SongDataDeserializer;
 import uk.co.yojan.kiara.server.serializers.SongMetaDataDeserializer;
@@ -47,7 +47,10 @@ public class EchoNestApi {
   // Get the raw JSON content from an EchoNest request given a spotifyId. (sync)
   private static String getSongMetaDataJson(String spotifyId) {
     try {
-      String getQuery = query + param("format", "json") + param("id", spotifyId) + param("bucket", "audio_summary");
+      String getQuery = query +
+          param("format", "json") +
+          param("id", songUri(spotifyId)) +
+          param("bucket", "audio_summary");
       URL url = new URL(baseURL + "/track/profile" + getQuery);
       return get(url);
     } catch (MalformedURLException e) {
@@ -83,19 +86,18 @@ public class EchoNestApi {
   }
 
   // Get the EchoNest analysis results for a song identified by spotifyId.
-  public static String getSongAnalysisJson(String spotifyId) {
-    SongAnalysis s = getSongMetaData(spotifyId);
+  public static String getSongDataJson(SongAnalysis analysis) {
     try {
-      URL url = new URL(s.getAnalysisUrl());
+      URL url = new URL(analysis.getAnalysisUrl());
       return get(url);
-    } catch (MalformedURLException e) {
+    } catch(MalformedURLException e) {
       e.printStackTrace();
     }
     return null;
   }
 
-  public static SongData getSongAnalysis(String spotifyId) {
-    String analysisJSON = getSongAnalysisJson(spotifyId);
+  public static SongData getSongData(SongAnalysis songAnalysis) {
+    String analysisJSON = getSongDataJson(songAnalysis);
     if(analysisJSON == null || analysisJSON.isEmpty()) {
       return null;
     } else {
@@ -103,6 +105,20 @@ public class EchoNestApi {
     }
   }
 
+  public static SongAnalysis getSongAnalysis(String spotifyId) {
+    SongAnalysis songAnalysis = getSongMetaData(spotifyId);
+    SongData songData = getSongData(songAnalysis);
+    songAnalysis.setSongData(songData);
+    return songAnalysis;
+  }
+
+  public static void deferSongAnalysis(String spotifyId) {
+
+  }
+
+  private static String songUri(String spotifyId) {
+    return "spotify:track:" + spotifyId;
+  }
 
   // Helper method for neat construction of param arguments.
   private static String param(String key, String val) {

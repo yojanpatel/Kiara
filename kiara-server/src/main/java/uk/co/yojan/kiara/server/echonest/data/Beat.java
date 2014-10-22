@@ -2,7 +2,12 @@ package uk.co.yojan.kiara.server.echonest.data;
 
 import com.google.gson.annotations.Expose;
 
-public class Beat {
+import java.io.Serializable;
+
+public class Beat implements Serializable{
+
+  private static final long serialVersionUID = 1L;
+
   @Expose
   private Double start;
   @Expose

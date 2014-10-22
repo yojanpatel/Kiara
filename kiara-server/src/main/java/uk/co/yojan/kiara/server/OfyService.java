@@ -3,9 +3,7 @@ package uk.co.yojan.kiara.server;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyFactory;
 import com.googlecode.objectify.ObjectifyService;
-import uk.co.yojan.kiara.server.models.Playlist;
-import uk.co.yojan.kiara.server.models.Song;
-import uk.co.yojan.kiara.server.models.User;
+import uk.co.yojan.kiara.server.models.*;
 
 import java.util.logging.Logger;
 
@@ -20,6 +18,8 @@ public class OfyService {
     register(User.class);
     register(Song.class);
     register(Playlist.class);
+    register(SongAnalysis.class);
+    register(SongData.class);
   }
 
   public static Objectify ofy() {
