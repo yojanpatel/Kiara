@@ -26,7 +26,7 @@ public class Playlist {
   private String playlistName;
   private boolean playing;
   private long lastViewedTimestamp;
-  private Map<String, Key<Song>> songIdKeyMap = new HashMap<String, Key<Song>>();
+  private Map<String, Key<Song>> songIdKeyMap = new HashMap<String, Key<Song>>(); // spotifyId ---> Key(spotifyId)
 
 
   public Long getId() {
@@ -79,25 +79,25 @@ public class Playlist {
     return ofy().load().keys(songIdKeyMap.values()).values();
   }
 
-  public Song getSong(Long id) {
-    if(songIdKeyMap.containsKey(id.toString()))
-      return ofy().load().key(songIdKeyMap.get(id.toString())).now();
+  public Song getSong(String id) {
+    if(songIdKeyMap.containsKey(id))
+      return ofy().load().key(songIdKeyMap.get(id)).now();
     else
       return null;
   }
 
-  public Playlist addSong(Long songId) {
-    songIdKeyMap.put(songId.toString(), Key.create(Song.class, songId));
+  public Playlist addSong(String spotifyId) {
+    songIdKeyMap.put(spotifyId, Key.create(Song.class, spotifyId));
     ofy().save().entity(this).now();
     return this;
   }
 
   public Playlist addSong(Song song) {
-    return addSong(song.getId());
+    return addSong(song.getSpotifyId());
   }
 
-  public Playlist removeSong(Long songId) {
-    songIdKeyMap.remove(songId.toString());
+  public Playlist removeSong(String songId) {
+    songIdKeyMap.remove(songId);
     ofy().save().entity(this).now();
     return this;
   }

@@ -28,6 +28,9 @@ public class PlaylistTest {
   private Playlist testPlaylist2;
   private Key<Playlist> testPlaylistKey;
 
+  private Song kiara;
+  private Song said;
+
   @Before
   public void setUp() {
     helper.setUp();
@@ -44,6 +47,18 @@ public class PlaylistTest {
     testPlaylist2 = new Playlist().setName("test-platlist-2");
     ofy().save().entities(testPlaylist, testPlaylist2).now();
     testUser.addPlaylist(testPlaylist);
+
+    kiara = new Song()
+        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
+        .setArtist("Bonobo")
+        .setAlbumName("Black Sands")
+        .setSongName("Kiara");
+    said = new Song()
+        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
+        .setArtist("Pearl")
+        .setAlbumName("Open")
+        .setSongName("Said");
+    ofy().save().entities(kiara, said).now();
   }
 
   @After
@@ -53,19 +68,6 @@ public class PlaylistTest {
 
   @Test
   public void testGetAllSongs() {
-    Song kiara = new Song()
-        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
-        .setArtist("Bonobo")
-        .setAlbumName("Black Sands")
-        .setSongName("Kiara");
-    Song said = new Song()
-        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
-        .setArtist("Pearl")
-        .setAlbumName("Open")
-        .setSongName("Said");
-
-    testUser.addSong(kiara);
-    testUser.addSong(said);
     testPlaylist.addSong(kiara);
     testPlaylist2.addSong(said);
 
@@ -83,19 +85,6 @@ public class PlaylistTest {
 
   @Test
   public void testRemoveSong() {
-    Song kiara = new Song()
-        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
-        .setArtist("Bonobo")
-        .setAlbumName("Black Sands")
-        .setSongName("Kiara");
-    Song said = new Song()
-        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
-        .setArtist("Pearl")
-        .setAlbumName("Open")
-        .setSongName("Said");
-
-    testUser.addSong(kiara);
-    testUser.addSong(said);
     testPlaylist.addSong(kiara);
     testPlaylist2.addSong(said);
 
@@ -114,19 +103,6 @@ public class PlaylistTest {
 
   @Test
   public void testGetSong() {
-    Song kiara = new Song()
-        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
-        .setArtist("Bonobo")
-        .setAlbumName("Black Sands")
-        .setSongName("Kiara");
-    Song said = new Song()
-        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
-        .setArtist("Pearl")
-        .setAlbumName("Open")
-        .setSongName("Said");
-
-    testUser.addSong(kiara);
-    testUser.addSong(said);
     testPlaylist.addSong(kiara);
     testPlaylist.addSong(said);
 

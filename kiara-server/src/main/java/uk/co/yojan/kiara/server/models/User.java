@@ -180,17 +180,18 @@ public class User {
     return songSpotifyIdMap.containsKey(spotifyId);
   }
 
+  /*
   public Song addSong(String spotifyId) throws Exception {
     if(hasSong(spotifyId))
       return null;
     else
       return addSong(Song.newInstanceFromSpotify(spotifyId));
-  }
+  }*/
 
   /*
    * Returns null if the user already has the song added,
    * else returns the Song.
-   */
+   *
   public Song addSong(Song song) {
       ofy().save().entity(song).now();
 
@@ -201,6 +202,7 @@ public class User {
       return song;
   }
 
+  *
   public User removeSong(Long id) {
     if(!hasSong(id))
       return this;
@@ -221,7 +223,7 @@ public class User {
     saveResult.now();
 
     return this;
-  }
+  }*/
 
   public Long getIdFromSpotifyId(String spotifyId) {
     return songSpotifyIdMap.get(spotifyId);

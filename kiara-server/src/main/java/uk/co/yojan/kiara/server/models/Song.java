@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.server.models;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.wrapper.spotify.Api;
@@ -11,19 +12,22 @@ import uk.co.yojan.kiara.server.serializers.SongSerializer;
 
 import java.util.logging.Logger;
 
+import static uk.co.yojan.kiara.server.OfyService.ofy;
+
 @JsonSerialize(using = SongSerializer.class)
 @Entity(name = "Song")
 public class Song {
 
   private static Logger log = Logger.getLogger(Song.class.getName());
 
-  private @Id Long id;
-  private String spotifyId;
+  private Long id;
+  private @Id String spotifyId;
   private String artistName;
   private String songName;
   private String albumName;
   private String imageURL;
 
+  private Key<SongAnalysis> analysis;
 
   /* A factory method to create an instance of a Song populated with values
    * pulled from Spotify.
@@ -43,8 +47,18 @@ public class Song {
     return sm;
   }
 
+  // Static method to check if a given song exists.
+  public static boolean exists(String spotifyId) {
+    return ofy().load().key(Key.create(Song.class, spotifyId)).now() != null;
+  }
+
+  /*
   public Long getId() {
     return id;
+  } */
+
+  public String getId() {
+    return spotifyId;
   }
 
   public String getSpotifyId() {
@@ -93,6 +107,7 @@ public class Song {
   }
 
   public Song copyFrom(Song from) {
+    setSpotifyId(from.getSpotifyId());
     setSongName(from.getSongName());
     setArtist(from.getArtist());
     setAlbumName(from.getAlbumName());

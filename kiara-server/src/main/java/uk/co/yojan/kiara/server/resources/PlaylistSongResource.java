@@ -1,6 +1,8 @@
 package uk.co.yojan.kiara.server.resources;
 
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Result;
+import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.User;
 
@@ -34,25 +36,34 @@ public class PlaylistSongResource {
                           @PathParam("playlist_id") Long playlistId) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
 
+    // Convert JSON string to string because of Retrofit.
+    spotifyId = spotifyId.replace("\"", "");
+
     if(!u.hasPlaylist(playlistId)) {
       return Response.notModified().build();
     }
 
     Song created;
-    if(!u.hasSong(spotifyId)) {
-      log.info("User does not have song. Adding.");
+    Result save = null;
+    if(!Song.exists(spotifyId)) {
       try {
-        created = u.addSong(spotifyId);
-      } catch(Exception e) {
+        created = Song.newInstanceFromSpotify(spotifyId);
+      } catch (Exception e) {
         e.printStackTrace();
-        return Response.serverError().build();
+        return Response.serverError().entity(e.getMessage()).build();
       }
+      save = ofy().save().entity(created);
     } else {
-      log.info("User already has song. Loading.");
-      created = u.getSongFromSpotifyId(spotifyId);
+      created = ofy().load().key(Key.create(Song.class, spotifyId)).now();
     }
 
-    u.getPlaylist(playlistId).addSong(u.getIdFromSpotifyId(spotifyId));
+    assert created.getSpotifyId().equals(spotifyId);
+
+    Playlist p = u.getPlaylist(playlistId);
+    p.addSong(spotifyId);
+
+
+    if(save != null) save.now();
     return Response.ok().entity(created).build();
   }
 }

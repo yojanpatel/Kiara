@@ -217,94 +217,94 @@ public class UserTest {
   }
 
 
-  // Songs
-  @Test
-  public void testGetAllSongs() {
-    Song kiara = new Song()
-        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
-        .setArtist("Bonobo")
-        .setAlbumName("Black Sands")
-        .setSongName("Kiara");
-    Song said = new Song()
-        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
-        .setArtist("Pearl")
-        .setAlbumName("Open")
-        .setSongName("Said");
-
-    testUser.addSong(kiara);
-    testUser.addSong(said);
-
-    try {
-      // Adding the same song (Bonobo - Kiara) should return null.
-      assertNull(testUser.addSong("7sqii6BhIDpJChYpU3WjwS"));
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-
-    User fetched = ofy().load().key(testKey).now();
-
-    ArrayList<Song> userSongs = new ArrayList<Song>(fetched.getAllSongs());
-
-    assertEquals(2, userSongs.size());
-
-    assertTrue(userSongs.get(0).getArtist().equals(kiara.getArtist()) ||
-        userSongs.get(0).getArtist().equals(said.getArtist()));
-
-    assertTrue(!userSongs.get(1).getArtist().equals(userSongs.get(0).getArtist()));
-
-    assertTrue(userSongs.get(1).getArtist().equals(kiara.getArtist()) ||
-        userSongs.get(1).getArtist().equals(said.getArtist()));
-  }
-
-  @Test
-  public void testGetSong() {
-    Song kiara = new Song()
-        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
-        .setArtist("Bonobo")
-        .setAlbumName("Black Sands")
-        .setSongName("Kiara");
-    Song said = new Song()
-        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
-        .setArtist("Pearl")
-        .setAlbumName("Open")
-        .setSongName("Said");
-
-    testUser.addSong(kiara);
-    testUser.addSong(said);
-
-    User fetched = ofy().load().key(testKey).now();
-
-    assertEquals(fetched.getSong(kiara.getId()).getArtist(), kiara.getArtist());
-    assertEquals(fetched.getSongFromSpotifyId("1SCr765E8UhorcLL6UDKjf").getArtist(), said.getArtist());
-  }
-
-  @Test
-  public void testDeleteSong() {
-    Song kiara = new Song()
-        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
-        .setArtist("Bonobo")
-        .setAlbumName("Black Sands")
-        .setSongName("Kiara");
-    Song said = new Song()
-        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
-        .setArtist("Pearl")
-        .setAlbumName("Open")
-        .setSongName("Said");
-
-    testUser.addSong(kiara);
-    testUser.addSong(said);
-    assertNotNull(ofy().load().entity(kiara).now());
-
-    User fetched = ofy().load().key(testKey).now();
-    assertEquals(2, fetched.getAllSongs().size());
-
-    fetched.removeSong(kiara.getId()); // remove Kiara song.
-    fetched.removeSong(-1L); // no effect.
-
-    ArrayList<Song> userSongs = new ArrayList<Song>(fetched.getAllSongs());
-    assertEquals(1, userSongs.size());
-    assertEquals("Pearl", userSongs.get(0).getArtist());
-
-    assertNull(ofy().load().entity(kiara).now());
-  }
+//  // Songs
+//  @Test
+//  public void testGetAllSongs() {
+//    Song kiara = new Song()
+//        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
+//        .setArtist("Bonobo")
+//        .setAlbumName("Black Sands")
+//        .setSongName("Kiara");
+//    Song said = new Song()
+//        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
+//        .setArtist("Pearl")
+//        .setAlbumName("Open")
+//        .setSongName("Said");
+//
+//    testUser.addSong(kiara);
+//    testUser.addSong(said);
+//
+//    try {
+//      // Adding the same song (Bonobo - Kiara) should return null.
+//      assertNull(testUser.addSong("7sqii6BhIDpJChYpU3WjwS"));
+//    } catch (Exception e) {
+//      fail(e.getMessage());
+//    }
+//
+//    User fetched = ofy().load().key(testKey).now();
+//
+//    ArrayList<Song> userSongs = new ArrayList<Song>(fetched.getAllSongs());
+//
+//    assertEquals(2, userSongs.size());
+//
+//    assertTrue(userSongs.get(0).getArtist().equals(kiara.getArtist()) ||
+//        userSongs.get(0).getArtist().equals(said.getArtist()));
+//
+//    assertTrue(!userSongs.get(1).getArtist().equals(userSongs.get(0).getArtist()));
+//
+//    assertTrue(userSongs.get(1).getArtist().equals(kiara.getArtist()) ||
+//        userSongs.get(1).getArtist().equals(said.getArtist()));
+//  }
+//
+//  @Test
+//  public void testGetSong() {
+//    Song kiara = new Song()
+//        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
+//        .setArtist("Bonobo")
+//        .setAlbumName("Black Sands")
+//        .setSongName("Kiara");
+//    Song said = new Song()
+//        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
+//        .setArtist("Pearl")
+//        .setAlbumName("Open")
+//        .setSongName("Said");
+//
+//    testUser.addSong(kiara);
+//    testUser.addSong(said);
+//
+//    User fetched = ofy().load().key(testKey).now();
+//
+//    assertEquals(fetched.getSong(kiara.getId()).getArtist(), kiara.getArtist());
+//    assertEquals(fetched.getSongFromSpotifyId("1SCr765E8UhorcLL6UDKjf").getArtist(), said.getArtist());
+//  }
+//
+//  @Test
+//  public void testDeleteSong() {
+//    Song kiara = new Song()
+//        .setSpotifyId("7sqii6BhIDpJChYpU3WjwS")
+//        .setArtist("Bonobo")
+//        .setAlbumName("Black Sands")
+//        .setSongName("Kiara");
+//    Song said = new Song()
+//        .setSpotifyId("1SCr765E8UhorcLL6UDKjf")
+//        .setArtist("Pearl")
+//        .setAlbumName("Open")
+//        .setSongName("Said");
+//
+//    testUser.addSong(kiara);
+//    testUser.addSong(said);
+//    assertNotNull(ofy().load().entity(kiara).now());
+//
+//    User fetched = ofy().load().key(testKey).now();
+//    assertEquals(2, fetched.getAllSongs().size());
+//
+//    fetched.removeSong(kiara.getId()); // remove Kiara song.
+//    fetched.removeSong(-1L); // no effect.
+//
+//    ArrayList<Song> userSongs = new ArrayList<Song>(fetched.getAllSongs());
+//    assertEquals(1, userSongs.size());
+//    assertEquals("Pearl", userSongs.get(0).getArtist());
+//
+//    assertNull(ofy().load().entity(kiara).now());
+//  }
 }

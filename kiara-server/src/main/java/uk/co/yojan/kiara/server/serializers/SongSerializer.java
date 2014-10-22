@@ -18,7 +18,7 @@ public class SongSerializer extends JsonSerializer<Song> {
 
     jsonGenerator.writeStartObject();
 
-    jsonGenerator.writeNumberField("id", song.getId());
+//    jsonGenerator.writeNumberField("id", song.getId());
     jsonGenerator.writeStringField("spotifyId", song.getSpotifyId());
     jsonGenerator.writeStringField("songName", song.getSongName());
     jsonGenerator.writeStringField("artistName", song.getArtist());
