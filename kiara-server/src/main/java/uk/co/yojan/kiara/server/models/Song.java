@@ -8,7 +8,9 @@ import com.wrapper.spotify.Api;
 import com.wrapper.spotify.methods.TrackRequest;
 import com.wrapper.spotify.models.Track;
 import uk.co.yojan.kiara.server.SpotifyApi;
+import uk.co.yojan.kiara.server.echonest.EchoNestApi;
 import uk.co.yojan.kiara.server.serializers.SongSerializer;
+import uk.co.yojan.kiara.server.tasks.TaskManager;
 
 import java.util.logging.Logger;
 
@@ -27,7 +29,8 @@ public class Song {
   private String albumName;
   private String imageURL;
 
-  private Key<SongAnalysis> analysis;
+  private SongAnalysis analysis;
+  private Key<SongAnalysis> analysisKey;
 
   /* A factory method to create an instance of a Song populated with values
    * pulled from Spotify.
@@ -43,6 +46,9 @@ public class Song {
       .setSongName(track.getName())
       .setAlbumName(track.getAlbum().getName())
       .setImageURL(track.getAlbum().getImages().get(0).getUrl());
+
+    // Add a new task to the TaskQueue fetch analysis from EchoNest and persist.
+    TaskManager.fetchAnalysis(spotifyId);
 
     return sm;
   }
@@ -113,5 +119,16 @@ public class Song {
     setAlbumName(from.getAlbumName());
     setImageURL(from.getImageURL());
     return this;
+  }
+
+  public SongAnalysis getAnalysis() {
+    if(analysis == null) {
+      log.info("Fetching meta-data from EchoNest. Please wait...");
+      analysis = EchoNestApi.getSongMetaData(spotifyId);
+      analysis.setId(spotifyId);
+      analysisKey = Key.create(SongAnalysis.class, spotifyId);
+      ofy().save().entities(this, analysis);
+    }
+    return analysis;
   }
 }

@@ -2,10 +2,9 @@ package uk.co.yojan.kiara.server.resources;
 
 import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.server.echonest.EchoNestApi;
-import uk.co.yojan.kiara.server.echonest.data.SongData;
+import uk.co.yojan.kiara.server.models.SongData;
 import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.SongAnalysis;
-import uk.co.yojan.kiara.server.models.User;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -37,14 +36,14 @@ public class SongResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{id}/data")
   public SongAnalysis getSongMetaData(@PathParam("id") String id) {
-    return EchoNestApi.getSongMetaData(id);
+    return ofy().load().key(Key.create(SongAnalysis.class, id)).now();
   }
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{id}/data/analysis")
   public SongData getSongAnalysis(@PathParam("id") String id) {
-    return EchoNestApi.getSongAnalysis(id);
+    return ofy().load().key(Key.create(SongData.class, id)).now();
   }
 
   @GET

@@ -8,9 +8,6 @@ import uk.co.yojan.kiara.server.models.Song;
 
 import java.io.IOException;
 
-/**
- * Created by yojan on 10/10/14.
- */
 public class SongSerializer extends JsonSerializer<Song> {
   @Override
   public void serialize(Song song, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)

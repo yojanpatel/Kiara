@@ -3,6 +3,7 @@ package uk.co.yojan.kiara.server.serializers;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import uk.co.yojan.kiara.server.echonest.data.*;
+import uk.co.yojan.kiara.server.models.SongData;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;

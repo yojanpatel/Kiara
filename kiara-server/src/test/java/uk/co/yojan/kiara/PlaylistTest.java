@@ -11,7 +11,6 @@ import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.User;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

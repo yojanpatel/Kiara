@@ -4,10 +4,6 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
-import uk.co.yojan.kiara.server.echonest.data.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A data class representing the results of audio meta-date analysis
