@@ -10,7 +10,7 @@ public class Playlist {
   @Expose
   private Long id;
   @Expose
-  @SerializedName("name")
+  @SerializedName("playlistName")
   private String playlistName;
   @Expose
   private Long lastViewedTimestamp;

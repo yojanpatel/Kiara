@@ -10,13 +10,13 @@ import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
 public interface SpotifyApiInterface {
 
-  @GET("/search?type=album,artist,track")
+  @GET("/v1/search?type=album,artist,track")
   @Headers("Accept: application/json")
   public SearchResult search(@Query("q") String query,
                              @Query("limit") int limit,
                              @Query("offset") int offset);
 
-  @GET("/search?type=album,artist,track")
+  @GET("/v1/search?type=album,artist,track")
   @Headers("Accept: application/json")
   public void search(@Query("q") String query,
                              @Query("limit") int limit,
@@ -25,10 +25,10 @@ public interface SpotifyApiInterface {
 
 
   // Requires oAuth (interceptor adds additional header).
-  @GET("/me")
+  @GET("/v1/me")
   public SpotifyUser getCurrentUser();
 
-  @GET("/me")
+  @GET("/v1/me")
   public void getCurrentUser(Callback<SpotifyUser> cb);
 
 }
