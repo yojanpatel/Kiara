@@ -3,14 +3,10 @@ package uk.co.yojan.kiara.android;
 import android.app.Application;
 import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
-import com.wrapper.spotify.Api;
 import uk.co.yojan.kiara.android.events.AuthCodeGrantResponse;
-import uk.co.yojan.kiara.android.events.CurrentUserResponse;
-import uk.co.yojan.kiara.android.events.FinishedLoadingEvent;
 import uk.co.yojan.kiara.android.events.RefreshAccessTokenResponse;
 import uk.co.yojan.kiara.android.services.KiaraService;
 import uk.co.yojan.kiara.android.services.SpotifyAuthService;
@@ -19,7 +15,6 @@ import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.KiaraClient;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
 import uk.co.yojan.kiara.client.SpotifyAuthInterface;
-import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
 public class KiaraApplication extends Application {
 
@@ -85,12 +80,12 @@ public class KiaraApplication extends Application {
     Log.d(log, "Initializing the Kiara Service and registering to the event bus.");
     kiaraService = new KiaraService(kiaraApi, bus, userId);
     bus.register(kiaraService);
-    bus.post(new FinishedLoadingEvent());
   }
 
   public EncryptedSharedPreferences sharedPreferences() {
     return sharedPreferences;
   }
+
 
   @Subscribe
   public void onAuthCodeGrantComplete(AuthCodeGrantResponse credentials) {

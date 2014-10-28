@@ -66,8 +66,6 @@ public class PlaylistListFragment extends KiaraFragment {
     mRecyclerView.setLayoutManager(mLayoutManager);
     parent = (KiaraActivity) getActivity();
     parent.getBus().post(new GetPlaylistsRequest());
-//    mAdapter = new PlaylistListViewAdapter(DummyProvider.getPlaylists(), mContext);
-//    mRecyclerView.setAdapter(mAdapter);
 
     Drawable plus = getResources().getDrawable(android.R.drawable.ic_input_add);
     FloatingActionButton fab = new FloatingActionButton.Builder(getActivity())

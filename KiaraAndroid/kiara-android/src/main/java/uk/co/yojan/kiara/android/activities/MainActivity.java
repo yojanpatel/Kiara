@@ -1,6 +1,5 @@
 package uk.co.yojan.kiara.android.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,8 +12,6 @@ import com.spotify.sdk.android.authentication.SpotifyAuthentication;
 import com.spotify.sdk.android.playback.ConnectionStateCallback;
 import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.Constants;
-import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
-import uk.co.yojan.kiara.android.KiaraApplication;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.events.*;
 import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
@@ -124,7 +121,7 @@ public class MainActivity extends KiaraActivity
         .putString(Constants.USER_ID, user.getId())
         .putString(Constants.USER_IMG_URL, user.getPrimaryImageURL())
         .putString(Constants.USER_TYPE, user.getType()).commit();
-    ((KiaraApplication)getApplication()).initKiaraService(user.getId());
+    getKiaraApplication().initKiaraService(user.getId());
     Toast.makeText(getApplicationContext(), sharedPreferences().getString(Constants.USER_ID, null), Toast.LENGTH_SHORT).show();
 
     goToPlaylistViewActivity();
