@@ -43,29 +43,29 @@ public interface KiaraApiInterface {
                                  @Body Playlist updated);
 
 
-  @GET("users/{userId}/songs")
+  @GET("/users/{userId}/songs")
   public Collection<Song> getAllSongs(@Path("userId") String userId);
 
-  @GET("users/{userId}/songs/{songId}")
+  @GET("/users/{userId}/songs/{songId}")
   public Song getSong(@Path("userId") String userId,
                       @Path("songId") Long songId);
 
 
-  @DELETE("users/{userId}/songs/{songId}")
+  @DELETE("/users/{userId}/songs/{songId}")
   public Response deleteSong(@Path("userId") String userId,
                          @Path("songId") Long songId);
 
-  @POST("users/{userId}/songs")
+  @POST("/users/{userId}/songs")
   @Headers("content-type: text/plain")
   public Song addSong(@Path("userId") String userId,
                       @Body String spotifyId);
 
 
-  @GET("users/{userId}/playlists/{playlistId}/songs")
+  @GET("/users/{userId}/playlists/{playlistId}/songs")
   public Collection<Song> getAllSongs(@Path("userId") String userId,
                                       @Path("playlistId") Long playlistId);
 
-  @POST("users/{userId}/playlists/{playlistId}/songs")
+  @POST("/users/{userId}/playlists/{playlistId}/songs")
   @Headers("content-type: text/plain")
   public Song addSong(@Path("userId") String userId,
                       @Path("playlistId") Long playlistId,
@@ -119,34 +119,34 @@ public interface KiaraApiInterface {
                              Callback<Playlist> cb);
 
 
-  @GET("users/{userId}/songs")
+  @GET("/users/{userId}/songs")
   public void getAllSongs(@Path("userId") String userId,
                           Callback<Collection<Song>> cb);
 
-  @GET("users/{userId}/songs/{songId}")
+  @GET("/users/{userId}/songs/{songId}")
   public void getSong(@Path("userId") String userId,
                       @Path("songId") Long songId,
                       Callback<Song> cb);
 
 
-  @DELETE("users/{userId}/songs/{songId}")
+  @DELETE("/users/{userId}/songs/{songId}")
   public void deleteSong(@Path("userId") String userId,
                          @Path("songId") Long songId,
                          Callback<Response> cb);
 
-  @POST("users/{userId}/songs")
+  @POST("/users/{userId}/songs")
   @Headers("content-type: text/plain")
   public void addSong(@Path("userId") String userId,
                       @Body String spotifyId,
                       Callback<Song> cb);
 
 
-  @GET("users/{userId}/playlists/{playlistId}/songs")
+  @GET("/users/{userId}/playlists/{playlistId}/songs")
   public void getAllSongs(@Path("userId") String userId,
                           @Path("playlistId") Long playlistId,
                           Callback<Collection<Song>> cb);
 
-  @POST("users/{userId}/playlists/{playlistId}/songs")
+  @POST("/users/{userId}/playlists/{playlistId}/songs")
   @Headers("content-type: text/plain")
   public void addSong(@Path("userId") String userId,
                       @Path("playlistId") Long playlistId,

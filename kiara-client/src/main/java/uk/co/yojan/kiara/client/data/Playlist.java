@@ -2,6 +2,7 @@ package uk.co.yojan.kiara.client.data;
 
 import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
 @Generated("org.jsonschema2pojo")
 public class Playlist {
@@ -9,6 +10,7 @@ public class Playlist {
   @Expose
   private Long id;
   @Expose
+  @SerializedName("name")
   private String playlistName;
   @Expose
   private Long lastViewedTimestamp;
