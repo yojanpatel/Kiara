@@ -41,12 +41,12 @@ public class SpotifyAuthService {
       @Override
       public void success(AuthorizationCodeGrant credentials, Response response) {
         Log.i(log, credentials.getAccessToken() + ", " + credentials.getRefreshToken());
+
         bus.post(new AuthCodeGrantResponse(
             credentials.getAccessToken(),
             credentials.getRefreshToken(),
             credentials.getExpiresIn()));
       }
-
 
       @Override
       public void failure(RetrofitError error) {
