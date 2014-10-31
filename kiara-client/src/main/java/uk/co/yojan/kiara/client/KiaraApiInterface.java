@@ -9,6 +9,7 @@ import uk.co.yojan.kiara.client.data.Song;
 import uk.co.yojan.kiara.client.data.User;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface KiaraApiInterface {
 
@@ -28,6 +29,10 @@ public interface KiaraApiInterface {
 
   @GET("/users/{userId}/playlists")
   public Collection<Playlist> getAllPlaylistsForUser(@Path("userId") String userId);
+
+  @GET("/users/{userId}/playlists?detail=true")
+  public List<PlaylistWithSongs> getAllPlaylistsWithSongs(@Path("userId") String userId);
+
 
   @GET("/users/{userId}/playlists/{playlistId}")
   public Playlist getPlaylist(@Path("userId") String userId,
@@ -104,6 +109,10 @@ public interface KiaraApiInterface {
   @GET("/users/{userId}/playlists")
   public void getAllPlaylistsForUser(@Path("userId") String userId,
                                      Callback<Collection<Playlist>> cb);
+
+  @GET("/users/{userId}/playlists?detail=true")
+  public void getAllPlaylistsWithSongs(@Path("userId") String userId,
+                                       Callback<List<PlaylistWithSongs>> cb);
 
   @GET("/users/{userId}/playlists/{playlistId}")
   public void getPlaylist(@Path("userId") String userId,
