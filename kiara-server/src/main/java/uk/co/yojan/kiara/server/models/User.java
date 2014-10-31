@@ -1,7 +1,10 @@
 package uk.co.yojan.kiara.server.models;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.appengine.repackaged.com.google.common.base.Function;
+import com.google.appengine.repackaged.com.google.common.base.Pair;
 import com.google.appengine.repackaged.com.google.common.collect.BiMap;
+import com.google.appengine.repackaged.com.google.common.collect.Collections2;
 import com.google.appengine.repackaged.com.google.common.collect.HashBiMap;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
@@ -13,8 +16,7 @@ import com.wrapper.spotify.methods.UserRequest;
 import uk.co.yojan.kiara.server.SpotifyApi;
 import uk.co.yojan.kiara.server.serializers.UserSerializer;
 
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
@@ -123,6 +125,21 @@ public class User {
 
   public Collection<Playlist> getAllPlaylists() {
     return ofy().load().keys(playlistKeyMap.values()).values();
+  }
+
+  public List<PlaylistWithSongs> getPlaylistsWithSongs() {
+    ArrayList<Playlist> playlists = new ArrayList<>(getAllPlaylists());
+
+    ArrayList<Map<Key<Song>, Song>> asyncMaps = new ArrayList<>();
+    for(Playlist p : playlists) asyncMaps.add(p.getAllSongsAsync());
+
+    List<PlaylistWithSongs> result = new ArrayList<>();
+    for(int i = 0; i < playlists.size(); i++) {
+      result.add(new PlaylistWithSongs(
+          playlists.get(i),
+          new ArrayList<Song>(asyncMaps.get(i).values())));
+    }
+    return result;
   }
 
   public Playlist getPlaylist(Long id) {

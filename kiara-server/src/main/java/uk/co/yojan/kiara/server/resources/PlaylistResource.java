@@ -29,9 +29,13 @@ public class PlaylistResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<Playlist> getAll(@PathParam("user_id") String userId) {
+  public Response getAll(@PathParam("user_id") String userId,
+                         @DefaultValue("false") @QueryParam("detail") boolean detail) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
-    return u.getAllPlaylists();
+    if(detail) {
+      return Response.ok().entity(u.getPlaylistsWithSongs()).build();
+    }
+    return Response.ok().entity(u.getAllPlaylists()).build();
   }
 
   @GET

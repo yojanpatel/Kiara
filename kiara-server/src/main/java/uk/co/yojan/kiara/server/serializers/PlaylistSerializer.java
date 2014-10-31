@@ -8,9 +8,7 @@ import uk.co.yojan.kiara.server.models.Playlist;
 
 import java.io.IOException;
 
-/**
- * Created by yojan on 10/10/14.
- */
+
 public class PlaylistSerializer extends JsonSerializer<Playlist> {
   @Override
   public void serialize(Playlist playlist, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)

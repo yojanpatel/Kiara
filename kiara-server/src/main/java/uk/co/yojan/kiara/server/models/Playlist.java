@@ -3,6 +3,7 @@ package uk.co.yojan.kiara.server.models;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Result;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import uk.co.yojan.kiara.server.serializers.PlaylistDeserializer;
@@ -80,6 +81,10 @@ public class Playlist {
 
   public Collection<Song> getAllSongs() {
     return ofy().load().keys(songIdKeyMap.values()).values();
+  }
+
+  public Map<Key<Song>, Song> getAllSongsAsync() {
+    return ofy().load().keys(songIdKeyMap.values());
   }
 
   public Song getSong(String id) {
