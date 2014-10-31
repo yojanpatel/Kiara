@@ -1,13 +1,17 @@
 package uk.co.yojan.kiara.server.resources;
 
+import com.google.appengine.repackaged.com.google.common.base.Pair;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.server.models.Playlist;
+import uk.co.yojan.kiara.server.models.PlaylistWithSongs;
+import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.User;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Logger;
 
@@ -34,8 +38,15 @@ public class PlaylistResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{id}")
   public Response get(@PathParam("user_id") String userId,
-                      @PathParam("id") Long id) {
+                      @PathParam("id") Long id,
+                      @DefaultValue("false") @QueryParam("detail") boolean detail) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
+    if(detail) {
+      Playlist playlist = u.getPlaylist(id);
+      ArrayList<Song> songs = new ArrayList<Song>(playlist.getAllSongs());
+      return Response.ok().entity(new PlaylistWithSongs(playlist, songs)).build();
+    }
+
     Playlist p = u.getPlaylist(id);
     return Response.ok().entity(p).build();
   }
