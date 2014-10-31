@@ -1,9 +1,11 @@
 package uk.co.yojan.kiara.server.models;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import uk.co.yojan.kiara.server.serializers.PlaylistDeserializer;
 import uk.co.yojan.kiara.server.serializers.PlaylistSerializer;
 
 import java.util.Collection;
@@ -18,6 +20,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
  * Playlist
  */
 @JsonSerialize(using = PlaylistSerializer.class)
+@JsonDeserialize(using = PlaylistDeserializer.class)
 @Entity(name = "Playlist")
 public class Playlist {
   private static Logger log = Logger.getLogger(Playlist.class.getName());
