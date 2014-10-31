@@ -3,7 +3,10 @@ package uk.co.yojan.kiara.client;
 import com.squareup.okhttp.Response;
 import retrofit.Callback;
 import retrofit.http.*;
-import uk.co.yojan.kiara.client.data.*;
+import uk.co.yojan.kiara.client.data.Playlist;
+import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
+import uk.co.yojan.kiara.client.data.Song;
+import uk.co.yojan.kiara.client.data.User;
 
 import java.util.Collection;
 
@@ -29,6 +32,10 @@ public interface KiaraApiInterface {
   @GET("/users/{userId}/playlists/{playlistId}")
   public Playlist getPlaylist(@Path("userId") String userId,
                               @Path("playlistId") Long playlistId);
+  @GET("/users/{userId}/playlists/{playlistId}?detail=true")
+
+  public PlaylistWithSongs getPlaylistWithSongs(@Path("userId") String userId,
+                                                @Path("playlistId") Long playlistId);
 
   @DELETE("/users/{userId}/playlists/{playlistId}")
   public Response deletePlaylist(@Path("userId") String userId,
@@ -102,6 +109,11 @@ public interface KiaraApiInterface {
   public void getPlaylist(@Path("userId") String userId,
                               @Path("playlistId") Long playlistId,
                               Callback<Playlist> cb);
+
+  @GET("/users/{userId}/playlists/{playlistId}?detail=true")
+  public void getPlaylistWithSongs(@Path("userId") String userId,
+                                   @Path("playlistId") Long playlistId,
+                                   Callback<PlaylistWithSongs> cb);
 
   @DELETE("/users/{userId}/playlists/{playlistId}")
   public void deletePlaylist(@Path("userId") String userId,

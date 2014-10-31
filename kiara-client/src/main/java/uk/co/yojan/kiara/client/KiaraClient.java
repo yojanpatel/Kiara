@@ -17,6 +17,7 @@ public class KiaraClient {
     if(sKiaraApi == null) {
       RestAdapter restAdapter = new RestAdapter.Builder()
           .setEndpoint("http://kiara-yojan.appspot.com")
+//          .setEndpoint("http://localhost:8080")
           .setLogLevel(RestAdapter.LogLevel.FULL)
           .build();
 
