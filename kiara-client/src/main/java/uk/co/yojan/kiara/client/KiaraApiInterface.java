@@ -47,8 +47,8 @@ public interface KiaraApiInterface {
                              @Path("playlistId") Long playlistId);
 
   @POST("/users/{userId}/playlists/")
-  public Response createPlaylist(@Path("userId") String userId,
-                             @Body Playlist playlist);
+  public Playlist createPlaylist(@Path("userId") String userId,
+                                 @Body Playlist playlist);
 
   @PUT("/users/{userId}/playlists/{playlistId}")
   public Playlist updatePlaylist(@Path("userId") String userId,
@@ -132,7 +132,7 @@ public interface KiaraApiInterface {
   @POST("/users/{userId}/playlists/")
   public void createPlaylist(@Path("userId") String userId,
                              @Body Playlist playlist,
-                             Callback<Response> cb);
+                             Callback<Playlist> cb);
 
   @PUT("/users/{userId}/playlists/{playlistId}")
   public void updatePlaylist(@Path("userId") String userId,
