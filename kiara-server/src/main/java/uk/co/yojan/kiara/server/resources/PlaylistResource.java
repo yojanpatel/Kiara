@@ -81,6 +81,7 @@ public class PlaylistResource {
 
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
   public Response create(@PathParam("user_id") String userId,
                          @Context UriInfo uri,
                          Playlist item) {
@@ -93,6 +94,6 @@ public class PlaylistResource {
     owner.addPlaylist(item);
 
     URI plUri = UriBuilder.fromUri(uri.getRequestUri()).path(item.getId().toString()).build();
-    return Response.created(plUri).build();
+    return Response.created(plUri).entity(item).build();
   }
 }
