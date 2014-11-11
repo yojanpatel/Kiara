@@ -12,6 +12,9 @@ public class Album {
   @SerializedName("album_type")
   @Expose
   private String albumType;
+  @SerializedName("artists")
+  @Expose
+  private Artists artists;
   @SerializedName("available_markets")
   @Expose
   private List<String> availableMarkets = new ArrayList<String>();
@@ -90,5 +93,13 @@ public class Album {
 
   public void setUri(String uri) {
     this.uri = uri;
+  }
+
+  public Artists getArtists() {
+    return artists;
+  }
+
+  public void setArtists(Artists artists) {
+    this.artists = artists;
   }
 }
