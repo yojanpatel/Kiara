@@ -2,10 +2,14 @@ package uk.co.yojan.kiara.android;
 
 import android.app.Application;
 import android.content.Context;
+import android.net.http.HttpResponseCache;
 import android.util.Log;
+import com.squareup.okhttp.Cache;
+import com.squareup.okhttp.OkHttpClient;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
+import retrofit.client.OkClient;
 import uk.co.yojan.kiara.android.events.AuthCodeGrantResponse;
 import uk.co.yojan.kiara.android.events.RefreshAccessTokenResponse;
 import uk.co.yojan.kiara.android.services.KiaraService;
@@ -15,6 +19,9 @@ import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.KiaraClient;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
 import uk.co.yojan.kiara.client.SpotifyAuthInterface;
+
+import java.io.File;
+import java.io.IOException;
 
 public class KiaraApplication extends Application {
 
@@ -31,15 +38,17 @@ public class KiaraApplication extends Application {
   private SpotifyApiInterface spotifyWebApi;
 
   private Bus bus = new Bus(ThreadEnforcer.ANY);
+  private Cache cache;
 
   @Override
   public void onCreate() {
     super.onCreate();
 
     sharedPreferences = EncryptedSharedPreferences.getPrefs(this, Constants.PREFERENCE_STRING, Context.MODE_PRIVATE);
+    installCache();
 
     // Construct the Api for various interactions.
-    kiaraApi = KiaraClient.getKiaraApiClient();
+    kiaraApi = KiaraClient.getKiaraApiClient(cachedClient());
     authApi = KiaraClient.getSpotifyAuth();
 
     // Create the services that subscribe to the event bus.
@@ -47,6 +56,23 @@ public class KiaraApplication extends Application {
 
     bus.register(spotifyAuthService);
     bus.register(this); // Listen to global events.
+  }
+
+  private void installCache() {
+    File httpCacheDir = new File(getApplicationContext().getCacheDir(), "Kiara");
+    long httpCacheSize = 10 * 1024 * 1024;
+    try {
+      HttpResponseCache.install(httpCacheDir, httpCacheSize);
+      cache = new Cache(httpCacheDir, httpCacheSize);
+    } catch (IOException e) {
+      Log.e(log, "HTTP response cache installation failed: " + e);
+    }
+  }
+
+  private OkClient cachedClient() {
+    OkHttpClient client = new OkHttpClient();
+    client.setCache(cache);
+    return new OkClient(client);
   }
 
   public Bus getBus() {
