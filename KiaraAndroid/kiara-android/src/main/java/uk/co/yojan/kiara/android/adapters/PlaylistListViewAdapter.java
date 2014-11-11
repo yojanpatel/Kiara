@@ -1,7 +1,9 @@
 package uk.co.yojan.kiara.android.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,26 +11,37 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.activities.PlayerActivity;
+import uk.co.yojan.kiara.android.fragments.PlayerFragment;
 import uk.co.yojan.kiara.android.fragments.PlaylistListFragment;
+import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.android.utils.CircularCropTransformation;
 import uk.co.yojan.kiara.client.data.Playlist;
+import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
+import uk.co.yojan.kiara.client.data.Song;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * An adapter for displaying playlists in a list format using the RecyclerView Api.
  * This class is responsible for providing the views that represent the playlist.
  */
-public class PlaylistListViewAdapter extends RecyclerView.Adapter<PlaylistListViewAdapter.ViewHolder> {
+public class PlaylistListViewAdapter
+    extends RecyclerView.Adapter<PlaylistListViewAdapter.ViewHolder>  {
 
-  private List<Playlist> data;
+  private static final String log = PlaylistListViewAdapter.class.getName();
+
+  private List<PlaylistWithSongs> data;
   private Context mContext;
 
   private static Picasso picasso;
 
-  public PlaylistListViewAdapter(List<Playlist> playlists, Context context) {
+  public PlaylistListViewAdapter(List<PlaylistWithSongs> playlists, Context context) {
     this.data = playlists;
     this.mContext = context;
     picasso = Picasso.with(mContext);
@@ -45,18 +58,34 @@ public class PlaylistListViewAdapter extends RecyclerView.Adapter<PlaylistListVi
     return vh;
   }
 
-
   // Replace the contents of a view (invoked by the layout manager)
   @Override
   public void onBindViewHolder(ViewHolder viewHolder, int position) {
-    Playlist p = data.get(position);
+    PlaylistWithSongs pws = data.get(position);
+    Playlist p = pws.getPlaylist();
     viewHolder.playlistName.setText(p.getPlaylistName());
-    viewHolder.details.setText("Bonobo, Flying Lotus, Pearl ...");
-    picasso.load("http://blog.iso50.com/wp-content/uploads/2010/03/Bonobo_10-450x450.png")
-           .placeholder(android.R.drawable.btn_star_big_on)
-           .resize(200, 200)
-           .transform(new CircularCropTransformation())
-           .into(viewHolder.image);
+
+    int numPlaylists = pws.getSongs().size();
+
+    if(numPlaylists > 0) {
+      picasso.load(pws.getSongs().get(0).getImageURL())
+          .placeholder(R.drawable.placeholder)
+          .resize(200, 200)
+              //           .transform(new CircularCropTransformation())
+          .into(viewHolder.image);
+      StringBuffer detailText = new StringBuffer();
+      for(int i = 0; i < Math.min(5, numPlaylists); i++) {
+        detailText.append(pws.getSongs().get(i).getArtistName() + ", ");
+      }
+      detailText.delete(detailText.length() - 2, detailText.length() - 1);
+      viewHolder.details.setText(detailText.toString());
+
+      String sizeText = numPlaylists + (numPlaylists > 1 ? " songs." : " song.");
+      viewHolder.size.setText(sizeText);
+    } else {
+      viewHolder.details.setText("No songs.");
+      picasso.load(R.drawable.placeholder).resize(200,200).into(viewHolder.image);
+    }
   }
 
   @Override
@@ -64,22 +93,27 @@ public class PlaylistListViewAdapter extends RecyclerView.Adapter<PlaylistListVi
     return data.size();
   }
 
+  public void updateList(ArrayList<PlaylistWithSongs> newData) {
+    if (newData != null) {
+      data = newData;
+      notifyDataSetChanged();
+    }
+  }
+
+  public void addPlaylist(Playlist p) {
+    data.add(new PlaylistWithSongs(p, new ArrayList<Song>()));
+  }
+
   public static class ViewHolder extends RecyclerView.ViewHolder {
 
     @InjectView(R.id.playlist_row_img) ImageView image;
     @InjectView(R.id.playlist_row_name) TextView playlistName;
     @InjectView(R.id.playlist_row_details) TextView details;
+    @InjectView(R.id.playlist_row_size) TextView size;
 
     public ViewHolder(View itemView) {
       super(itemView);
       ButterKnife.inject(this, itemView);
-    }
-  }
-
-  public void updateList(List<Playlist> newData) {
-    if(newData != null) {
-      data = newData;
-      notifyDataSetChanged();
     }
   }
 }

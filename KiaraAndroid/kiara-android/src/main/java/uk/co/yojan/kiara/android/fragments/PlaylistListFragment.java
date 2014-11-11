@@ -1,7 +1,7 @@
 package uk.co.yojan.kiara.android.fragments;
 
 
-import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
@@ -16,20 +16,24 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import butterknife.OnClick;
-import butterknife.Optional;
 import com.squareup.otto.Subscribe;
+import com.wrapper.spotify.models.Playlist;
+import de.keyboardsurfer.android.widget.crouton.Crouton;
+import de.keyboardsurfer.android.widget.crouton.Style;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.activities.CreatePlaylistActivity;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
+import uk.co.yojan.kiara.android.activities.PlaylistSongListActivity;
 import uk.co.yojan.kiara.android.adapters.PlaylistListViewAdapter;
+import uk.co.yojan.kiara.android.dialogs.CreatePlaylistDialog;
+import uk.co.yojan.kiara.android.events.CreatedPlaylist;
 import uk.co.yojan.kiara.android.events.GetPlaylistsRequest;
+import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
+import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.android.views.FloatingActionButton;
-import uk.co.yojan.kiara.client.data.Playlist;
+import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
+import uk.co.yojan.kiara.client.data.Song;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 
 public class PlaylistListFragment extends KiaraFragment {
@@ -44,7 +48,7 @@ public class PlaylistListFragment extends KiaraFragment {
   private PlaylistListViewAdapter mAdapter;
   private RecyclerView.LayoutManager mLayoutManager;
 
-  private int fabId;
+  private ArrayList<PlaylistWithSongs> playlists;
 
   public PlaylistListFragment() {
   }
@@ -64,44 +68,73 @@ public class PlaylistListFragment extends KiaraFragment {
     mRecyclerView.setHasFixedSize(true);
     mLayoutManager = new LinearLayoutManager(getActivity());
     mRecyclerView.setLayoutManager(mLayoutManager);
+
     parent = (KiaraActivity) getActivity();
     parent.getBus().post(new GetPlaylistsRequest());
 
-    Drawable plus = getResources().getDrawable(android.R.drawable.ic_input_add);
-    FloatingActionButton fab = new FloatingActionButton.Builder(getActivity())
-        .withButtonColor(getResources().getColor(R.color.deeporange500))
-        .withDrawable(plus)
-        .withGravity(Gravity.BOTTOM | Gravity.RIGHT)
-        .withMargins(0, 0, 24, 24)
-        .create();
-    fab.setId(R.id.fab_playlist_create);
+
+    setUpFab();
 
     return rootView;
   }
 
   @Subscribe
-  public void onPlaylistsReceived(ArrayList<Playlist> rcvd) {
-    Log.d(log, "playlists received. " + rcvd.size());
-    List<Playlist> playlists = new ArrayList<Playlist>(rcvd);
+  public void onPlaylistsReceived(final ArrayList<PlaylistWithSongs> rcvd) {
+    Log.d(log, "Playlists received. " + rcvd.size());
     if(mAdapter == null) {
-      mAdapter = new PlaylistListViewAdapter(playlists, mContext);
+      mAdapter = new PlaylistListViewAdapter(rcvd, mContext);
     } else {
-      mAdapter.updateList(playlists);
+      mAdapter.updateList(rcvd);
     }
+    playlists = rcvd;
     mRecyclerView.setAdapter(mAdapter);
+    mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {
+      @Override
+      public void onItemClick(View view, int position) {
+        Log.d(log, "Item clicked at position " + position);
+
+        Intent i = new Intent(mContext, PlaylistSongListActivity.class);
+        i.putExtra(PlaylistSongListActivity.SONG_LIST_ARG_KEY,
+            SongParcelable.convert(playlists.get(position).getSongs()));
+        i.putExtra(PlaylistSongListActivity.PLAYLIST_ID_ARG_KEY,
+            playlists.get(position).getPlaylist().getId());
+
+        startActivity(i);
+      }
+    }));
     progressBar.setVisibility(View.INVISIBLE);
   }
 
-//  @Optional @OnClick(R.id.fab_playlist_create)
-//  public void onPlaylistCreateClick(FloatingActionButton view) {
-//    view.hideFloatingActionButton();
-//    Intent i = new Intent(mContext, CreatePlaylistActivity.class);
-//    startActivity(i);
-//  }
+  @Subscribe
+  public void onNewPlaylistCreated(final CreatedPlaylist cp) {
+    Crouton.makeText(parent, "New Playlist! " + cp.getPlaylist().getPlaylistName(), Style.CONFIRM);
+    mAdapter.addPlaylist(cp.getPlaylist());
+//    playlists.add(new PlaylistWithSongs(cp.getPlaylist(), new ArrayList<Song>()));
+    mAdapter.notifyDataSetChanged();
+  }
 
   @Override
   public void onDestroyView() {
     super.onDestroyView();
     ButterKnife.reset(this);
+  }
+
+
+  private void setUpFab() {
+    Drawable plus = getResources().getDrawable(R.drawable.ic_add_white_24dp);
+    FloatingActionButton fab = new FloatingActionButton.Builder(getActivity())
+        .withButtonColor(getResources().getColor(R.color.pinkA200))
+        .withDrawable(plus)
+        .withGravity(Gravity.BOTTOM | Gravity.RIGHT)
+        .withMargins(0, 0, 24, 24)
+        .create();
+
+    fab.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        FragmentManager fm = getFragmentManager();
+        new CreatePlaylistDialog().show(fm, "fragment_create_playlist");
+      }
+    });
   }
 }
