@@ -8,6 +8,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 import uk.co.yojan.kiara.android.events.CurrentUserRequest;
 import uk.co.yojan.kiara.android.events.SearchRequest;
+import uk.co.yojan.kiara.android.events.SearchResultCreateSongEvent;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
 import uk.co.yojan.kiara.client.data.spotify.SearchResult;
 import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
@@ -44,12 +45,13 @@ public class SpotifyWebService {
   }
 
   @Subscribe
-  public void search(SearchRequest request) {
+  public void search(final SearchRequest request) {
 
     spotifyApi.search(request.getQuery(), request.getLimit(), request.getOffset(),
         new Callback<SearchResult>() {
           @Override
           public void success(SearchResult searchResult, Response response) {
+//            bus.post(new SearchResultCreateSongEvent(request.getPlaylistId(), searchResult));
             bus.post(searchResult);
           }
 
