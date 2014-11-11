@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import de.keyboardsurfer.android.widget.crouton.Crouton;
+import de.keyboardsurfer.android.widget.crouton.Style;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.events.CreatePlaylistRequest;
@@ -41,6 +43,7 @@ public class CreatePlaylistDialog extends DialogFragment {
         .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialogInterface, int i) {
+            Crouton.makeText(getActivity(), "Busy creating new playlist ...", Style.INFO);
             ((KiaraActivity)getActivity()).getBus()
                 .post(new CreatePlaylistRequest(playlistName.getText().toString()));
           }
@@ -52,7 +55,7 @@ public class CreatePlaylistDialog extends DialogFragment {
             dialogInterface.cancel();
           }
         })
-        .setIcon(android.R.drawable.btn_plus);
+        .setIcon(R.drawable.ic_playlist_add_black_36dp);
 
     return builder.create();
   }
