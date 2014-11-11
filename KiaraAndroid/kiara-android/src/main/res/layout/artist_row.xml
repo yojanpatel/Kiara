@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+  <ImageView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:id="@+id/artist_img"
+      android:padding="4dp"/>
+
+  <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:id="@+id/artist_name"
+      android:text="Artist Name"
+      android:textSize="14sp"
+      android:textColor="@color/grey900"
+      android:layout_marginTop="8dp"
+      android:layout_toRightOf="@+id/artist_img"
+      android:layout_alignParentRight="true"
+      android:padding="8dp"/>
+  
+  <View
+      android:layout_width="fill_parent"
+      android:layout_height="1dp"
+      android:background="@color/grey400"
+      android:layout_alignParentBottom="true"/>
+
+</RelativeLayout>

@@ -130,4 +130,6 @@
   <color name="yellowA400">#ffea00</color>
   <color name="yellowA700">#ffd600</color>
 
+  <color name="transparent">#00000000</color>
+
 </resources>

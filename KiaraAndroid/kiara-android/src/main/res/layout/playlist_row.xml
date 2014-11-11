@@ -9,6 +9,9 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:id="@+id/playlist_row_img"
+      android:src="@drawable/placeholder"
+      android:maxHeight="200dp"
+      android:maxWidth="200dp"
       android:contentDescription="@string/playlist_row_image_desc"
       />
 
@@ -36,5 +39,24 @@
       android:layout_alignStart="@+id/playlist_row_name"
       android:layout_below="@+id/playlist_row_name"
       android:id="@+id/playlist_row_details"/>
+
+  <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="X songs."
+      android:textColor="@color/grey100"
+      android:textSize="12sp"
+      android:paddingLeft="8dp"
+      android:paddingRight="8dp"
+      android:layout_alignLeft="@+id/playlist_row_name"
+      android:layout_alignStart="@+id/playlist_row_name"
+      android:layout_below="@+id/playlist_row_details"
+      android:id="@+id/playlist_row_size"/>
+
+  <View
+      android:layout_width="fill_parent"
+      android:layout_height="1dp"
+      android:background="@color/grey800"
+      android:layout_alignBottom="@+id/playlist_row_img"/>
 
 </RelativeLayout>
