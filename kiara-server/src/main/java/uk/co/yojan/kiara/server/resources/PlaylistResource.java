@@ -1,6 +1,5 @@
 package uk.co.yojan.kiara.server.resources;
 
-import com.google.appengine.repackaged.com.google.common.base.Pair;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.server.models.Playlist;
@@ -12,7 +11,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
@@ -32,10 +30,15 @@ public class PlaylistResource {
   public Response getAll(@PathParam("user_id") String userId,
                          @DefaultValue("false") @QueryParam("detail") boolean detail) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
+
+    CacheControl cc = new CacheControl();
+    cc.setMaxAge(24 * 60 * 60);
+    Response.ResponseBuilder builder = Response.ok().cacheControl(cc);
+
     if(detail) {
-      return Response.ok().entity(u.getPlaylistsWithSongs()).build();
+      return builder.entity(u.getPlaylistsWithSongs()).build();
     }
-    return Response.ok().entity(u.getAllPlaylists()).build();
+    return builder.entity(u.getAllPlaylists()).build();
   }
 
   @GET
@@ -45,14 +48,20 @@ public class PlaylistResource {
                       @PathParam("id") Long id,
                       @DefaultValue("false") @QueryParam("detail") boolean detail) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
+
+    CacheControl cc = new CacheControl();
+    cc.setMaxAge(24 * 60 * 60);
+
+    Response.ResponseBuilder builder = Response.ok().cacheControl(cc);
+
     if(detail) {
       Playlist playlist = u.getPlaylist(id);
       ArrayList<Song> songs = new ArrayList<Song>(playlist.getAllSongs());
-      return Response.ok().entity(new PlaylistWithSongs(playlist, songs)).build();
+      return builder.entity(new PlaylistWithSongs(playlist, songs)).build();
     }
 
     Playlist p = u.getPlaylist(id);
-    return Response.ok().entity(p).build();
+    return builder.entity(p).build();
   }
 
   @DELETE
@@ -93,7 +102,10 @@ public class PlaylistResource {
     User owner = ownerResult.now(); // wait
     owner.addPlaylist(item);
 
+    CacheControl cc = new CacheControl();
+    cc.setMaxAge(24 * 60 * 60);
+
     URI plUri = UriBuilder.fromUri(uri.getRequestUri()).path(item.getId().toString()).build();
-    return Response.created(plUri).entity(item).build();
+    return Response.created(plUri).entity(item).cacheControl(cc).build();
   }
 }
