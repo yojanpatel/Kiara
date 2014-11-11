@@ -1,29 +1,24 @@
 package uk.co.yojan.kiara.android.activities;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.fragments.PlaylistListFragment;
 
-public class PlaylistViewActivity extends KiaraActivity {
+public class SearchActivity extends KiaraActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_playlist_view);
-        if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaylistListFragment())
-                    .commit();
-        }
+        setContentView(R.layout.activity_search);
     }
 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.playlist_view, menu);
+        getMenuInflater().inflate(R.menu.search, menu);
         return true;
     }
 

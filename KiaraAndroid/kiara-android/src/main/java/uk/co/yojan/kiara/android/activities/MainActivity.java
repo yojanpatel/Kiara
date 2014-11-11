@@ -1,12 +1,16 @@
 package uk.co.yojan.kiara.android.activities;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.spotify.sdk.android.authentication.SpotifyAuthentication;
 import com.spotify.sdk.android.playback.ConnectionStateCallback;
@@ -20,14 +24,22 @@ import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 public class MainActivity extends KiaraActivity
   implements ConnectionStateCallback {
 
-  private String LOG = getClass().getName();
+  private String LOG = MainActivity.class.getName();
+
+  @InjectView(R.id.title) TextView kiaraTitle;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
 
     if(accessExpired()) {
+      // Inflate the layout to display while authentication, data flow is carried out.
+      removeTitleBar();
+      setContentView(R.layout.activity_main);
+      ButterKnife.inject(this);
+      Typeface tf = Typeface.createFromAsset(getAssets(), "fonts/basictitlefont.ttf");
+      kiaraTitle.setTypeface(tf);
+
       // If refreshToken exists, we can use that to get another access token.
       Log.d(LOG, "Access Token has expired.");
       String refreshToken = sharedPreferences().getString(Constants.REFRESH_TOKEN, null);
@@ -111,7 +123,13 @@ public class MainActivity extends KiaraActivity
     toast("Authenticated.");
 
     // Get the current user's details since they may have been updated.
-    getBus().post(new CurrentUserRequest());
+    String userId = sharedPreferences().getString(Constants.USER_ID, null);
+    if(userId != null) {
+      getKiaraApplication().initKiaraService(userId);
+      goToPlaylistViewActivity();
+    } else {
+      getBus().post(new CurrentUserRequest());
+    }
   }
 
   // Get basic user information and update the shared preferences.
@@ -128,7 +146,10 @@ public class MainActivity extends KiaraActivity
   }
 
   private void goToPlaylistViewActivity() {
-    startActivity(new Intent(this, PlaylistViewActivity.class));
+    Intent i = new Intent(this, PlaylistViewActivity.class);
+    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    startActivity(i);
+    finish();
   }
 
 

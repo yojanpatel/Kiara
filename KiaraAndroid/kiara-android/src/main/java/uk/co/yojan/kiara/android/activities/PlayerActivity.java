@@ -1,29 +1,37 @@
 package uk.co.yojan.kiara.android.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.fragments.PlaylistListFragment;
+import uk.co.yojan.kiara.android.fragments.PlayerFragment;
+import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 
-public class PlaylistViewActivity extends KiaraActivity {
-
+public class PlayerActivity extends KiaraActivity {
+    SongParcelable song;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_playlist_view);
-        if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaylistListFragment())
-                    .commit();
-        }
+      super.onCreate(savedInstanceState);
+
+      Intent trigger = getIntent();
+      if(trigger != null) {
+        song = trigger.getParcelableExtra(PlayerFragment.SONG_PARAM);
+      }
+
+      setContentView(R.layout.activity_player);
+      if (savedInstanceState == null) {
+          getFragmentManager().beginTransaction()
+                  .add(R.id.container, PlayerFragment.newInstance(song))
+                  .commit();
+      }
     }
 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.playlist_view, menu);
+        getMenuInflater().inflate(R.menu.player, menu);
         return true;
     }
 
