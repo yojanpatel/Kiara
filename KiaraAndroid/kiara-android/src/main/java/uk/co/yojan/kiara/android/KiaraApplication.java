@@ -1,8 +1,8 @@
 package uk.co.yojan.kiara.android;
 
 import android.app.Application;
+import android.app.DownloadManager;
 import android.content.Context;
-import android.net.http.HttpResponseCache;
 import android.util.Log;
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.OkHttpClient;
@@ -15,6 +15,7 @@ import uk.co.yojan.kiara.android.events.RefreshAccessTokenResponse;
 import uk.co.yojan.kiara.android.services.KiaraService;
 import uk.co.yojan.kiara.android.services.SpotifyAuthService;
 import uk.co.yojan.kiara.android.services.SpotifyWebService;
+import uk.co.yojan.kiara.android.utils.OttoEventBuffer;
 import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.KiaraClient;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
@@ -36,47 +37,38 @@ public class KiaraApplication extends Application {
   private KiaraApiInterface kiaraApi;
   private SpotifyAuthInterface authApi;
   private SpotifyApiInterface spotifyWebApi;
+  private uk.co.yojan.kiara.android.client.KiaraClient client;
 
   private Bus bus = new Bus(ThreadEnforcer.ANY);
-  private Cache cache;
+  private OttoEventBuffer eventBuffer;
 
   @Override
   public void onCreate() {
     super.onCreate();
-
     sharedPreferences = EncryptedSharedPreferences.getPrefs(this, Constants.PREFERENCE_STRING, Context.MODE_PRIVATE);
-    installCache();
 
     // Construct the Api for various interactions.
-    kiaraApi = KiaraClient.getKiaraApiClient(cachedClient());
+    client = new uk.co.yojan.kiara.android.client.KiaraClient(getApplicationContext());
+    kiaraApi = KiaraClient.getKiaraApiClient();
     authApi = KiaraClient.getSpotifyAuth();
 
     // Create the services that subscribe to the event bus.
     spotifyAuthService = new SpotifyAuthService(authApi, bus);
 
+    // Instantiate event buffer wrt to the global event bus.
+    eventBuffer = new OttoEventBuffer(bus);
+    eventBuffer.startSaving();
+
     bus.register(spotifyAuthService);
     bus.register(this); // Listen to global events.
   }
 
-  private void installCache() {
-    File httpCacheDir = new File(getApplicationContext().getCacheDir(), "Kiara");
-    long httpCacheSize = 10 * 1024 * 1024;
-    try {
-      HttpResponseCache.install(httpCacheDir, httpCacheSize);
-      cache = new Cache(httpCacheDir, httpCacheSize);
-    } catch (IOException e) {
-      Log.e(log, "HTTP response cache installation failed: " + e);
-    }
-  }
-
-  private OkClient cachedClient() {
-    OkHttpClient client = new OkHttpClient();
-    client.setCache(cache);
-    return new OkClient(client);
-  }
-
   public Bus getBus() {
     return bus;
+  }
+
+  public OttoEventBuffer eventBuffer() {
+    return eventBuffer;
   }
 
   public SpotifyApiInterface spotifyWebApi() {
@@ -87,6 +79,9 @@ public class KiaraApplication extends Application {
     return kiaraApi;
   }
 
+  public uk.co.yojan.kiara.android.client.KiaraClient kiaraClient() {
+    return client;
+  }
   public SpotifyApiInterface spotifyApi() {
     return spotifyWebApi;
   }
@@ -102,9 +97,10 @@ public class KiaraApplication extends Application {
     return spotifyWebApi;
   }
 
+  // Instantiate the KiaraService to handle the REST calls with Kiara server.
   public void initKiaraService(String userId) {
     Log.d(log, "Initializing the Kiara Service and registering to the event bus.");
-    kiaraService = new KiaraService(kiaraApi, bus, userId);
+    kiaraService = new KiaraService(kiaraApi, bus, userId, client);
     bus.register(kiaraService);
   }
 

@@ -122,9 +122,13 @@ public class AddSongDialog extends DialogFragment {
   public void onResume() {
     super.onResume();
     activity.getBus().register(this);
-//    int width = getResources().getDisplayMetrics().widthPixels;
-//    int height = getResources().getDisplayMetrics().heightPixels;
-//    getDialog().getWindow().setLayout(width, height);
+  }
+
+  // Maximise dialog to take up the entire screen.
+  public void enlarge() {
+    int width = getResources().getDisplayMetrics().widthPixels;
+    int height = getResources().getDisplayMetrics().heightPixels;
+    getDialog().getWindow().setLayout(width, height);
   }
 
   /**
@@ -140,11 +144,13 @@ public class AddSongDialog extends DialogFragment {
 
   @Subscribe
   public void onSearchResultsReceived(final SearchResult result) {
-    this.result = result;
+    Log.d("AddSongDialog", "search results received.");
+    enlarge();
     Crouton.hide(searchCrouton);
     progressBar.setVisibility(View.INVISIBLE);
     resultList.setVisibility(View.VISIBLE);
 
+    this.result = result;
     this.mAdapter = new SearchResultAdapter(result, mContext);
     resultList.setAdapter(mAdapter);
     resultList.addOnItemTouchListener(new RecyclerItemTouchListener(mContext,

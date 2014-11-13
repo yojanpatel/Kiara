@@ -41,8 +41,8 @@ public class PlaylistListViewAdapter
 
   private static Picasso picasso;
 
-  public PlaylistListViewAdapter(List<PlaylistWithSongs> playlists, Context context) {
-    this.data = playlists;
+  public PlaylistListViewAdapter(Context context) {
+    this.data = new ArrayList<PlaylistWithSongs>();
     this.mContext = context;
     picasso = Picasso.with(mContext);
     picasso.setIndicatorsEnabled(true);
@@ -63,27 +63,28 @@ public class PlaylistListViewAdapter
   public void onBindViewHolder(ViewHolder viewHolder, int position) {
     PlaylistWithSongs pws = data.get(position);
     Playlist p = pws.getPlaylist();
+
     viewHolder.playlistName.setText(p.getPlaylistName());
+    int numSongs = pws.getSongs().size();
 
-    int numPlaylists = pws.getSongs().size();
-
-    if(numPlaylists > 0) {
+    if(numSongs > 0) {
       picasso.load(pws.getSongs().get(0).getImageURL())
           .placeholder(R.drawable.placeholder)
           .resize(200, 200)
               //           .transform(new CircularCropTransformation())
           .into(viewHolder.image);
       StringBuffer detailText = new StringBuffer();
-      for(int i = 0; i < Math.min(5, numPlaylists); i++) {
+      for(int i = 0; i < Math.min(5, numSongs); i++) {
         detailText.append(pws.getSongs().get(i).getArtistName() + ", ");
       }
       detailText.delete(detailText.length() - 2, detailText.length() - 1);
       viewHolder.details.setText(detailText.toString());
 
-      String sizeText = numPlaylists + (numPlaylists > 1 ? " songs." : " song.");
+      String sizeText = numSongs + (numSongs > 1 ? " songs." : " song.");
       viewHolder.size.setText(sizeText);
     } else {
       viewHolder.details.setText("No songs.");
+      viewHolder.size.setText("");
       picasso.load(R.drawable.placeholder).resize(200,200).into(viewHolder.image);
     }
   }
@@ -95,7 +96,8 @@ public class PlaylistListViewAdapter
 
   public void updateList(ArrayList<PlaylistWithSongs> newData) {
     if (newData != null) {
-      data = newData;
+      data.clear();
+      data.addAll(newData);
       notifyDataSetChanged();
     }
   }

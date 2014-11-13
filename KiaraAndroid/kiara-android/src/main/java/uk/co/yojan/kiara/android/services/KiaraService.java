@@ -1,54 +1,81 @@
 package uk.co.yojan.kiara.android.services;
 
 import android.util.Log;
-import android.widget.Toast;
+import com.android.volley.VolleyError;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import uk.co.yojan.kiara.android.client.KiaraClient;
 import uk.co.yojan.kiara.android.events.*;
 import uk.co.yojan.kiara.client.KiaraApiInterface;
-import uk.co.yojan.kiara.client.SpotifyApiInterface;
 import uk.co.yojan.kiara.client.data.Playlist;
 import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
 import uk.co.yojan.kiara.client.data.Song;
-import uk.co.yojan.kiara.client.data.spotify.SearchResult;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Arrays;
 
 public class KiaraService {
 
-  private static final String log = KiaraApiInterface.class.getName();
+  private static final String log = KiaraService.class.getName();
 
   private KiaraApiInterface kiaraApi;
+  KiaraClient client;
   private Bus bus;
   private String userId;
 
-  public KiaraService(KiaraApiInterface api, Bus bus, String userId) {
+
+  public KiaraService(KiaraApiInterface api, Bus bus, String userId, KiaraClient client) {
     this.kiaraApi = api;
     this.bus = bus;
     this.userId = userId;
+    this.client = client;
   }
 
+
   @Subscribe
-  public void onGetPlaylists(GetPlaylistsRequest request) {
-    Log.d(log, "Requesting playlists for user.");
-    kiaraApi.getAllPlaylistsWithSongs(userId, new Callback<List<PlaylistWithSongs>>() {
-      @Override
-      public void success(List<PlaylistWithSongs> playlists, Response response) {
-        Log.d(log, "successfully got playlists. posting onto the bus.");
-        bus.post(new ArrayList<PlaylistWithSongs>(playlists));
-      }
+  public void onGetAllPlaylists(GetAllPlaylists req) {
+    Log.d(log, "Requesting all playlists for user.");
+    client.allPlaylistsWithSongs(userId,
+        new com.android.volley.Response.Listener<PlaylistWithSongs[]>() {
+          @Override
+          public void onResponse(PlaylistWithSongs[] response) {
 
-      @Override
-      public void failure(RetrofitError error) {
-        Log.e(log, error.getMessage());
+            Log.d(log, "Successfully got playlists. Posting onto the bus." + response[0].getPlaylist().getPlaylistName());
+            bus.post(new ArrayList<PlaylistWithSongs>(Arrays.asList(response)));
+          }
+        },
 
-      }
-    });
+        new com.android.volley.Response.ErrorListener() {
+          @Override
+          public void onErrorResponse(VolleyError error) {
+            Log.e(log, error.toString());
+          }
+        }
+    );
+  }
+
+
+  @Subscribe
+  public void getSongsForPlaylist(GetSongsForPlaylist request) {
+    Log.d(log, "Requesting songs for playlist " + request.getId());
+    client.getAllSongs(userId, request.getId(),
+        new com.android.volley.Response.Listener<Song[]>() {
+          @Override
+          public void onResponse(Song[] response) {
+            Log.d(log, "Successfully got " + response.length + " songs for the playlist. Posting onto the bus.");
+            bus.post(new ArrayList<Song>(Arrays.asList(response)));
+          }
+        },
+        new com.android.volley.Response.ErrorListener() {
+          @Override
+          public void onErrorResponse(VolleyError error) {
+            Log.e(log, error.toString());
+          }
+        }
+    );
   }
 
   @Subscribe
@@ -65,10 +92,9 @@ public class KiaraService {
 
       @Override
       public void failure(RetrofitError error) {
-        Log.e(log, error.getMessage());
+        Log.e(log, error.toString());
       }
     });
-
   }
 
   @Subscribe
@@ -82,7 +108,7 @@ public class KiaraService {
 
       @Override
       public void failure(RetrofitError error) {
-        Log.e(log, error.getMessage());
+        Log.e(log, error.toString());
       }
     });
   }
@@ -104,8 +130,10 @@ public class KiaraService {
 
       @Override
       public void failure(RetrofitError error) {
-        Log.e(log, error.getMessage());
+        Log.e(log, error.toString());
       }
     } );
   }
+
+
 }

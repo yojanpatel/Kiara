@@ -107,8 +107,7 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
     artistName.setText(currentSong.getArtistName());
     albumName.setText(currentSong.getAlbumName());
 
-    seekBar.setMax(255);
-    seekBar.getThumb().setAlpha(0);
+    seekBar.setMax(255);;
     seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -163,7 +162,6 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
   }
 
   private void pauseplay() {
-
     if(playing) {
       // Pause the player
       player.pause();

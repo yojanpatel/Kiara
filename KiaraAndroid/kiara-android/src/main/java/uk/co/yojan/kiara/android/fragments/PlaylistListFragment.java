@@ -17,16 +17,18 @@ import android.widget.ProgressBar;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.squareup.otto.Subscribe;
-import com.wrapper.spotify.models.Playlist;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
+import uk.co.yojan.kiara.android.KiaraApplication;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.activities.PlaylistSongListActivity;
 import uk.co.yojan.kiara.android.adapters.PlaylistListViewAdapter;
+import uk.co.yojan.kiara.android.client.VolleySingleton;
 import uk.co.yojan.kiara.android.dialogs.CreatePlaylistDialog;
 import uk.co.yojan.kiara.android.events.CreatedPlaylist;
-import uk.co.yojan.kiara.android.events.GetPlaylistsRequest;
+import uk.co.yojan.kiara.android.events.GetAllPlaylists;
+import uk.co.yojan.kiara.android.events.GetSongsForPlaylist;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.android.views.FloatingActionButton;
@@ -34,6 +36,7 @@ import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
 import uk.co.yojan.kiara.client.data.Song;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class PlaylistListFragment extends KiaraFragment {
@@ -66,50 +69,54 @@ public class PlaylistListFragment extends KiaraFragment {
     this.mContext = rootView.getContext();
 
     mRecyclerView.setHasFixedSize(true);
+
     mLayoutManager = new LinearLayoutManager(getActivity());
     mRecyclerView.setLayoutManager(mLayoutManager);
 
+    mAdapter = new PlaylistListViewAdapter(mContext);
+    mRecyclerView.setAdapter(mAdapter);
+
+    mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext,new RecyclerItemTouchListener.OnItemClickListener() {
+      @Override
+      public void onItemClick(View view, int position) {
+        Log.d(log, "Item clicked at position " + position);
+        long playlistId = playlists.get(position).getPlaylist().getId();
+
+        /* Look for cached result for the playlist's songs. */
+        List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs("yojanpatel", playlistId);
+        if(songs == null) {
+          songs = playlists.get(position).getSongs();
+        }
+
+        Intent i = new Intent(mContext, PlaylistSongListActivity.class);
+        i.putExtra(PlaylistSongListActivity.SONG_LIST_ARG_KEY, SongParcelable.convert(songs));
+        i.putExtra(PlaylistSongListActivity.PLAYLIST_ID_ARG_KEY, playlistId);
+        getBus().post(new GetSongsForPlaylist(playlistId));
+        startActivity(i);
+      }
+    }));
+
     parent = (KiaraActivity) getActivity();
-    parent.getBus().post(new GetPlaylistsRequest());
-
-
-    setUpFab();
+    parent.getBus().post(new GetAllPlaylists());
 
     return rootView;
   }
 
   @Subscribe
   public void onPlaylistsReceived(final ArrayList<PlaylistWithSongs> rcvd) {
-    Log.d(log, "Playlists received. " + rcvd.size());
-    if(mAdapter == null) {
-      mAdapter = new PlaylistListViewAdapter(rcvd, mContext);
-    } else {
+    if(rcvd.size() > 0 && rcvd.get(0) instanceof  PlaylistWithSongs) {
+      Log.d(log, "Playlists received. " + rcvd.size());
       mAdapter.updateList(rcvd);
+      playlists = rcvd;
+      progressBar.setVisibility(View.INVISIBLE);
+      setUpFab();
     }
-    playlists = rcvd;
-    mRecyclerView.setAdapter(mAdapter);
-    mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {
-      @Override
-      public void onItemClick(View view, int position) {
-        Log.d(log, "Item clicked at position " + position);
-
-        Intent i = new Intent(mContext, PlaylistSongListActivity.class);
-        i.putExtra(PlaylistSongListActivity.SONG_LIST_ARG_KEY,
-            SongParcelable.convert(playlists.get(position).getSongs()));
-        i.putExtra(PlaylistSongListActivity.PLAYLIST_ID_ARG_KEY,
-            playlists.get(position).getPlaylist().getId());
-
-        startActivity(i);
-      }
-    }));
-    progressBar.setVisibility(View.INVISIBLE);
   }
 
   @Subscribe
   public void onNewPlaylistCreated(final CreatedPlaylist cp) {
     Crouton.makeText(parent, "New Playlist! " + cp.getPlaylist().getPlaylistName(), Style.CONFIRM);
     mAdapter.addPlaylist(cp.getPlaylist());
-//    playlists.add(new PlaylistWithSongs(cp.getPlaylist(), new ArrayList<Song>()));
     mAdapter.notifyDataSetChanged();
   }
 
@@ -136,5 +143,6 @@ public class PlaylistListFragment extends KiaraFragment {
         new CreatePlaylistDialog().show(fm, "fragment_create_playlist");
       }
     });
+    fab.showFloatingActionButton();
   }
 }

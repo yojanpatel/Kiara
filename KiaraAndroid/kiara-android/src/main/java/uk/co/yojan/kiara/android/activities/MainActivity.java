@@ -92,7 +92,7 @@ public class MainActivity extends KiaraActivity
   public boolean accessExpired() {
     String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
     if(accessToken == null) {
-      return false;
+      return true;
     }
     return (sharedPreferences().getLong(Constants.ACCESS_DEADLINE, 0L) < getTimestamp());
   }

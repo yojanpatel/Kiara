@@ -7,17 +7,24 @@ import uk.co.yojan.kiara.android.KiaraApplication;
 public class KiaraFragment extends Fragment {
 
   private Bus mBus;
+  private boolean registeredToBus;
 
   @Override
-  public void onResume() {
-    super.onResume();
-    getBus().register(this);
+  public void onStart() {
+    super.onStart();
+    if(!registeredToBus)
+      getBus().register(this);
+    registeredToBus = true;
+    getKiaraApplication().eventBuffer().stopAndProcess();
   }
 
   @Override
-  public void onPause() {
-    super.onPause();
-    getBus().unregister(this);
+  public void onStop() {
+    super.onStop();
+    getKiaraApplication().eventBuffer().startSaving();
+    if(registeredToBus)
+      getBus().unregister(this);
+    registeredToBus = false;
   }
 
   public Bus getBus() {

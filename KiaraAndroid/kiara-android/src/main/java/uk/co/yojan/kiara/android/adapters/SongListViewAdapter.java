@@ -11,11 +11,14 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.comparators.SongComparatorByArtist;
 import uk.co.yojan.kiara.client.data.Song;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -60,8 +63,17 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
 
   public void addSong(Song song) {
     data.add(song);
-    notifyItemInserted(data.size() - 1);
+    Collections.sort(this.data, new SongComparatorByArtist());
+    notifyDataSetChanged();
   }
+
+  public void updateSongs(List<Song> songs) {
+    this.data.clear();
+    this.data.addAll(songs);
+    Collections.sort(this.data, new SongComparatorByArtist());
+    notifyDataSetChanged();
+  }
+
 
   public static class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -73,13 +85,6 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
     public ViewHolder(View itemView) {
       super(itemView);
       ButterKnife.inject(this, itemView);
-    }
-  }
-
-  public void updateList(ArrayList<Song> newData) {
-    if(newData != null) {
-      data = newData;
-      notifyDataSetChanged();
     }
   }
 }
