@@ -31,12 +31,9 @@ public class UserResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{id}")
-  public Response get(@PathParam("id") String id) {
+  public User get(@PathParam("id") String id) {
     Key key = Key.create(User.class, id);
-    CacheControl cc = new CacheControl();
-    cc.setMaxAge(24 * 60 * 60);
-    return Response.ok().entity(ofy().load().key(key).now()).cacheControl(cc).build();
-//    return (User)ofy().load().key(key).now();
+    return (User)ofy().load().key(key).now();
   }
 
   @DELETE
@@ -57,6 +54,7 @@ public class UserResource {
       return Response.noContent().build();
     } else {
       loaded.copyFrom(item);
+      loaded.incrementCounter();
       ofy().save().entity(loaded); // async
       return Response.ok().entity(loaded).build();
     }

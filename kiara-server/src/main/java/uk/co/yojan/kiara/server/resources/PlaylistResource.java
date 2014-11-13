@@ -28,17 +28,26 @@ public class PlaylistResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public Response getAll(@PathParam("user_id") String userId,
-                         @DefaultValue("false") @QueryParam("detail") boolean detail) {
+                         @DefaultValue("false") @QueryParam("detail") boolean detail,
+                         @Context Request request) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
-
+    EntityTag etag = new EntityTag(Long.toString(u.v()));
+    Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
     CacheControl cc = new CacheControl();
-    cc.setMaxAge(24 * 60 * 60);
-    Response.ResponseBuilder builder = Response.ok().cacheControl(cc);
-
-    if(detail) {
-      return builder.entity(u.getPlaylistsWithSongs()).build();
+//    cc.setMaxAge(60);
+    if(builder != null) {
+      Logger.getLogger("PlaylistResource").info("Cached resource did change " + etag.getValue());
+      return builder.build();
     }
-    return builder.entity(u.getAllPlaylists()).build();
+    // cached resource did change, serve updated content.
+//    if(builder == null) {
+      if(detail) {
+        builder = Response.ok().entity(u.getPlaylistsWithSongs()).tag(etag);
+      } else {
+        builder = Response.ok().entity(u.getAllPlaylists()).tag(etag);
+      }
+//    }
+    return builder.cacheControl(cc).build();
   }
 
   @GET
@@ -48,20 +57,14 @@ public class PlaylistResource {
                       @PathParam("id") Long id,
                       @DefaultValue("false") @QueryParam("detail") boolean detail) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
-
-    CacheControl cc = new CacheControl();
-    cc.setMaxAge(24 * 60 * 60);
-
-    Response.ResponseBuilder builder = Response.ok().cacheControl(cc);
-
     if(detail) {
       Playlist playlist = u.getPlaylist(id);
       ArrayList<Song> songs = new ArrayList<Song>(playlist.getAllSongs());
-      return builder.entity(new PlaylistWithSongs(playlist, songs)).build();
+      return Response.ok().entity(new PlaylistWithSongs(playlist, songs)).build();
     }
 
     Playlist p = u.getPlaylist(id);
-    return builder.entity(p).build();
+    return Response.ok().entity(p).build();
   }
 
   @DELETE
@@ -83,6 +86,7 @@ public class PlaylistResource {
       return Response.noContent().build();
     } else {
       loaded.copyFrom(item);
+      loaded.incrementCounter();
       ofy().save().entity(loaded); // async
       return Response.ok().entity(loaded).build();
     }
@@ -93,19 +97,16 @@ public class PlaylistResource {
   @Produces(MediaType.APPLICATION_JSON)
   public Response create(@PathParam("user_id") String userId,
                          @Context UriInfo uri,
-                         Playlist item) {
+                         Playlist item,
+                         @Context Request request) {
+//    return Response.ok().build();
     Result<User> ownerResult = ofy().load().key(Key.create(User.class, userId)); // async
-
     item.updateLastViewed();
     ofy().save().entity(item).now(); // sync
 
     User owner = ownerResult.now(); // wait
     owner.addPlaylist(item);
-
-    CacheControl cc = new CacheControl();
-    cc.setMaxAge(24 * 60 * 60);
-
     URI plUri = UriBuilder.fromUri(uri.getRequestUri()).path(item.getId().toString()).build();
-    return Response.created(plUri).entity(item).cacheControl(cc).build();
+    return Response.created(plUri).entity(item).build();
   }
 }

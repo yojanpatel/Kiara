@@ -3,7 +3,6 @@ package uk.co.yojan.kiara.server.models;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.googlecode.objectify.Key;
-import com.googlecode.objectify.Result;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import uk.co.yojan.kiara.server.serializers.PlaylistDeserializer;
@@ -32,6 +31,16 @@ public class Playlist {
   private long lastViewedTimestamp;
   private Map<String, Key<Song>> songIdKeyMap = new HashMap<String, Key<Song>>(); // spotifyId ---> Key(spotifyId)
 
+  // version for caching.
+  private long v;
+
+  public synchronized void incrementCounter() {
+    this.v++;
+  }
+
+  public long v() {
+    return id * songIdKeyMap.hashCode() * playlistName.hashCode();
+  }
 
   public Long getId() {
     return id;
@@ -96,6 +105,7 @@ public class Playlist {
 
   public Playlist addSong(String spotifyId) {
     songIdKeyMap.put(spotifyId, Key.create(Song.class, spotifyId));
+    incrementCounter();
     ofy().save().entity(this).now();
     return this;
   }
@@ -106,6 +116,7 @@ public class Playlist {
 
   public Playlist removeSong(String songId) {
     songIdKeyMap.remove(songId);
+    incrementCounter();
     ofy().save().entity(this).now();
     return this;
   }

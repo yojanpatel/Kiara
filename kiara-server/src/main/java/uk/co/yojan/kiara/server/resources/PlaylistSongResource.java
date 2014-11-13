@@ -7,7 +7,7 @@ import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.User;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 import java.util.Collection;
 import java.util.logging.Logger;
 
@@ -24,24 +24,35 @@ public class PlaylistSongResource {
   private static Logger log = Logger.getLogger(PlaylistSongResource.class.getName());
 
   @GET
-  public Collection<Song> getSongs(@PathParam("user_id") String userId,
-                                   @PathParam("playlist_id") Long playlistId) {
+  public Response getSongs(@PathParam("user_id") String userId,
+                                   @PathParam("playlist_id") Long playlistId,
+                                   @Context Request request) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
-    return u.getPlaylist(playlistId).getAllSongs();
+    Playlist p = u.getPlaylist(playlistId);
+    EntityTag etag = new EntityTag(Long.toString(p.v()));
+    Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
+    CacheControl cc = new CacheControl();
+
+    // cached resource did change, serve updated content.
+    if(builder == null) {
+      builder = Response.ok().entity(p.getAllSongs()).tag(etag);
+    }
+    return builder.cacheControl(cc).build();
   }
 
   @POST
   public Response addSong(String spotifyId,
                           @PathParam("user_id") String userId,
                           @PathParam("playlist_id") Long playlistId) {
-    User u = ofy().load().key(Key.create(User.class, userId)).now();
 
-    // Convert JSON string to string because of Retrofit.
-    spotifyId = spotifyId.replace("\"", "");
+    User u = ofy().load().key(Key.create(User.class, userId)).now();
+    Result us = ofy().save().entity(u);
 
     if(!u.hasPlaylist(playlistId)) {
       return Response.notModified().build();
     }
+
+    spotifyId = spotifyId.replace("\"", "");
 
     Song created;
     Result save = null;
@@ -62,8 +73,10 @@ public class PlaylistSongResource {
     Playlist p = u.getPlaylist(playlistId);
     p.addSong(spotifyId);
 
+    us.now();
+    if(save != null)
+      save.now();
 
-    if(save != null) save.now();
     return Response.ok().entity(created).build();
   }
 }

@@ -1,10 +1,7 @@
 package uk.co.yojan.kiara.server.models;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.appengine.repackaged.com.google.common.base.Function;
-import com.google.appengine.repackaged.com.google.common.base.Pair;
 import com.google.appengine.repackaged.com.google.common.collect.BiMap;
-import com.google.appengine.repackaged.com.google.common.collect.Collections2;
 import com.google.appengine.repackaged.com.google.common.collect.HashBiMap;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
@@ -43,6 +40,9 @@ public class User {
 //  private HashMap<String, Long> songSpotifyIdMap = new HashMap<>();
   private BiMap<String, Long> songSpotifyIdMap = HashBiMap.create();
 
+  // version for caching.
+  private long v;
+
   public static User newInstanceFromSpotify(String spotifyId) {
     User um = new User();
     Api api = SpotifyApi.clientCredentialsApi();
@@ -58,6 +58,14 @@ public class User {
       log.warning("Could not get User. " + e.getMessage());
     }
     return um;
+  }
+
+  public synchronized void incrementCounter() {
+    this.v++;
+  }
+
+  public long v() {
+    return playlistKeyMap.hashCode()*id.hashCode();
   }
 
   public String getId() {
