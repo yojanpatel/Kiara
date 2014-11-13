@@ -1,9 +1,7 @@
 package uk.co.yojan.kiara.client;
 
-import com.squareup.okhttp.OkHttpClient;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
-import retrofit.client.Client;
 import retrofit.client.OkClient;
 import uk.co.yojan.kiara.client.data.Playlist;
 import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
@@ -33,19 +31,6 @@ public class KiaraClient {
     return sKiaraApi;
   }
 
-  public static KiaraApiInterface getKiaraApiClient(OkClient client) {
-    if(sKiaraApi == null) {
-      RestAdapter restAdapter = new RestAdapter.Builder()
-          .setEndpoint("http://kiara-yojan.appspot.com")
-//          .setEndpoint("http://localhost:8080")
-          .setClient(client)
-          .setLogLevel(RestAdapter.LogLevel.FULL)
-          .build();
-
-      sKiaraApi = restAdapter.create(KiaraApiInterface.class);
-    }
-    return sKiaraApi;
-  }
 
   /*
    * This interface is to interact with the auth service hosted on app-engine
