@@ -1,10 +1,8 @@
 package uk.co.yojan.kiara.analysis.cluster;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import uk.co.yojan.kiara.server.models.Playlist;
-import uk.co.yojan.kiara.server.models.SongFeature;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.PriorityQueue;
 
 /**
  * DataStructure that encapsulates the distances between all the songs for a playlist.
@@ -14,12 +12,12 @@ import java.util.*;
  */
 public class DistanceMatrix {
 
-  private HashSet<ClusterEdge> edges;
+  private HashMap<Long, ClusterEdge> edges;
   private PriorityQueue<ClusterEdge> distanceQueue;
 
 
   public DistanceMatrix() {
-    edges = new HashSet<>();
+    edges = new HashMap<>();
     distanceQueue = new PriorityQueue<>();
   }
 
@@ -31,7 +29,7 @@ public class DistanceMatrix {
   public ClusterEdge head() {
     if(!distanceQueue.isEmpty()) {
       ClusterEdge headEdge = distanceQueue.poll();
-      edges.remove(headEdge);
+      edges.remove(hashIndex(headEdge.getLeft(), headEdge.getRight()));
       assert edges.size() == distanceQueue.size();
       return headEdge;
     }
@@ -39,13 +37,7 @@ public class DistanceMatrix {
   }
 
   public ClusterEdge edge(SongCluster c1, SongCluster c2) {
-    throw new NotImplementedException();
-  }
-
-  public void remove(ClusterEdge rm) {
-    edges.remove(rm);
-    distanceQueue.remove(rm);
-    assert edges.size() == distanceQueue.size();
+    return edges.get(hashIndex(c1, c2));
   }
 
   /*
@@ -60,15 +52,33 @@ public class DistanceMatrix {
   }
 
   public void insert(ClusterEdge edge) {
-    if(!edges.contains(edge)) {
-      edges.add(edge);
+    if(edge == null) System.out.println("NULL");
+    if(!distanceQueue.contains(edge)) {
+      edges.put(hashIndex(edge.getLeft(), edge.getRight()), edge);
       distanceQueue.add(edge);
       assert edges.size() == distanceQueue.size();
     }
   }
 
+  public void remove(ClusterEdge rm) {
+    edges.remove(hashIndex(rm.getLeft(), rm.getRight()));
+    distanceQueue.remove(rm);
+    assert edges.size() == distanceQueue.size();
+  }
+
   public boolean isEmpty() {
     assert edges.isEmpty() == distanceQueue.isEmpty();
     return edges.isEmpty();
+  }
+
+  private static long hashIndex(SongCluster c1, SongCluster c2) {
+    long index = 0L;
+    if(c1 != null) index += c1.hashCode();
+    if(c2 != null) index += c2.hashCode();
+    return index;
+  }
+
+  public Collection<ClusterEdge> getClusters() {
+    return distanceQueue;
   }
 }

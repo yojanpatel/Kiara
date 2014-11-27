@@ -23,6 +23,7 @@ public class ClusterEdge implements Comparable<ClusterEdge> {
   public ClusterEdge(SongCluster left, SongCluster right, Double distance) {
     this.left = left;
     this.right = right;
+    this.distance = distance;
   }
 
   public SongCluster getLeft() {
@@ -49,6 +50,25 @@ public class ClusterEdge implements Comparable<ClusterEdge> {
     this.distance = distance;
   }
 
+  /*
+   * Builder for a new ClusterEdge as a result from the agglomeration of two
+   * SongClusters involved in this edge.
+   *
+   * @return SongCluster representing the new node created in the hierarchy.
+   */
+  public SongCluster agglomerate() {
+    // Id of an agglomerated node is the concatenation of the two children ids separated by a dash.
+    String clusterId = (left == null ? "" : left.getId()) + (right == null ? "" : ("-" + right.getId()));
+    SongCluster cluster = new SongCluster(clusterId);
+
+    cluster.getChildren().add(left);
+    cluster.getChildren().add(right);
+    left.setParent(cluster);
+    right.setParent(cluster);
+
+    return cluster;
+  }
+
   /**
    * Compares this object with the specified object for order.  Returns a
    * negative integer, zero, or a positive integer as this object is less
@@ -56,6 +76,8 @@ public class ClusterEdge implements Comparable<ClusterEdge> {
    */
   @Override
   public int compareTo(ClusterEdge o) {
+    System.out.println(o == null);
+    System.out.println(o.getDistance());
     return getDistance().compareTo(o.getDistance());
   }
 

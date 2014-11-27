@@ -22,6 +22,7 @@ public class SongCluster {
 
   public SongCluster(String id) {
     this.id = id;
+    this.children = new ArrayList<>();
   }
 
   public String getId() {
