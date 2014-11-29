@@ -19,5 +19,6 @@
     <string name="search_song_query_hint">Search song</string>
     <string name="add_song_dialog">Add Song</string>
     <string name="title_activity_fake">FakeActivity</string>
+  <string name="add_all">Add All</string>
 
 </resources>

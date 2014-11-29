@@ -7,9 +7,10 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import uk.co.yojan.kiara.android.events.CurrentUserRequest;
+import uk.co.yojan.kiara.android.events.FetchPlaylistTracks;
 import uk.co.yojan.kiara.android.events.SearchRequest;
-import uk.co.yojan.kiara.android.events.SearchResultCreateSongEvent;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
+import uk.co.yojan.kiara.client.data.spotify.PlaylistTracks;
 import uk.co.yojan.kiara.client.data.spotify.SearchResult;
 import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
@@ -51,7 +52,6 @@ public class SpotifyWebService {
         new Callback<SearchResult>() {
           @Override
           public void success(SearchResult searchResult, Response response) {
-//            bus.post(new SearchResultCreateSongEvent(request.getPlaylistId(), searchResult));
             bus.post(searchResult);
           }
 
@@ -60,5 +60,22 @@ public class SpotifyWebService {
             Log.e(log, error.getMessage());
           }
         });
+  }
+
+  @Subscribe
+  public void getTracksForPlaylist(final FetchPlaylistTracks request) {
+    String userId = request.getUserId();
+    String playlistId = request.getPlaylistId();
+    spotifyApi.getTrackIdsForPlaylist(userId, playlistId, new Callback<PlaylistTracks>() {
+      @Override
+      public void success(PlaylistTracks playlistTracks, Response response) {
+        bus.post(playlistTracks);
+      }
+
+      @Override
+      public void failure(RetrofitError error) {
+        Log.e(log, error.getMessage());
+      }
+    });
   }
 }

@@ -24,10 +24,12 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
   private static final int TRACK_TYPE = 0;
   private static final int ARTIST_TYPE = 1;
   private static final int ALBUM_TYPE = 2;
+  private static final int LABEL_TYPE = 3;
 
 
   private SearchResult data;
   private int numTracks, numArtists, numAlbums;
+  private int trackLabel, artistLabel, albumlabel;
 
   private Context mContext;
   private static Picasso picasso;
@@ -37,7 +39,20 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     this.numTracks = result.getTracks().getTracks().size();
     this.numArtists = result.getArtists().getArtists().size();
     this.numAlbums = result.getAlbums().getAlbums().size();
+
+    trackLabel = numTracks > 0 ? 0 : -1;
+    artistLabel = numArtists > 0
+        ? numTracks + (numTracks > 0 ? 1 : 0)
+        : -1;
+    albumlabel = numAlbums > 0
+        ? (numArtists > 0) ? artistLabel + numArtists + (numTracks > 0 ? 1 : 0)
+            : (numTracks > 0) ? numTracks
+                : 0
+        : -1;
+
     Log.d("SearchResultAdapter", numTracks + " " + numArtists + " " + numAlbums + " " + getItemCount());
+    Log.d("SearchResultAdapter", "labels at " + trackLabel + " " + artistLabel + " " + albumlabel);
+
     this.mContext = context;
     picasso = Picasso.with(mContext);
     picasso.setIndicatorsEnabled(true);
@@ -46,13 +61,14 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
   @Override
   public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
     LayoutInflater inflater =  LayoutInflater.from(parent.getContext());
-
       if(viewType == TRACK_TYPE) {
         return new ViewHolderTrack(inflater.inflate(R.layout.song_row, parent, false));
       } else if(viewType == ARTIST_TYPE) {
           return new ViewHolderArtist(inflater.inflate(R.layout.artist_row, parent, false));
       } else if(viewType == ALBUM_TYPE) {
         return new ViewHolderAlbum(inflater.inflate(R.layout.album_row, parent, false));
+      } else if(viewType == LABEL_TYPE) {
+        return new ViewHolderLabel(inflater.inflate(R.layout.label_row, parent, false));
       }
       else return null;
   }
@@ -60,12 +76,11 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
     int viewType = getItemViewType(position);
-    Log.d("SearchResultAdapter", getItemViewType(5) + " " + 5);
     Log.d("SearchResultAdapter", viewType + " " + position);
     if(viewType == TRACK_TYPE) {
       Log.d("SearchResultAdapter", "Casting to ViewHolderTrack");
       ViewHolderTrack vhTrack = (ViewHolderTrack) viewHolder;
-      Track track = data.getTracks().getTracks().get(position);
+      Track track = data.getTracks().getTracks().get(position - 1);
       vhTrack.songName.setText(track.getName());
       vhTrack.artistName.setText(track.getArtists().get(0).getName());
       vhTrack.albumName.setText(track.getAlbum().getName());
@@ -79,7 +94,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     } else if(viewType == ARTIST_TYPE) {
       Log.d("SearchResultAdapter", "Casting to ViewHolderArtist");
       ViewHolderArtist vhArtist = (ViewHolderArtist) viewHolder;
-      Artist artist = data.getArtists().getArtists().get(position - numTracks);
+      Artist artist = data.getArtists().getArtists().get(position - artistLabel - 1);
       vhArtist.artistName.setText(artist.getName());
       if(artist.getImages().size() > 0) {
         picasso.load(artist.getImages().get(0).getUrl())
@@ -91,7 +106,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     } else if(viewType == ALBUM_TYPE) {
       ViewHolderAlbum vhAlbum = (ViewHolderAlbum) viewHolder;
-      Album album = data.getAlbums().getAlbums().get(position - numArtists - numTracks);
+      Album album = data.getAlbums().getAlbums().get(position - albumlabel - 1);
       vhAlbum.albumName.setText(album.getName());
 //      vhAlbum.artistName.setText(album.getArtists().getArtists().get(0).getName());
       if(album.getImages().size() > 0) {
@@ -100,19 +115,31 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             .resize(200, 200)
             .into(vhAlbum.albumImg);
       }
+    } else if(viewType == LABEL_TYPE) {
+      ViewHolderLabel vhLabel = (ViewHolderLabel) viewHolder;
+      String text = "";
+      if(position == trackLabel) text = "Tracks";
+      else if(position == artistLabel) text = "Artists";
+      else if(position == albumlabel) text = "Albums";
+      vhLabel.label.setText(text);
     }
   }
 
   @Override
   public int getItemCount() {
-    return numTracks + numArtists + numAlbums;
+    int count = numTracks + numArtists + numAlbums;
+    if(numTracks > 0) count++;  // track label
+    if(numArtists > 0) count++; // artist label
+    if(numAlbums > 0) count++;  // album label
+    return count;
   }
 
   @Override
   public int getItemViewType(int position) {
-    if(position < numTracks) return TRACK_TYPE;
-    else if(position < numTracks + numArtists) return ARTIST_TYPE;
-    else if(position < numTracks + numArtists + numAlbums) return ALBUM_TYPE;
+    if(position == trackLabel || position == artistLabel || position == albumlabel) return LABEL_TYPE;
+    else if(trackLabel >= 0 && position < numTracks + 1) return TRACK_TYPE;
+    else if(artistLabel >= 0 && position < artistLabel + numArtists + 1) return ARTIST_TYPE;
+    else if(albumlabel >= 0 && position < albumlabel + numAlbums + 1) return ALBUM_TYPE;
     else return -1;
   }
 
@@ -159,6 +186,15 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
       ButterKnife.inject(this, itemView);
       albumName.setTextColor(mContext.getResources().getColor(R.color.grey900));
       artistName.setTextColor(mContext.getResources().getColor(R.color.grey900));
+    }
+  }
+
+  public class ViewHolderLabel extends RecyclerView.ViewHolder {
+    @InjectView(R.id.label_text) TextView label;
+
+    public ViewHolderLabel(View itemView) {
+      super(itemView);
+      ButterKnife.inject(this, itemView);
     }
   }
 }

@@ -13,6 +13,7 @@
       android:id="@+id/search_query_edit"
       android:hint="@string/search_song_query_hint"
       android:padding="8dp"
+      android:textColor="@color/grey700"
       android:layout_alignParentLeft="true"
       android:layout_toLeftOf="@+id/search_btn_dialog"
       />

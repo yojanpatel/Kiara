@@ -33,10 +33,12 @@
         <activity
             android:name=".activities.PlaylistViewActivity"
             android:label="@string/title_activity_playlist_view" >
-        </activity>
-        <activity
-            android:name=".activities.CreatePlaylistActivity"
-            android:label="@string/title_activity_create_playlist" >
+
+          <intent-filter>
+            <action android:name="android.intent.action.SEND"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <data android:mimeType="text/plain"/>
+          </intent-filter>
         </activity>
         <activity
             android:name=".activities.SearchActivity"
@@ -50,10 +52,8 @@
             android:name=".activities.PlayerActivity"
             android:label="@string/title_activity_player" >
         </activity>
-        <activity
-            android:name=".activities.FakeActivity"
-            android:label="@string/title_activity_fake" >
-        </activity>
+
+
     </application>
 
 </manifest>
