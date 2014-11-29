@@ -40,6 +40,20 @@ public class PlaylistSongResource {
     return builder.cacheControl(cc).build();
   }
 
+  @GET
+  @Path("/try")
+  public Response get() {
+    String spotifyId = "5dHpbFmZjWucrol0M7aNGU";
+    Song created = null;
+    try {
+      created = Song.newInstanceFromSpotify(spotifyId);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+    return Response.ok().entity(created).build();
+  }
+
   @POST
   public Response addSong(String spotifyId,
                           @PathParam("user_id") String userId,
