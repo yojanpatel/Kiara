@@ -8,6 +8,7 @@ import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
 import uk.co.yojan.kiara.client.data.Song;
 import uk.co.yojan.kiara.client.data.User;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -173,4 +174,12 @@ public interface KiaraApiInterface {
                       @Path("playlistId") Long playlistId,
                       @Body String spotifyId,
                       Callback<Song> cb);
+
+
+  @POST("/users/{userId}/playlists/{playlistId}/songs/batch")
+  @Headers("content-type: application/json")
+  public void addSongs(@Path("userId") String userId,
+                      @Path("playlistId") Long playlistId,
+                      @Body ArrayList<String> spotifyIds,
+                      Callback<List<Song>> cb);
 }
