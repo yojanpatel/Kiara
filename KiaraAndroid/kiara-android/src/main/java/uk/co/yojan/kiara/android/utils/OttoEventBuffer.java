@@ -12,18 +12,22 @@ import uk.co.yojan.kiara.client.data.Song;
 import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Class supporting catching and saving an HTTP responses temporarily
  */
+@SuppressWarnings("unchecked")
 public class OttoEventBuffer {
 
   private static final String log = OttoEventBuffer.class.getName();
 
   private Bus bus;
-  private ArrayList savedMessages = new ArrayList();
+//  private ArrayList savedMessages = new ArrayList();
+  private HashSet savedMessages = new HashSet();
 
   private boolean registeredToBus;
+  private boolean saving;
 
 
   public OttoEventBuffer(Bus eventBus) {
@@ -32,20 +36,26 @@ public class OttoEventBuffer {
 
   /** Starts saving any incoming responses or errors until stopped */
   public void startSaving() {
-    Log.i(log, "Starting to buffer events.");
-    if(!registeredToBus)
-      bus.register(this);
-    registeredToBus = true;
+    if(!saving) {
+      Log.i(log, "Starting to buffer events.");
+      if (!registeredToBus)
+        bus.register(this);
+      registeredToBus = true;
+      saving = true;
+    }
   }
 
   /** Sends out buffer and stops storing new */
   public void stopAndProcess() {
-    Log.i(log, "Stopping to buffer events and posting the buffered ones.");
-    unregister();
-    for (Object message : savedMessages) {
-      bus.post(message);
+    if(saving) {
+      Log.i(log, "Stopping to buffer events and posting the buffered ones. " + savedMessages.size());
+      unregister();
+      for (Object message : savedMessages) {
+        bus.post(message);
+      }
+      savedMessages.clear();
+      saving = false;
     }
-    savedMessages.clear();
   }
 
   /** Clears buffers and stops storing new*/
@@ -62,6 +72,13 @@ public class OttoEventBuffer {
       registeredToBus = false;
     } catch (Exception e) {
       Log.d("OttoEventBuffer", e.toString());
+    }
+  }
+
+  private void serviced(Object event) {
+//    savedMessages.remove(event);
+    if(savedMessages.contains(event)) {
+      savedMessages.remove(event);
     }
   }
 

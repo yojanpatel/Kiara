@@ -2,14 +2,11 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.app.Activity;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 import com.squareup.otto.Bus;
-import com.wrapper.spotify.Api;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
 import uk.co.yojan.kiara.android.KiaraApplication;
-import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
 
@@ -24,7 +21,7 @@ public class KiaraActivity extends Activity {
   private boolean registeredToBus;
 
   @Override
-  public void onStart() {
+  public void onResume() {
     super.onStart();
     if(!registeredToBus)
       getBus().register(this);
@@ -33,7 +30,7 @@ public class KiaraActivity extends Activity {
   }
 
   @Override
-  public void onStop() {
+  public void onPause() {
     super.onStop();
     getKiaraApplication().eventBuffer().startSaving();
     if(registeredToBus)
