@@ -52,6 +52,10 @@
             android:name=".activities.PlayerActivity"
             android:label="@string/title_activity_player" >
         </activity>
+        <activity
+            android:name=".activities.BrowseActivity"
+            android:label="@string/title_activity_browse_activity">
+        </activity>
 
 
     </application>

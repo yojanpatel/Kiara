@@ -10,7 +10,6 @@ import uk.co.yojan.kiara.android.events.CurrentUserRequest;
 import uk.co.yojan.kiara.android.events.FetchPlaylistTracks;
 import uk.co.yojan.kiara.android.events.SearchRequest;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
-import uk.co.yojan.kiara.client.data.spotify.PlaylistTracks;
 import uk.co.yojan.kiara.client.data.spotify.SearchResult;
 import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
@@ -66,10 +65,10 @@ public class SpotifyWebService {
   public void getTracksForPlaylist(final FetchPlaylistTracks request) {
     String userId = request.getUserId();
     String playlistId = request.getPlaylistId();
-    spotifyApi.getTrackIdsForPlaylist(userId, playlistId, new Callback<PlaylistTracks>() {
+    spotifyApi.getTrackIdsForPlaylist(userId, playlistId, new Callback<uk.co.yojan.kiara.client.data.spotify.Playlist>() {
       @Override
-      public void success(PlaylistTracks playlistTracks, Response response) {
-        bus.post(playlistTracks);
+      public void success(uk.co.yojan.kiara.client.data.spotify.Playlist playlist, Response response) {
+        bus.post(playlist);
       }
 
       @Override

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.fragments.PlaylistListFragment;
 
@@ -21,11 +22,11 @@ public class PlaylistViewActivity extends KiaraActivity {
 
       Intent trigger = getIntent();
       String urlData = trigger.getStringExtra(Intent.EXTRA_TEXT);
-      String titleData = trigger.getStringExtra(Intent.EXTRA_SUBJECT);
+      String subjData = trigger.getStringExtra(Intent.EXTRA_SUBJECT);
       if(urlData != null) {
         setTitle("Choose playlist to add into");
       }
-      Bundle args = intialiseArgs(urlData);
+      Bundle args = intialiseArgs(urlData, subjData);
       if (savedInstanceState == null) {
           getFragmentManager().beginTransaction()
                   .add(R.id.container, PlaylistListFragment.newInstance(args))
@@ -42,7 +43,7 @@ public class PlaylistViewActivity extends KiaraActivity {
    * http://open.spotify.com/user/{userId}/playlist/{playlistId}
    * http://open.spotify.com/album/{albumId}
    * http://open.spotify.com/track/{trackId} */
-  private Bundle intialiseArgs(String url) {
+  private Bundle intialiseArgs(String url, String title) {
     if (url != null) {
       Bundle args = new Bundle();
       Log.d(log, url);
@@ -60,21 +61,22 @@ public class PlaylistViewActivity extends KiaraActivity {
           Log.d(log, "Playlist shared: " + user + " " + playlistId);
           args.putString(PlaylistListFragment.USER_PARAM, user);
           args.putString(PlaylistListFragment.PLAYLIST_PARAM, playlistId);
-          args.putSerializable(PlaylistListFragment.CASE_PARAM, PlaylistListFragment.Case.Playlist);
+          args.putString(PlaylistListFragment.PLAYLIST_NAME_PARAM, title);
+          args.putSerializable(PlaylistListFragment.CASE_PARAM, Constants.Case.Playlist);
         }
         // CASE album
         else if (parts[1].equals("album")) {
           String albumId = parts[2];
           Log.d(log, "Album shared: " + albumId);
           args.putString(PlaylistListFragment.ALBUM_PARAM, albumId);
-          args.putSerializable(PlaylistListFragment.CASE_PARAM, PlaylistListFragment.Case.Album);
+          args.putSerializable(PlaylistListFragment.CASE_PARAM, Constants.Case.Album);
         }
         // CASE track
         else if (parts[1].equals("track")) {
           String trackId = parts[2];
           Log.d(log, "Track shared: " + trackId);
           args.putString(PlaylistListFragment.TRACK_PARAM, trackId);
-          args.putSerializable(PlaylistListFragment.CASE_PARAM, PlaylistListFragment.Case.Track);
+          args.putSerializable(PlaylistListFragment.CASE_PARAM, Constants.Case.Track);
         }
       } catch (MalformedURLException e) {
         Log.e(log, e.toString());

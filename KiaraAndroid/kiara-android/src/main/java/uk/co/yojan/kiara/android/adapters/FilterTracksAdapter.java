@@ -10,7 +10,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import org.apache.commons.lang.StringUtils;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.client.data.spotify.PlaylistTracks;
+import uk.co.yojan.kiara.client.data.spotify.Track;
 
 import java.util.List;
 
@@ -19,11 +19,12 @@ import java.util.List;
  */
 public class FilterTracksAdapter extends RecyclerView.Adapter<FilterTracksAdapter.ViewHolder> {
 
-  List<PlaylistTracks.PlaylistTrack> tracks;
+//  List<PlaylistTracks.PlaylistTrack> tracks;
+  List<Track> tracks;
   Context context;
 
-  public FilterTracksAdapter(PlaylistTracks playlistTracks, Context context) {
-    tracks = playlistTracks.getTracks();
+  public FilterTracksAdapter(List<Track> tracks, Context context) {
+    this.tracks = tracks;
   }
 
   @Override
@@ -35,13 +36,13 @@ public class FilterTracksAdapter extends RecyclerView.Adapter<FilterTracksAdapte
 
   @Override
   public void onBindViewHolder(ViewHolder viewHolder, int position) {
-    PlaylistTracks.PlaylistTrack track = tracks.get(position);
+    Track track = tracks.get(position);
 
-    viewHolder.title.setText(track.getTrackName());
+    viewHolder.title.setText(track.getName());
 
     StringBuilder sb = new StringBuilder();
-    String artistName = track.getArtistName();
-    String albumName = track.getAlbumName();
+    String artistName = track.getArtists().get(0).getName();
+    String albumName = track.getAlbum().getName();
     sb.append(artistName);
     if(!StringUtils.isBlank(artistName) &&
        !StringUtils.isBlank(albumName)) {
@@ -56,9 +57,9 @@ public class FilterTracksAdapter extends RecyclerView.Adapter<FilterTracksAdapte
     return tracks.size();
   }
 
-  public class ViewHolder extends RecyclerView.ViewHolder {
-    @InjectView(R.id.title) TextView title;
-    @InjectView(R.id.detail) TextView detail;
+  public static class ViewHolder extends RecyclerView.ViewHolder {
+    @InjectView(R.id.title) public TextView title;
+    @InjectView(R.id.detail) public TextView detail;
 
     public ViewHolder(View itemView) {
       super(itemView);

@@ -4,7 +4,7 @@
     <string name="app_name">Kiara</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_playlist_view">Playlists</string>
+    <string name="title_activity_playlist_view">Kiara</string>
     <string name="playlist_row_image_desc">playlist_thumbnail</string>
     <string name="title_activity_create_playlist">CreatePlaylistActivity</string>
     <string name="title_activity_search">SearchActivity</string>
@@ -20,5 +20,6 @@
     <string name="add_song_dialog">Add Song</string>
     <string name="title_activity_fake">FakeActivity</string>
   <string name="add_all">Add All</string>
+  <string name="title_activity_browse_activity">Browse Tracks</string>
 
 </resources>

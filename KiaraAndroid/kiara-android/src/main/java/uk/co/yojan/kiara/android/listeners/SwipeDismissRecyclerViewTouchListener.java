@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.swipedismiss;
+package uk.co.yojan.kiara.android.listeners;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;

@@ -19,12 +19,13 @@ import butterknife.InjectView;
 import com.squareup.otto.Subscribe;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.activities.BrowseActivity;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.activities.PlaylistSongListActivity;
 import uk.co.yojan.kiara.android.adapters.PlaylistListViewAdapter;
 import uk.co.yojan.kiara.android.dialogs.CreatePlaylistDialog;
-import uk.co.yojan.kiara.android.dialogs.FilterTracksDialog;
 import uk.co.yojan.kiara.android.events.CreatedPlaylist;
 import uk.co.yojan.kiara.android.events.FetchPlaylistTracks;
 import uk.co.yojan.kiara.android.events.GetAllPlaylists;
@@ -43,10 +44,10 @@ public class PlaylistListFragment extends KiaraFragment {
 
   private static final String log = PlaylistListFragment.class.getName();
 
-  public enum Case {Playlist, Track, Album, Default}
   public static final String CASE_PARAM = "CASE_PARAM";
   public static final String USER_PARAM = "USER_PARAM";
   public static final String PLAYLIST_PARAM = "PLAYLIST_PARAM";
+  public static final String PLAYLIST_NAME_PARAM = "PLAYLIST_NAME_PARAM";
   public static final String ALBUM_PARAM = "ALBUM_PARAM";
   public static final String TRACK_PARAM = "TRACK_PARAM";
 
@@ -60,9 +61,10 @@ public class PlaylistListFragment extends KiaraFragment {
 
   private ArrayList<PlaylistWithSongs> playlists;
 
-  private Case c;
+  private Constants.Case c;
   private String userId;
   private String playlistId;
+  private String playlistName;
   private String albumId;
   private String trackId;
 
@@ -83,10 +85,11 @@ public class PlaylistListFragment extends KiaraFragment {
     Log.d("PVA", "onCreate");
     Bundle args = getArguments();
     if (args != null) {
-      c = (Case)args.getSerializable(CASE_PARAM);
+      c = (Constants.Case)args.getSerializable(CASE_PARAM);
       switch(c) {
         case Playlist:
           userId = args.getString(USER_PARAM);
+          playlistName = args.getString(PLAYLIST_NAME_PARAM);
           playlistId = args.getString(PLAYLIST_PARAM);
         case Track:
           trackId = args.getString(TRACK_PARAM);
@@ -94,7 +97,7 @@ public class PlaylistListFragment extends KiaraFragment {
           albumId = args.getString(ALBUM_PARAM);
       }
     } else {
-      c = Case.Default;
+      c = Constants.Case.Default;
     }
   }
 
@@ -105,7 +108,7 @@ public class PlaylistListFragment extends KiaraFragment {
     ButterKnife.inject(this, rootView);
     this.mContext = rootView.getContext();
     if(getArguments() != null)
-      Log.d("PVA", "CASE: " + (Case)getArguments().getSerializable(CASE_PARAM));
+      Log.d("PVA", "CASE: " + (Constants.Case)getArguments().getSerializable(CASE_PARAM));
     mRecyclerView.setHasFixedSize(true);
 
     mLayoutManager = new LinearLayoutManager(getActivity());
@@ -117,10 +120,10 @@ public class PlaylistListFragment extends KiaraFragment {
     mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {
       @Override
       public void onItemClick(View view, int position) {
-        if(c == Case.Default) {
+        if(c == Constants.Case.Default) {
           Log.d("PVA", "DEFAULT");
           defaultOnItemClick(view, position);
-        } else if (c == Case.Playlist) {
+        } else if (c == Constants.Case.Playlist) {
           Log.d("PVA", "PLAYLIST");
           playlistOnItemClick(view, position);
         }
@@ -141,12 +144,10 @@ public class PlaylistListFragment extends KiaraFragment {
       mAdapter.updateList(rcvd);
       playlists = rcvd;
       progressBar.setVisibility(View.INVISIBLE);
-      if(c == Case.Default)
+      if(c == Constants.Case.Default)
         setUpFab();
     }
   }
-
-
 
   @Subscribe
   public void onNewPlaylistCreated(final CreatedPlaylist cp) {
@@ -204,8 +205,13 @@ public class PlaylistListFragment extends KiaraFragment {
 
     // Post event to get all tracks for the playlist.
     getBus().post(new FetchPlaylistTracks(userId, playlistId));
-    // Start the new dialog.
+    // Start the new Activity.
     FragmentManager fm = getFragmentManager();
-    FilterTracksDialog.newInstance(playlistId).show(fm, "playlist_add_all");
+    Intent intent = new Intent(mContext, BrowseActivity.class);
+    intent.putExtra(CASE_PARAM, c);
+    intent.putExtra(PLAYLIST_PARAM, playlistId);
+    intent.putExtra(PLAYLIST_NAME_PARAM, playlistName);
+    startActivity(intent);
+//    FilterTracksDialog.newInstance(playlistId, playlistName).show(fm, "playlist_add_all");
   }
 }

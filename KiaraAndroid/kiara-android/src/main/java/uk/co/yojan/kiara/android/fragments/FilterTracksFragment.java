@@ -1,10 +1,6 @@
-package uk.co.yojan.kiara.android.dialogs;
+package uk.co.yojan.kiara.android.fragments;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +12,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.nispok.snackbar.Snackbar;
+import com.nispok.snackbar.listeners.ActionClickListener;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import org.apache.commons.lang.StringUtils;
@@ -29,6 +27,7 @@ import uk.co.yojan.kiara.android.views.FullImageView;
 import uk.co.yojan.kiara.client.data.spotify.Playlist;
 import uk.co.yojan.kiara.client.data.spotify.Track;
 
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -36,7 +35,7 @@ import java.util.List;
  *  The user should be able to swipe left/right to delete certain songs before
  *  adding to the given playlist.
  */
-public class FilterTracksDialog extends DialogFragment {
+public class FilterTracksFragment extends KiaraFragment {
 
   Context mContext;
   KiaraActivity activity;
@@ -47,47 +46,32 @@ public class FilterTracksDialog extends DialogFragment {
 
   private String playlistId;
   private String playlistName;
-//  private PlaylistTracks tracks;
   private List<Track> tracks;
 
   private FilterTracksAdapter mAdapter;
-  SwipeDismissRecyclerViewTouchListener touchListener;
+  private SwipeDismissRecyclerViewTouchListener touchListener;
   private ParallaxRecyclerAdapter<Track> parallaxAdapter;
   private RecyclerView.LayoutManager mLayoutManager;
 
 
-  public static FilterTracksDialog newInstance(String spotifyPlaylistId, String playlistName) {
-    FilterTracksDialog ftd = new FilterTracksDialog();
-    ftd.setPlaylistId(spotifyPlaylistId);
-    ftd.setPlaylistName(playlistName);
-    return ftd;
+  public static FilterTracksFragment newInstance(String spotifyPlaylistId, String playlistName) {
+    FilterTracksFragment ftf = new FilterTracksFragment();
+    ftf.setPlaylistId(spotifyPlaylistId);
+    ftf.setPlaylistName(playlistName);
+    return ftf;
   }
 
   @Override
-  public Dialog onCreateDialog(Bundle savedInstanceState) {
+  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     this.activity = (KiaraActivity)getActivity();
-    this.mContext = getActivity().getApplicationContext();
+    this.toBeRemoved = new HashSet<String>();
 
-    View view = activity.getLayoutInflater().inflate(R.layout.filter_song_dialog, null);
+    View view = activity.getLayoutInflater().inflate(R.layout.filter_song_dialog, container, false);
     ButterKnife.inject(this, view);
-    AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-    builder.setView(view)
-        .setPositiveButton(R.string.add_all, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialogInterface, int i) {
-            // TODO(yojan) batch add event.
-          }
-        })
-        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialogInterface, int i) {
-            // User cancelled the dialog, do nothing.
-            dialogInterface.cancel();
-          }
-        });
+    this.mContext = view.getContext();
     picasso = Picasso.with(mContext);
     initRecyclerView();
-    return builder.create();
+    return view;
   }
 
   @Override
@@ -103,42 +87,54 @@ public class FilterTracksDialog extends DialogFragment {
   }
 
   private void initRecyclerView() {
-    tracksList.setHasFixedSize(true);
     mLayoutManager = new LinearLayoutManager(activity);
     tracksList.setLayoutManager(mLayoutManager);
     touchListener = new SwipeDismissRecyclerViewTouchListener(tracksList,
-            new SwipeDismissRecyclerViewTouchListener.DismissCallbacks() {
+        new SwipeDismissRecyclerViewTouchListener.DismissCallbacks() {
 
-              // Called to determine whether the given position can be dismissed.
-              @Override
-              public boolean canDismiss(int position) {
-                return position != 0;
-              }
+          // Called to determine whether the given position can be dismissed.
+          @Override
+          public boolean canDismiss(int position) {
+            return position != 0;
+          }
 
-              // Called when the user has indicated they she would like to dismiss one or more list item
-              // positions.
-              @Override
-              public void onDismiss(RecyclerView recyclerView, int[] reverseSortedPositions) {
-                for(int viewPosition : reverseSortedPositions) {
-                  int position = viewPosition - 1;
-                  mLayoutManager.removeView(mLayoutManager.getChildAt(position));
-                  Log.d("DIALOG SWIPE", "Removing " + tracks.get(position).getName());
-                  tracks.remove(position);
-                  mAdapter.notifyDataSetChanged();
-                  parallaxAdapter.notifyDataSetChanged();
-                }
-              }
-            });
+          /* Called when the user has indicated they she would like to dismiss one or more list item
+             positions. */
+          @Override
+          public void onDismiss(RecyclerView recyclerView, int[] reverseSortedPositions) {
+            for(int viewPosition : reverseSortedPositions) {
+              final int position = viewPosition - 1;
+              final Track removedTrack = tracks.get(position);
+
+              mLayoutManager.removeView(mLayoutManager.getChildAt(position));
+              Log.d("FilterTracksFragment", "Swiped " + removedTrack.getName());
+              tracks.remove(position);
+              mAdapter.notifyDataSetChanged();
+
+              /* Display the Undo Snackbar */
+              Snackbar.with(mContext).text(removedTrack.getName() + " removed.")
+                  .actionLabel("Undo")
+                  .actionListener(new ActionClickListener() {
+                    @Override
+                    public void onActionClicked() {
+                      // Undo - add the song back to the tracks list at the same position.
+                      tracks.add(position, removedTrack);
+                      parallaxAdapter.notifyDataSetChanged();
+                    }
+                  })
+                  .show(activity);
+            }
+          }
+        });
     tracksList.setOnTouchListener(touchListener);
 
-    // Set scroll listener so we don't look for swipes during scrolling.
-    tracksList.setOnScrollListener(touchListener.makeScrollListener());
+    /* Set scroll listener so we don't look for swipes during scrolling. */
+//    tracksList.setOnScrollListener(touchListener.makeScrollListener());
     tracksList.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {
       @Override
       public void onItemClick(View view, int position) {
         int pos = position - 1;
         Log.d("DIALOG", tracks.get(pos).getId() + " " + tracks.get(pos).getName());
-
       }
     }));
   }
@@ -206,6 +202,4 @@ public class FilterTracksDialog extends DialogFragment {
   public void setPlaylistName(String name) {
     this.playlistName = name;
   }
-
-
 }
