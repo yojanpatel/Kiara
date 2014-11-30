@@ -27,7 +27,6 @@ import uk.co.yojan.kiara.android.views.FullImageView;
 import uk.co.yojan.kiara.client.data.spotify.Playlist;
 import uk.co.yojan.kiara.client.data.spotify.Track;
 
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -64,7 +63,6 @@ public class FilterTracksFragment extends KiaraFragment {
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     this.activity = (KiaraActivity)getActivity();
-    this.toBeRemoved = new HashSet<String>();
 
     View view = activity.getLayoutInflater().inflate(R.layout.filter_song_dialog, container, false);
     ButterKnife.inject(this, view);
