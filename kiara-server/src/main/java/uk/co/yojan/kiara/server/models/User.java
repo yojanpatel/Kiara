@@ -172,16 +172,19 @@ public class User {
   }
 
 
-  public User removePlaylist(Long playlistId) {
+  /*
+   * @return true if playlist was successfully deleted.
+   */
+  public boolean removePlaylist(Long playlistId) {
     if(!hasPlaylist(playlistId))
-      return this;
+      return false;
 
     Result dr = ofy().delete().key(Key.create(Playlist.class, playlistId));
     String idStr = playlistId.toString();
     playlistKeyMap.remove(idStr);
     ofy().save().entity(this).now();
     dr.now();
-    return this;
+    return true;
   }
 
   public Collection<Song> getAllSongs() {

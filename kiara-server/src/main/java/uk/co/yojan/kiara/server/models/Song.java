@@ -8,9 +8,8 @@ import com.wrapper.spotify.Api;
 import com.wrapper.spotify.methods.TrackRequest;
 import com.wrapper.spotify.models.Track;
 import uk.co.yojan.kiara.server.SpotifyApi;
-import uk.co.yojan.kiara.server.echonest.EchoNestApi;
 import uk.co.yojan.kiara.server.serializers.SongSerializer;
-import uk.co.yojan.kiara.server.tasks.TaskManager;
+import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 
 import java.util.logging.Logger;
 
