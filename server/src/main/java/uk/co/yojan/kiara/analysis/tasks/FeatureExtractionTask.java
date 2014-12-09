@@ -4,13 +4,11 @@ import com.google.appengine.api.taskqueue.DeferredTask;
 import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.analysis.features.SegmentHelper;
 import uk.co.yojan.kiara.analysis.features.Statistics;
-import uk.co.yojan.kiara.server.echonest.EchoNestApi;
 import uk.co.yojan.kiara.server.echonest.data.Segment;
 import uk.co.yojan.kiara.server.models.SongAnalysis;
 import uk.co.yojan.kiara.server.models.SongData;
 import uk.co.yojan.kiara.server.models.SongFeature;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
@@ -51,6 +49,7 @@ public class FeatureExtractionTask implements DeferredTask {
     sf.setValence(songAnalysis.getValence());
     sf.setLoudness(songData.getLoudness());
     sf.setTempo(songData.getTempo());
+    sf.setNormalisedTempo(normaliseTempo(songData.getTempo()));
     sf.setTempoConfidence(songData.getTempoConfidence());
 
     ofy().delete().entities(songAnalysis, songData);
@@ -70,5 +69,17 @@ public class FeatureExtractionTask implements DeferredTask {
       statMoments.add(stats.momentVector());
     }
     return statMoments;
+  }
+
+  /**
+   * Normalises the tempo range [0, 500] according to EchoNest to [0, 1]
+   * based on a logarithmic scale.
+   *
+   * f(tempo) = (1 - cos(pi*x / 500))/2, where K is a normalisation constant.
+   *
+   * @return a Double between 0 and 1 representing the normalised tempo feature.
+   */
+  private Double normaliseTempo(Double tempo) {
+    return (1 - Math.cos(Math.PI * tempo / 500)) / 2;
   }
 }

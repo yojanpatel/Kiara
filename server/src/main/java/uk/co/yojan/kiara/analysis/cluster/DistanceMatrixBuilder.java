@@ -22,6 +22,7 @@ public class DistanceMatrixBuilder {
     for(SongFeature f : features) {
       baseClusters.add(new SongCluster(f.getId()));
     }
+    matrix.setClusters(baseClusters);
 
     /* Currently unidirectional (for bidirectional, int j = 0; ignore if i == j) */
     for(int i = 0; i < features.size(); i++) {
@@ -39,7 +40,7 @@ public class DistanceMatrixBuilder {
   /*
    * Load the SongFeature entities associated with playlist from the DataStore.
    */
-  private static Collection<SongFeature> loadFeatures(Playlist playlist) {
+  public static Collection<SongFeature> loadFeatures(Playlist playlist) {
     Collection<String> songIds = playlist.getAllSongIds();
     Collection<Key<SongFeature>> featureKeys = new ArrayList<>();
     for(String id : songIds) {

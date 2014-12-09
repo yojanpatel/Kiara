@@ -3,6 +3,7 @@ package uk.co.yojan.kiara.analysis.cluster;
 import uk.co.yojan.kiara.analysis.cluster.linkage.ClusterLinkage;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -11,13 +12,14 @@ import java.util.ArrayList;
 public class HierarchicalClustering {
 
   // The clusters that are still to be agglomerated til a single one remains.
-  private ArrayList<SongCluster> remainingClusters;
+  private List<SongCluster> remainingClusters;
   private DistanceMatrix distances;
   private ClusterLinkage linkage;
 
   public HierarchicalClustering(DistanceMatrix distances, ClusterLinkage linkage) {
     this.distances = distances;
     this.linkage = linkage;
+    remainingClusters = distances.getClusters();
   }
 
   private void agglomerate() {

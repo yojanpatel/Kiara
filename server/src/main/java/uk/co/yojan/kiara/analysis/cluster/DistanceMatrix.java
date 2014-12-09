@@ -1,8 +1,6 @@
 package uk.co.yojan.kiara.analysis.cluster;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.PriorityQueue;
+import java.util.*;
 
 /**
  * DataStructure that encapsulates the distances between all the songs for a playlist.
@@ -12,6 +10,7 @@ import java.util.PriorityQueue;
  */
 public class DistanceMatrix {
 
+  private List<SongCluster> clusters;
   private HashMap<Long, ClusterEdge> edges;
   private PriorityQueue<ClusterEdge> distanceQueue;
 
@@ -19,6 +18,7 @@ public class DistanceMatrix {
   public DistanceMatrix() {
     edges = new HashMap<>();
     distanceQueue = new PriorityQueue<>();
+    clusters = new ArrayList<>();
   }
 
   /*
@@ -78,7 +78,11 @@ public class DistanceMatrix {
     return index;
   }
 
-  public Collection<ClusterEdge> getClusters() {
-    return distanceQueue;
+  public void setClusters(List<SongCluster> clusters) {
+    this.clusters = clusters;
+  }
+
+  public List<SongCluster> getClusters() {
+    return clusters;
   }
 }

@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.server.tasks;
+package uk.co.yojan.kiara.analysis.tasks;
 
 import com.google.appengine.api.taskqueue.DeferredTask;
 import uk.co.yojan.kiara.server.echonest.EchoNestApi;
@@ -22,7 +22,7 @@ public class GetSongAnalysisTask implements DeferredTask {
     this.title = title;
   }
 
-  private static final Logger log = Logger.getLogger(GetSongAnalysisTask.class.getName());
+  private static final Logger log = Logger.getLogger(uk.co.yojan.kiara.analysis.tasks.GetSongAnalysisTask.class.getName());
 
   /**
    * When an object implementing interface Runnable is used
