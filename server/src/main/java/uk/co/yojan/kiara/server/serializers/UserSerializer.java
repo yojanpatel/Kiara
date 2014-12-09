@@ -21,7 +21,7 @@ public class UserSerializer extends JsonSerializer<User> {
     jsonGenerator.writeStringField("facebookId", user.getFacebookId());
     jsonGenerator.writeStringField("email", user.getEmail());
     jsonGenerator.writeStringField("imageURL", user.getImageURL());
-    jsonGenerator.writeNumberField("v", user.v());
+    jsonGenerator.writeStringField("v", user.v());
 
     jsonGenerator.writeEndObject();
   }

@@ -19,7 +19,7 @@ public class PlaylistSerializer extends JsonSerializer<Playlist> {
     jsonGenerator.writeNumberField("id", playlist.getId());
     jsonGenerator.writeStringField("playlistName", playlist.getName());
     jsonGenerator.writeNumberField("lastViewedTimestamp", playlist.getLastViewedTimestamp());
-    jsonGenerator.writeNumberField("v", playlist.v());
+    jsonGenerator.writeStringField("v", playlist.v());
 
     jsonGenerator.writeEndObject();
 

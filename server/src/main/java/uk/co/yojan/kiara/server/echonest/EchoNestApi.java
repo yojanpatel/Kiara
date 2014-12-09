@@ -10,10 +10,7 @@ import uk.co.yojan.kiara.server.serializers.SongMetaDataDeserializer;
 import uk.co.yojan.kiara.server.serializers.SongSearchDeserializer;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
@@ -40,6 +37,8 @@ public class EchoNestApi {
       urlConn.setRequestMethod("GET");
       urlConn.setReadTimeout(10000); // 10 seconds
       InputStream is = urlConn.getInputStream();
+
+
       byte[] bytes = new byte[is.available()];
       is.read(bytes, 0, is.available());
       return new String(bytes, StandardCharsets.UTF_8);
@@ -51,7 +50,11 @@ public class EchoNestApi {
 
   public static String get(URL url) {
     try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+      URLConnection urlConn = url.openConnection();
+//      urlConn.setUseCaches(false);
+      urlConn.setRequestProperty("Cache-Control", "no-cache,max-age=0");
+      urlConn.setRequestProperty("Pragma", "no-cache");
+      BufferedReader reader = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
       StringBuilder sb = new StringBuilder();
       String line;
       while ((line = reader.readLine()) != null) {
@@ -140,6 +143,7 @@ public class EchoNestApi {
     if(analysisJSON == null || analysisJSON.isEmpty()) {
       return null;
     } else {
+      log.info(analysisJSON);
       return gson.fromJson(analysisJSON, SongData.class);
     }
   }
@@ -176,9 +180,8 @@ public class EchoNestApi {
   }
 
   public static void main(String[] args) {
-    String json = getSongMetaDataJson("4Gkd4msFAFTiDxFZcg9r8i");
-    System.out.println(json);
-    SongAnalysis s = searchSong("Emika", "Filters");
-    System.out.println(s.getArtist());
+    SongAnalysis s = getSongMetaData("4B4zDmbHdkXZ1wUJv1yKFy");
+    SongData sd = getSongData(s);
+    System.out.println(sd.getLoudness());
   }
 }

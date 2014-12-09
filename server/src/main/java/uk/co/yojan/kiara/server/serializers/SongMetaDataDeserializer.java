@@ -5,7 +5,6 @@ import com.google.gson.*;
 import uk.co.yojan.kiara.server.models.SongAnalysis;
 
 import java.lang.reflect.Type;
-import java.util.logging.Logger;
 
 public class SongMetaDataDeserializer implements JsonDeserializer<SongAnalysis> {
   @Override
@@ -15,18 +14,34 @@ public class SongMetaDataDeserializer implements JsonDeserializer<SongAnalysis> 
     SongAnalysis s = new SongAnalysis();
     JsonObject trackObj = jsonElement.getAsJsonObject().get("response").getAsJsonObject().get("track").getAsJsonObject();
     s.setTitle(trackObj.get("title").getAsString());
-    s.setAudioMd5(trackObj.get("audio_md5").getAsString());
+
+    if(trackObj.has("audio_md5")) {
+      s.setAudioMd5(trackObj.get("audio_md5").getAsString());
+    }
     s.setRelease(trackObj.get("release").getAsString());
     s.setArtist(trackObj.get("artist").getAsString());
     s.setStatus(trackObj.get("status").getAsString());
     s.setBasicMetaData(true);
 
     JsonObject audioSumObj = trackObj.get("audio_summary").getAsJsonObject();
-    s.setTimeSignature(audioSumObj.get("time_signature").getAsInt());
-    s.setTempo(audioSumObj.get("tempo").getAsDouble());
+    try {
+      s.setTimeSignature(audioSumObj.get("time_signature").getAsInt());
+    } catch(Exception e) {
+      s.setTimeSignature(0);
+    }
+
+    try {
+      s.setTempo(audioSumObj.get("tempo").getAsDouble());
+    } catch (Exception e) {
+      s.setTempo(0.0);
+    }
     s.setEnergy(audioSumObj.get("energy").getAsDouble());
     s.setLiveness(audioSumObj.get("liveness").getAsDouble());
-    s.setSpeechiness(audioSumObj.get("speechiness").getAsDouble());
+    try {
+      s.setSpeechiness(audioSumObj.get("speechiness").getAsDouble());
+    } catch (Exception e) {
+      s.setSpeechiness(0.0);
+    }
     s.setMode(audioSumObj.get("mode").getAsInt());
     s.setAcousticness(audioSumObj.get("acousticness").getAsDouble());
     s.setDanceability(audioSumObj.get("danceability").getAsDouble());

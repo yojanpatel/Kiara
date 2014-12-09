@@ -40,7 +40,7 @@ public class PlaylistResource {
                          @Context Request request) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
 
-    EntityTag etag = new EntityTag(Long.toString(u.v()));
+    EntityTag etag = new EntityTag(u.v());
     Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
     CacheControl cc = new CacheControl();
 
@@ -78,8 +78,11 @@ public class PlaylistResource {
                       @Context Request request) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
     Playlist playlist = u.getPlaylist(id);
+    if(playlist == null) {
+      return Response.noContent().build();
+    }
 
-    EntityTag etag = new EntityTag(Long.toString(playlist.v()));
+    EntityTag etag = new EntityTag(playlist.v());
     Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
     CacheControl cc = new CacheControl();
 

@@ -8,7 +8,8 @@ import uk.co.yojan.kiara.server.models.User;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
@@ -29,7 +30,8 @@ public class PlaylistSongResource {
                                    @Context Request request) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
     Playlist p = u.getPlaylist(playlistId);
-    EntityTag etag = new EntityTag(Long.toString(p.v()));
+    if(p == null) return Response.noContent().build();
+    EntityTag etag = new EntityTag(p.v());
     Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
     CacheControl cc = new CacheControl();
 
@@ -61,13 +63,14 @@ public class PlaylistSongResource {
                           @PathParam("playlist_id") Long playlistId) {
 
     User u = ofy().load().key(Key.create(User.class, userId)).now();
+    u.incrementCounter();
     Result us = ofy().save().entity(u);
 
     if(!u.hasPlaylist(playlistId)) {
       return Response.notModified().build();
     }
 
-    spotifyId = spotifyId.replace("\"", "");
+    spotifyId = spotifyId.replace("\"", "").replace("spotify:track:", "");
 
     Song created;
     Result save = null;
@@ -86,12 +89,82 @@ public class PlaylistSongResource {
     assert created.getSpotifyId().equals(spotifyId);
 
     Playlist p = u.getPlaylist(playlistId);
-    p.addSong(spotifyId);
+    p.addSong(spotifyId).now();
 
     us.now();
     if(save != null)
       save.now();
 
     return Response.ok().entity(created).build();
+  }
+
+  @POST
+  @Path("/batch")
+  public Response batchAddSongs(List<String> spotifyIds,
+                                @PathParam("user_id") String userId,
+                                @PathParam("playlist_id") Long playlistId) {
+    // Format the spotify ids so they consist only of the string id for the tracks.
+    formatSpotifyTrackIds(spotifyIds);
+
+    // Load the user and playlist from the datastore.
+    User u = ofy().load().key(Key.create(User.class, userId)).now();
+    u.incrementCounter();
+    Result us = ofy().save().entity(u);
+
+    if(!u.hasPlaylist(playlistId)) {
+      return Response.notModified().build();
+    }
+    Playlist p = u.getPlaylist(playlistId);
+
+
+    ArrayList<Result> songSaveResults = new ArrayList<>();
+    ArrayList<String> errorTracks = new ArrayList<>();
+    ArrayList<Song> createdSongs = new ArrayList<>();
+
+    // Either download meta-data from Spotify and add to the datastore, or load from datastore
+    // if it already exists.
+    for(String trackId : spotifyIds) {
+      Song created = null;
+      Result save = null;
+
+      /*
+       * Check if the song already exists in the Datastore.
+       * If it does not, create a new Song entity using meta-data from Spotify and persist.
+       * Else, load the existing entity from the Datatore.
+       */
+      if(!Song.exists(trackId)) {
+        try {
+          created = Song.newInstanceFromSpotify(trackId);
+          log.info(created.getSongName() + " did not exist. adding.");
+        } catch (Exception e) {
+          log.warning(e.getMessage());
+          errorTracks.add(trackId);
+        }
+        if(created != null)
+          songSaveResults.add(ofy().save().entity(created));
+      } else {
+        created = ofy().load().key(Key.create(Song.class, trackId)).now();
+        log.info(created.getSongName() + " did exist. loading.");
+      }
+
+      if(created != null) {
+        assert created.getSpotifyId().equals(trackId);
+        createdSongs.add(created);
+      }
+    }
+
+    us.now();
+    p.addSongs(createdSongs).now();
+    for(Result r : songSaveResults) r.now();
+    // Update the HashMap for playlist.
+
+    return Response.ok().entity(createdSongs).build();
+  }
+
+
+  private void formatSpotifyTrackIds(List<String> ids) {
+    for(int i = 0; i < ids.size(); i++) {
+      ids.set(i, ids.get(i).replace("\"", "").replace("spotify:track:", ""));
+    }
   }
 }
