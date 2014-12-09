@@ -3,15 +3,13 @@ package uk.co.yojan.kiara.server.models;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Result;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import uk.co.yojan.kiara.server.serializers.PlaylistDeserializer;
 import uk.co.yojan.kiara.server.serializers.PlaylistSerializer;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
@@ -38,8 +36,8 @@ public class Playlist {
     this.v++;
   }
 
-  public long v() {
-    return id * songIdKeyMap.hashCode() * playlistName.hashCode();
+  public String v() {
+    return id.toString() + Integer.toString(songIdKeyMap.hashCode()) + Integer.toString(playlistName.hashCode());
   }
 
   public Long getId() {
@@ -88,6 +86,10 @@ public class Playlist {
     return this;
   }
 
+  public Collection<String> getAllSongIds() {
+    return songIdKeyMap.keySet();
+  }
+
   public Collection<Song> getAllSongs() {
     return ofy().load().keys(songIdKeyMap.values()).values();
   }
@@ -103,15 +105,22 @@ public class Playlist {
       return null;
   }
 
-  public Playlist addSong(String spotifyId) {
+  public Result addSong(String spotifyId) {
     songIdKeyMap.put(spotifyId, Key.create(Song.class, spotifyId));
     incrementCounter();
-    ofy().save().entity(this).now();
-    return this;
+    return ofy().save().entity(this);
   }
 
-  public Playlist addSong(Song song) {
+  public Result addSong(Song song) {
     return addSong(song.getSpotifyId());
+  }
+
+  public Result addSongs(List<Song> songs) {
+    for(Song s : songs) {
+      songIdKeyMap.put(s.getId(), Key.create(Song.class, s.getId()));
+    }
+    incrementCounter();
+    return ofy().save().entity(this);
   }
 
   public Playlist removeSong(String songId) {

@@ -3,6 +3,9 @@ package uk.co.yojan.kiara.server;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyFactory;
 import com.googlecode.objectify.ObjectifyService;
+import uk.co.yojan.kiara.analysis.cluster.Cluster;
+import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
+import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
 import uk.co.yojan.kiara.server.models.*;
 
 import java.util.logging.Logger;
@@ -18,9 +21,14 @@ public class OfyService {
     register(User.class);
     register(Song.class);
     register(Playlist.class);
+
     register(SongAnalysis.class);
     register(SongData.class);
     register(SongFeature.class);
+
+    register(Cluster.class);
+    register(NodeCluster.class);
+    register(LeafCluster.class);
   }
 
   public static Objectify ofy() {

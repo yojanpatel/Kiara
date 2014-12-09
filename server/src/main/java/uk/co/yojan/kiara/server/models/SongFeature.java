@@ -3,8 +3,11 @@ package uk.co.yojan.kiara.server.models;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Serialize;
+import uk.co.yojan.kiara.server.annotations.Feature;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is a DataStore entity, that contains the features for the song
@@ -21,18 +24,22 @@ public class SongFeature {
   @Id private String id; // Spotify Id
 
   /* 12 pitches * 8 statistical moments */
-  @Serialize(zip=true) private ArrayList<ArrayList<Double>> pitchMoments;
+  @Serialize(zip=true)
+//  @Feature(dims = 2, size = {12, 8}, weight = 0.5)
+  private ArrayList<ArrayList<Double>> pitchMoments;
 
   /* 14 timbre components * 8 statistical moments */
-  @Serialize(zip=true) private ArrayList<ArrayList<Double>> timbreMoments;
+  @Serialize(zip=true)
+  @Feature(dims = 2, size = {12, 8})
+  private ArrayList<ArrayList<Double>> timbreMoments;
 
   private Double duration;
   private Double tempo;
+  @Feature private Double normalisedTempo;
   private Double tempoConfidence;
-  private Double loudness;
-  private Double energy;
-  private Double valence;
-
+  @Feature private Double loudness;
+  @Feature private Double energy;
+  @Feature private Double valence;
 
   public SongFeature() {
     pitchMoments = new ArrayList<>();
@@ -110,6 +117,14 @@ public class SongFeature {
     this.tempoConfidence = tempoConfidence;
   }
 
+  public Double getNormalisedTempo() {
+    return normalisedTempo;
+  }
+
+  public void setNormalisedTempo(Double normalisedTempo) {
+    this.normalisedTempo = normalisedTempo;
+  }
+
   public Double getLoudness() {
     return loudness;
   }
@@ -132,5 +147,134 @@ public class SongFeature {
 
   public void setValence(Double valence) {
     this.valence = valence;
+  }
+
+  /*
+   * Euclidian distance metric to another Song.
+   * Sum for all features, the component-wise difference squared.
+   */
+  public Double distanceTo(SongFeature other) {
+    Double distance = 0.0;
+
+    distance += Math.pow((other.getTempo() - this.getTempo()), 2);
+    distance += Math.pow((other.getEnergy() - this.getEnergy()), 2);
+    distance += Math.pow((other.getValence() - this.getValence()), 2);
+    distance += Math.pow((other.getLoudness() - this.getLoudness()), 2);
+
+    for(int pitch = 0; pitch < pitchMoments.size(); pitch++) {
+      ArrayList<Double> thisPitchVector = this.getPitchMoment(pitch);
+      ArrayList<Double> otherPitchVector = other.getPitchMoment(pitch);
+      for(int stat = 0; stat < thisPitchVector.size(); stat++) {
+        distance += Math.pow(otherPitchVector.get(stat) - thisPitchVector.get(stat), 2);
+      }
+    }
+
+    for(int timbre = 0; timbre < timbreMoments.size(); timbre++) {
+      ArrayList<Double> thisTimbreVector = this.getTimbreMoment(timbre);
+      ArrayList<Double> otherTimbreVector = other.getTimbreMoment(timbre);
+      for(int stat = 0; stat < thisTimbreVector.size(); stat++) {
+        distance += Math.pow(otherTimbreVector.get(stat) - thisTimbreVector.get(stat), 2);
+      }
+    }
+
+    return distance;
+  }
+
+  public static List<String> getFeatureNames() {
+    ArrayList<String> featureNames = new ArrayList<>();
+    for(Field field : SongFeature.class.getDeclaredFields()) {
+      Feature featureAnnotation = field.getAnnotation(Feature.class);
+      if(featureAnnotation != null) {
+        if(featureAnnotation.dims() == 1) {
+          /* Scalar */
+          if(featureAnnotation.size()[0] == 1) {
+            featureNames.add(field.getName());
+          }
+          /* 1D Vector */
+          else {
+            for(int i = 0; i < featureAnnotation.size()[0]; i++) {
+              featureNames.add(field.getName() + "-" + i);
+            }
+          }
+        }/* 2D Matrix */
+        else if(featureAnnotation.dims() == 2) {
+          System.out.println(featureAnnotation.size()[0] + "x" + featureAnnotation.size()[1]);
+          for(int i = 0; i < featureAnnotation.size()[0]; i++) {
+            for(int j = 0; j < featureAnnotation.size()[1]; j++) {
+              featureNames.add(field.getName() + "-" + i + "-" + j);
+            }
+          }
+        }
+      }
+    }
+    return featureNames;
+  }
+
+  public double[] getFeatureValues() throws IllegalAccessException {
+    Field[] fields = SongFeature.class.getDeclaredFields();
+    /* TODO: remove */
+    setNormalisedTempo(normaliseTempo(getTempo()));
+
+    /** Count the number of features. */
+    int numFeatures = 0;
+    for(Field field : fields) {
+      Feature featureAnnotation = field.getAnnotation(Feature.class);
+      if(featureAnnotation != null) {
+        if(featureAnnotation.dims() == 1) {
+          numFeatures += featureAnnotation.size()[0];
+        } else if(featureAnnotation.dims() == 2) {
+          numFeatures += featureAnnotation.size()[0]*featureAnnotation.size()[1];
+        }
+      }
+    }
+
+    System.out.println("total features " + numFeatures);
+    /** Construct the feature value double. */
+    double[] featureVals = new double[numFeatures];
+    int featureIndex = 0;
+    for(Field field : SongFeature.class.getDeclaredFields()) {
+      System.out.println("Current feature: " + field.getName());
+      Feature featureAnnotation = field.getAnnotation(Feature.class);
+      if(featureAnnotation != null) {
+        if(featureAnnotation.dims() == 1) {
+          /* Scalar */
+          if(featureAnnotation.size()[0] == 1) {
+            Double val = (Double)field.get(this);
+            featureVals[featureIndex] = featureAnnotation.weight() * val;
+            featureIndex++;
+          }
+          /* 1D Vector */
+          else {
+            for(int i = 0; i < featureAnnotation.size()[0]; i++) {
+              featureVals[featureIndex] = featureAnnotation.weight() * ((ArrayList<Double>)field.get(this)).get(i);
+              featureIndex++;
+            }
+          }
+        }/* 2D Matrix */
+        else if(featureAnnotation.dims() == 2) {
+          System.out.println(featureAnnotation.size()[0] + "x" + featureAnnotation.size()[1]);
+          for(int i = 0; i < featureAnnotation.size()[0]; i++) {
+            for(int j = 0; j < featureAnnotation.size()[1]; j++) {
+              ArrayList<ArrayList<Double>> list = ((ArrayList<ArrayList<Double>>)field.get(this));
+              featureVals[featureIndex] = featureAnnotation.weight() * list.get(i).get(j);
+              featureIndex++;
+            }
+          }
+        }
+      }
+    }
+    return featureVals;
+  }
+
+  /**
+   * Normalises the tempo range [0, 500] according to EchoNest to [0, 1]
+   * based on a logarithmic scale.
+   *
+   * f(tempo) = (1 - cos(pi*x / 500))/2, where K is a normalisation constant.
+   *
+   * @return a Double between 0 and 1 representing the normalised tempo feature.
+   */
+  private Double normaliseTempo(Double tempo) {
+    return (1 - Math.cos(Math.PI * tempo / 500)) / 2;
   }
 }

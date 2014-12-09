@@ -64,8 +64,8 @@ public class User {
     this.v++;
   }
 
-  public long v() {
-    return playlistKeyMap.hashCode()*id.hashCode();
+  public String v() {
+    return Long.toString(v) + Integer.toString(playlistKeyMap.hashCode())  + Integer.toString(id.hashCode());
   }
 
   public String getId() {
