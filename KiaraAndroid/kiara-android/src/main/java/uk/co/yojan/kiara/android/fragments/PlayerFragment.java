@@ -1,37 +1,42 @@
 package uk.co.yojan.kiara.android.fragments;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.spotify.sdk.android.Spotify;
-import com.spotify.sdk.android.playback.Player;
 import com.spotify.sdk.android.playback.PlayerNotificationCallback;
 import com.spotify.sdk.android.playback.PlayerState;
 import com.spotify.sdk.android.playback.PlayerStateCallback;
+import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
-import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
+import uk.co.yojan.kiara.android.background.MusicService;
+import uk.co.yojan.kiara.android.background.MusicStateCallback;
+import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
-import uk.co.yojan.kiara.android.views.FloatingActionButton;
 import uk.co.yojan.kiara.client.data.Song;
 
 /**
  * Fragment that handles the song streaming from Spotify.
  */
-public class PlayerFragment extends KiaraFragment implements PlayerNotificationCallback, PlayerStateCallback {
+public class PlayerFragment extends KiaraFragment implements PlayerNotificationCallback, PlayerStateCallback, MusicStateCallback {
 
   private static final String log = PlayerFragment.class.getName();
   public static final String SONG_PARAM = "SONG";
@@ -40,30 +45,29 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
   private Context mContext;
   private static Picasso picasso;
 
+  private boolean bound;
+
   @InjectView(R.id.album_image) ImageView albumArt;
   @InjectView(R.id.song_name) TextView songName;
   @InjectView(R.id.artist_name) TextView artistName;
   @InjectView(R.id.album_name) TextView albumName;
   @InjectView(R.id.seekBar) SeekBar seekBar;
 
-  private FloatingActionButton fab;
-  private Song currentSong;
-  private String songSpotifyId;
-  private Player player;
-  private boolean playing = true;
-  private int currentPosition = 0;
-  private int duration;
+  @InjectView(R.id.playpause) ImageButton playpause;
+  @InjectView(R.id.favouritefab) FloatingActionButton favouriteFab;
+  @InjectView(R.id.elapsed) TextView elapsed;
 
-  private Handler mHandler = new Handler();
-  private Runnable mRunnable = new Runnable() {
-    @Override
-    public void run() {
-      if(player != null && playing) {
-        player.getPlayerState(PlayerFragment.this);
-      }
-      mHandler.postDelayed(this, 1000);
-    }
-  };
+  private Song currentSong;
+
+  MusicService musicService;
+
+  Drawable pause;
+  Drawable play;
+  Drawable favOutline;
+  Drawable favFilled;
+
+  private int currentPosition;
+  private int duration;
 
   public static PlayerFragment newInstance(Song song) {
     PlayerFragment fragment =  new PlayerFragment();
@@ -82,12 +86,10 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
     super.onCreate(savedInstanceState);
     if (getArguments() != null) {
       currentSong = (Song)getArguments().getParcelable(SONG_PARAM);
-      songSpotifyId = "spotify:track:"+currentSong.getSpotifyId();
-      Log.d(log, currentSong.getArtistName());
     }
 
     picasso = Picasso.with(mContext);
-    picasso.setIndicatorsEnabled(true);
+    picasso.setIndicatorsEnabled(false);
   }
 
   @Override
@@ -98,25 +100,46 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
     this.mContext = rootView.getContext();
 
     parent = (KiaraActivity) getActivity();
+    Resources res = getResources();
+    pause = res.getDrawable(R.drawable.ic_pause_circle_fill_white_48dp);
+    play = res.getDrawable(R.drawable.ic_play_circle_fill_white_48dp);
+    favOutline = res.getDrawable(R.drawable.ic_favorite_outline_white_24dp);
+    favFilled = res.getDrawable(R.drawable.ic_favorite_white_24dp);
 
-    setUpFab();
-    initialisePlayer();
+
+    Intent startService = new Intent(mContext, MusicService.class);
+    parent.startService(startService);
+    Intent bind = new Intent(mContext, MusicService.class);
+    parent.bindService(bind, mConnection, Context.BIND_AUTO_CREATE);
+
+    initButtons();
+    initialiseSeekBar();
 
     picasso.load(currentSong.getImageURL()).into(albumArt);
     songName.setText(currentSong.getSongName());
     artistName.setText(currentSong.getArtistName());
     albumName.setText(currentSong.getAlbumName());
 
-    seekBar.setMax(255);;
+    return rootView;
+  }
+
+  @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    ButterKnife.reset(this);
+    Spotify.destroyPlayer(this);
+    if (bound) {
+      parent.unbindService(mConnection);
+      bound = false;
+    }
+  }
+
+  private void initialiseSeekBar() {
+    seekBar.setMax(255);
     seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if(player != null && fromUser) {
-          Log.d(log, "progress changed: " + duration + " " + progress);
-          int position = (int)(duration * ((float)progress/255.0));
-          Log.d(log, "seeking to " + (duration*(progress/255)) + " " + position);
-          player.seekToPosition(position);
-        }
+       getBus().post(new SeekbarProgressChanged(seekBar, progress, fromUser));
       }
 
       @Override
@@ -125,72 +148,32 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
       @Override
       public void onStopTrackingTouch(SeekBar seekBar) {}
     });
-
-    return rootView;
   }
 
-
-  private void initialisePlayer() {
-    String accessToken = parent.sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
-    if(accessToken != null) {
-      Spotify spotify = new Spotify(accessToken);
-      player = spotify.getPlayer(mContext, "Kiara", this,
-          new Player.InitializationObserver() {
-
-            @Override
-            public void onInitialized() {
-              Log.d(log, "onInitialized");
-              player.addPlayerNotificationCallback(PlayerFragment.this);
-              player.play(songSpotifyId);
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-              Log.e(log, throwable.getMessage());
-              Toast.makeText(mContext, "Something went wrong!", Toast.LENGTH_SHORT).show();
-            }
-          });
-      mHandler.post(mRunnable);
-    }
-  }
-
-  @Override
-  public void onDestroyView() {
-    super.onDestroyView();
-    ButterKnife.reset(this);
-    Spotify.destroyPlayer(this);
-  }
-
-  private void pauseplay() {
-    if(playing) {
-      // Pause the player
-      player.pause();
-      player.getPlayerState(this);
-      Drawable play = getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp);
-      fab.setFloatingActionButtonDrawable(play);
-      playing = !playing;
-    } else {
-      // Start playing
-      Drawable pause = getResources().getDrawable(R.drawable.ic_pause_white_24dp);
-      fab.setFloatingActionButtonDrawable(pause);
-      player.resume();
-      playing = !playing;
-    }
-  }
-
-  private void setUpFab() {
-    Drawable pause = getResources().getDrawable(R.drawable.ic_pause_white_24dp);
-    fab = new FloatingActionButton.Builder(getActivity())
-        .withButtonColor(getResources().getColor(R.color.pinkA200))
-        .withDrawable(pause)
-        .withGravity(Gravity.RIGHT | Gravity.BOTTOM)
-        .withMargins(0, 0, 0, 24)
-        .create();
-
-    fab.setOnClickListener(new View.OnClickListener() {
+  private void initButtons() {
+    playpause.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        pauseplay();
+        if(musicService.pauseplay()) {
+          // Playing
+          playpause.setImageDrawable(pause);
+        } else {
+          // Paused
+          playpause.setImageDrawable(play);
+        }
+      }
+    });
+
+
+    favouriteFab.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        // favourited
+        if(musicService.toggleFav()) {
+          favouriteFab.setIcon(R.drawable.ic_favorite_white_24dp);
+        } else {
+          favouriteFab.setIcon(R.drawable.ic_favorite_outline_white_24dp);
+        }
       }
     });
   }
@@ -205,12 +188,54 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
   }
 
   @Override
+  public void onPlayingStateChanged(boolean nowPlaying) {
+    if(nowPlaying) {
+      // player is now playing.
+      playpause.setImageDrawable(pause);
+    } else {
+      // player is now paused.
+      playpause.setImageDrawable(play);
+    }
+  }
+
+  @Subscribe
+  @Override
   public void onPlayerState(PlayerState playerState) {
     currentPosition = playerState.positionInMs;
     duration = playerState.durationInMs;
     Log.d(log, "playerState received. " + playerState.durationInMs);
     if(duration > 0) {
       seekBar.setProgress((currentPosition * 255) / duration);
+
+      currentPosition /= 1000; // convert to seconds
+      int hours = currentPosition / 3600;
+      currentPosition  = currentPosition % 3600;
+      int mins = currentPosition / 60;
+      int seconds = currentPosition % 60;
+      String elapsedText  = "";
+      if(hours > 0) elapsedText = hours + ".";
+      elapsedText += mins + "." + seconds;
+      elapsed.setText(elapsedText);
     }
   }
+
+  private ServiceConnection mConnection = new ServiceConnection() {
+
+    @Override
+    public void onServiceConnected(ComponentName className,
+                                   IBinder service) {
+      Log.d("KiaraActivity", "serviceConnected");
+      // We've bound to LocalService, cast the IBinder and get LocalService instance
+      MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+      musicService = binder.getService();
+      bound = true;
+      musicService.setCurrentSong(currentSong);
+      musicService.startForeground();
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName arg0) {
+      bound = false;
+    }
+  };
 }

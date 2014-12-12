@@ -1,9 +1,7 @@
 package uk.co.yojan.kiara.android.adapters;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,19 +9,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import butterknife.OnClick;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.activities.PlayerActivity;
-import uk.co.yojan.kiara.android.fragments.PlayerFragment;
-import uk.co.yojan.kiara.android.fragments.PlaylistListFragment;
-import uk.co.yojan.kiara.android.parcelables.SongParcelable;
-import uk.co.yojan.kiara.android.utils.CircularCropTransformation;
 import uk.co.yojan.kiara.client.data.Playlist;
 import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
 import uk.co.yojan.kiara.client.data.Song;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +76,7 @@ public class PlaylistListViewAdapter
     } else {
       viewHolder.details.setText("No songs.");
       viewHolder.size.setText("");
-      picasso.load(R.drawable.placeholder).resize(200,200).into(viewHolder.image);
+      picasso.load(R.drawable.ic_placeholder).resize(200,200).into(viewHolder.image);
     }
   }
 

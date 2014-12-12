@@ -68,4 +68,11 @@ public class SongParcelable extends Song implements Parcelable {
     for(Song s : songs) l.add(new SongParcelable(s));
     return l;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if(o == null || !(o instanceof SongParcelable)) return false;
+    SongParcelable sp = (SongParcelable)o;
+    return getSpotifyId().equals(sp.getSpotifyId());
+  }
 }

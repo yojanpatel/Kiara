@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.android.fragments;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -34,9 +35,7 @@ import uk.co.yojan.kiara.android.views.FloatingActionButton;
 import uk.co.yojan.kiara.client.data.Song;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -50,6 +49,7 @@ import java.util.List;
 public class SongListFragment extends KiaraFragment {
   private static final String log = SongListFragment.class.getName();
   private static final String ID_PARAM = "id_param";
+  private static final String NAME_PARAM = "name_param";
   private static final String SONG_PARAM = "song_param";
 
   private OnFragmentInteractionListener mListener;
@@ -60,20 +60,22 @@ public class SongListFragment extends KiaraFragment {
   @InjectView(R.id.song_recycler_view) RecyclerView mRecyclerView;
 
   private RecyclerView.LayoutManager mLayoutManager;
-  private KiaraActivity parent;
+  private KiaraActivity activity;
 
   private ArrayList<SongParcelable> songs;
   private long id;
+  private String playlistName;
 
   /*
    * Factory method to create the fragment from the activity.
    * It allows easier transfer of data.
    */
-  public static SongListFragment newInstance(long id, ArrayList<SongParcelable> songs) {
+  public static SongListFragment newInstance(long id, String name, ArrayList<SongParcelable> songs) {
     SongListFragment fragment =  new SongListFragment();
     Bundle args = new Bundle();
     args.putParcelableArrayList(SONG_PARAM, songs);
     args.putLong(ID_PARAM, id);
+    args.putString(NAME_PARAM, name);
     fragment.setArguments(args);
     return fragment;
   }
@@ -91,6 +93,8 @@ public class SongListFragment extends KiaraFragment {
       songs = getArguments().getParcelableArrayList(SONG_PARAM);
       Collections.sort(songs, new SongComparatorByArtist());
       id = getArguments().getLong(ID_PARAM);
+      playlistName = getArguments().getString(NAME_PARAM);
+      Log.d(log, playlistName);
     }
   }
 
@@ -101,10 +105,14 @@ public class SongListFragment extends KiaraFragment {
     ButterKnife.inject(this, rootView);
 
     this.mContext = rootView.getContext();
-    this.parent = (KiaraActivity) getActivity();
+    this.activity = (KiaraActivity) getActivity();
+
+    ActionBar ab = activity.getActionBar();
+    if(ab != null)
+      ab.setTitle(playlistName);
 
     // Use previous set of songs (the ones cached already) until the network call is returned.
-    this.mAdapter = new SongListViewAdapter(new ArrayList<Song>(songs), mContext);
+    this.mAdapter = new SongListViewAdapter(songs, mContext);
     Log.d(log, "Using previous set of songs until network call returned. ");
 
     mRecyclerView.setHasFixedSize(true);
@@ -148,8 +156,13 @@ public class SongListFragment extends KiaraFragment {
 
   @Subscribe
   public void onSongAdded(final SongAdded song) {
-    mAdapter.addSong(song.getSong());
-    Crouton.makeText(parent, "Added song.", Style.CONFIRM).show();
+    SongParcelable sp = new SongParcelable(song.getSong());
+    if(!this.songs.contains(sp)) {
+      Crouton.cancelAllCroutons();
+      Crouton.makeText(activity, "Added song.", Style.CONFIRM).show();
+      this.songs.add(sp);
+      mAdapter.notifyDataSetChanged();
+    }
   }
 
   /*
@@ -159,11 +172,14 @@ public class SongListFragment extends KiaraFragment {
   public void onSongsReceived(final ArrayList<Song> songs) {
     if(songs.size() > 0 && songs.get(0) instanceof Song) {
       Log.d(log, "onSongsReceived, updating the list.");
-      this.songs.clear();
       for (Song s : songs) {
-        this.songs.add(new SongParcelable(s));
+        SongParcelable sp = new SongParcelable(s);
+        if(!this.songs.contains(sp)) {
+          this.songs.add(new SongParcelable(s));
+        }
       }
-      this.mAdapter.updateSongs(songs);
+      mAdapter.notifyDataSetChanged();
+      activity.setProgressBarVisibility(View.GONE);
     }
   }
 

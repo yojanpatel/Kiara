@@ -39,6 +39,7 @@ public class MainActivity extends KiaraActivity
       ButterKnife.inject(this);
       Typeface tf = Typeface.createFromAsset(getAssets(), "fonts/basictitlefont.ttf");
       kiaraTitle.setTypeface(tf);
+      addIndeterminateProgressBar();
 
       // If refreshToken exists, we can use that to get another access token.
       Log.d(LOG, "Access Token has expired.");

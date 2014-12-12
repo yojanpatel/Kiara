@@ -1,6 +1,5 @@
 package uk.co.yojan.kiara.android.activities;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,9 +19,11 @@ public class PlaylistSongListActivity extends KiaraActivity
 
     public static final String SONG_LIST_ARG_KEY = "SONG_LIST_KEY";
     public static final String PLAYLIST_ID_ARG_KEY = "PLAYLIST_ID_ARG_KEY";
+    public static final String PLAYLIST_NAME_ARG_KEY = "PLAYLIST_NAME_ARG_KEY";
 
     private ArrayList<SongParcelable> songs;
     private long id;
+    private String playlistName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,14 +32,17 @@ public class PlaylistSongListActivity extends KiaraActivity
       if(trigger != null) {
         songs = trigger.getParcelableArrayListExtra(SONG_LIST_ARG_KEY);
         id = trigger.getLongExtra(PLAYLIST_ID_ARG_KEY, -1);
+        playlistName = trigger.getStringExtra(PLAYLIST_NAME_ARG_KEY);
+        Log.d(log, playlistName);
       }
 
       setContentView(R.layout.activity_playlist_song_list);
       if (savedInstanceState == null) {
           getFragmentManager().beginTransaction()
-                  .add(R.id.container, SongListFragment.newInstance(id, songs))
+                  .add(R.id.container, SongListFragment.newInstance(id, playlistName, songs))
                   .commit();
       }
+      addIndeterminateProgressBar();
     }
 
     @Override

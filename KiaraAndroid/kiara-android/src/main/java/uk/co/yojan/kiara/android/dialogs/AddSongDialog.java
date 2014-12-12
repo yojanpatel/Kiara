@@ -5,7 +5,6 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,14 +22,10 @@ import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
-import uk.co.yojan.kiara.android.activities.PlayerActivity;
 import uk.co.yojan.kiara.android.adapters.SearchResultAdapter;
 import uk.co.yojan.kiara.android.events.AddSong;
 import uk.co.yojan.kiara.android.events.SearchRequest;
-import uk.co.yojan.kiara.android.events.SearchResultCreateSongEvent;
-import uk.co.yojan.kiara.android.fragments.PlayerFragment;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
-import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.spotify.SearchResult;
 import uk.co.yojan.kiara.client.data.spotify.Track;
 
@@ -87,7 +82,6 @@ public class AddSongDialog extends DialogFragment {
           }
         });
 
-    resultList.setHasFixedSize(true);
     mLayoutManager = new LinearLayoutManager(activity);
     resultList.setLayoutManager(mLayoutManager);
 
@@ -157,11 +151,12 @@ public class AddSongDialog extends DialogFragment {
         new RecyclerItemTouchListener.OnItemClickListener() {
           @Override
           public void onItemClick(View view, int position) {
-            List<Track> tracks = result.getTracks().getTracks();
-            if(position < tracks.size()) {
-              Track track = tracks.get(position);
+            List<Track> tracks = AddSongDialog.this.result.getTracks().getTracks();
+            if(mAdapter.getItemViewType(position) == SearchResultAdapter.TRACK_TYPE) {
+              Track track = tracks.get(position - 1);
               activity.getBus().post(new AddSong(id, track.getId()));
               getDialog().dismiss();
+              Log.d("results", track.getName());
               Crouton.makeText(getActivity(), "Adding " + track.getName(), Style.INFO, (ViewGroup)getView()).show();
             }
           }

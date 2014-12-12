@@ -21,10 +21,10 @@ import uk.co.yojan.kiara.client.data.spotify.Track;
 
 public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-  private static final int TRACK_TYPE = 0;
-  private static final int ARTIST_TYPE = 1;
-  private static final int ALBUM_TYPE = 2;
-  private static final int LABEL_TYPE = 3;
+  public static final int TRACK_TYPE = 0;
+  public static final int ARTIST_TYPE = 1;
+  public static final int ALBUM_TYPE = 2;
+  public static final int LABEL_TYPE = 3;
 
 
   private SearchResult data;
@@ -86,7 +86,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
       vhTrack.albumName.setText(track.getAlbum().getName());
       if(track.getAlbum().getImages().size() > 0) {
         picasso.load(track.getAlbum().getImages().get(0).getUrl())
-            .placeholder(R.drawable.placeholder)
+            .placeholder(R.drawable.ic_placeholder_200)
             .resize(200, 200)
             .into(vhTrack.albumArt);
       }
@@ -98,7 +98,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
       vhArtist.artistName.setText(artist.getName());
       if(artist.getImages().size() > 0) {
         picasso.load(artist.getImages().get(0).getUrl())
-            .placeholder(R.drawable.placeholder)
+            .placeholder(R.drawable.ic_placeholder_200)
             .resize(200, 200)
             .transform(new CircularCropTransformation())
             .into(vhArtist.artistImg);
@@ -111,7 +111,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 //      vhAlbum.artistName.setText(album.getArtists().getArtists().get(0).getName());
       if(album.getImages().size() > 0) {
         picasso.load(album.getImages().get(0).getUrl())
-            .placeholder(R.color.indigo100)
+            .placeholder(R.drawable.ic_placeholder_200)
             .resize(200, 200)
             .into(vhAlbum.albumImg);
       }

@@ -13,10 +13,13 @@ import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.data.Playlist;
 import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
 import uk.co.yojan.kiara.client.data.Song;
+import uk.co.yojan.kiara.client.data.spotify.Track;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+@SuppressWarnings("UnusedDeclaration")
 public class KiaraService {
 
   private static final String log = KiaraService.class.getName();
@@ -65,6 +68,7 @@ public class KiaraService {
         new com.android.volley.Response.Listener<Song[]>() {
           @Override
           public void onResponse(Song[] response) {
+            if(response == null) return;
             Log.d(log, "Successfully got " + response.length + " songs for the playlist. Posting onto the bus.");
             bus.post(new ArrayList<Song>(Arrays.asList(response)));
           }
@@ -133,6 +137,25 @@ public class KiaraService {
         Log.e(log, error.toString());
       }
     } );
+  }
+
+  @Subscribe
+  public void onBatchAddSongs(BatchAddSongs request) {
+    ArrayList<String> ids = new ArrayList<String>();
+    for(Track t : request.getTracks()) ids.add(t.getId());
+    kiaraApi.addSongs(userId, request.getPlaylistId(), ids, new Callback<List<Song>>() {
+      @Override
+      public void success(List<Song> songs, Response response) {
+        Log.d(log, "Added " + songs.size() + " songs.");
+        bus.post(new ArrayList<Song>(songs));
+      }
+
+      @Override
+      public void failure(RetrofitError error) {
+        Log.e(log, error.toString());
+      }
+    });
+
   }
 
 

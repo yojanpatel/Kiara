@@ -14,6 +14,8 @@ public class PlayerActivity extends KiaraActivity {
     protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
 
+      removeTitleBar();
+
       Intent trigger = getIntent();
       if(trigger != null) {
         song = trigger.getParcelableExtra(PlayerFragment.SONG_PARAM);

@@ -11,7 +11,8 @@ import uk.co.yojan.kiara.android.fragments.PlaylistListFragment;
 public class BrowseActivity extends KiaraActivity {
 
   Constants.Case c;
-  String playlistId;
+  Long playlistId;
+  String spotifyPlaylistId;
   String playlistName;
 
   @Override
@@ -21,14 +22,17 @@ public class BrowseActivity extends KiaraActivity {
     Intent trigger = getIntent();
     if(trigger != null) {
       c = (Constants.Case) trigger.getSerializableExtra(PlaylistListFragment.CASE_PARAM);
-      playlistId = trigger.getStringExtra(PlaylistListFragment.PLAYLIST_PARAM);
+      playlistId = trigger.getLongExtra(PlaylistListFragment.PLAYLIST_ID_PARAM, 0);
+      spotifyPlaylistId = trigger.getStringExtra(PlaylistListFragment.PLAYLIST_PARAM);
       playlistName = trigger.getStringExtra(PlaylistListFragment.PLAYLIST_NAME_PARAM);
     }
 
+    FilterTracksFragment ftf = FilterTracksFragment.newInstance(spotifyPlaylistId, playlistName);
+    ftf.setPlaylistId(playlistId);
     setContentView(R.layout.browse_activity);
     if (savedInstanceState == null) {
       getFragmentManager().beginTransaction()
-          .add(R.id.container, FilterTracksFragment.newInstance(playlistId, playlistName))
+          .add(R.id.container, ftf)
           .commit();
     }
   }

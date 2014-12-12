@@ -47,6 +47,7 @@ public class PlaylistListFragment extends KiaraFragment {
   public static final String CASE_PARAM = "CASE_PARAM";
   public static final String USER_PARAM = "USER_PARAM";
   public static final String PLAYLIST_PARAM = "PLAYLIST_PARAM";
+  public static final String PLAYLIST_ID_PARAM = "PLAYLIST_ID_PARAM";
   public static final String PLAYLIST_NAME_PARAM = "PLAYLIST_NAME_PARAM";
   public static final String ALBUM_PARAM = "ALBUM_PARAM";
   public static final String TRACK_PARAM = "TRACK_PARAM";
@@ -129,29 +130,39 @@ public class PlaylistListFragment extends KiaraFragment {
         }
       }
     }));
-
     parent = (KiaraActivity) getActivity();
-    parent.getBus().post(new GetAllPlaylists());
-
     return rootView;
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    parent.getBus().post(new GetAllPlaylists());
+    if(playlists == null)
+      parent.addIndeterminateProgressBar();
   }
 
   @Subscribe
   public void onPlaylistsReceived(final ArrayList<PlaylistWithSongs> rcvd) {
     //noinspection ConstantConditions
+    parent.setProgressBarVisibility(View.INVISIBLE);
+    progressBar.setVisibility(View.INVISIBLE);
     if(rcvd.size() > 0 && rcvd.get(0) instanceof  PlaylistWithSongs) {
-      Log.d(log, "Playlists received. " + rcvd.size());
-      mAdapter.updateList(rcvd);
-      playlists = rcvd;
-      progressBar.setVisibility(View.INVISIBLE);
-      if(c == Constants.Case.Default)
-        setUpFab();
+      if(playlists != null) Log.d(log, playlists.size() + "<" + rcvd.size());
+      if(playlists == null || playlists.size() < rcvd.size()) {
+        Log.d(log, "Playlists received. " + rcvd.size());
+        mAdapter.updateList(rcvd);
+        playlists = rcvd;
+        if (c == Constants.Case.Default)
+          setUpFab();
+      }
     }
   }
 
   @Subscribe
   public void onNewPlaylistCreated(final CreatedPlaylist cp) {
     Crouton.makeText(parent, "New Playlist! " + cp.getPlaylist().getPlaylistName(), Style.CONFIRM);
+    playlists.add(new PlaylistWithSongs(cp.getPlaylist(), null));
     mAdapter.addPlaylist(cp.getPlaylist());
     mAdapter.notifyDataSetChanged();
   }
@@ -186,15 +197,19 @@ public class PlaylistListFragment extends KiaraFragment {
     Log.d(log, "default - Item clicked at position " + position);
     long playlistId = playlists.get(position).getPlaylist().getId();
 
-    /* Look for cached result for the playlist's songs. */
-    List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs("yojanpatel", playlistId);
-    if(songs == null) {
-      songs = playlists.get(position).getSongs();
-    }
-
     Intent i = new Intent(mContext, PlaylistSongListActivity.class);
-    i.putExtra(PlaylistSongListActivity.SONG_LIST_ARG_KEY, SongParcelable.convert(songs));
+
+    /* Look for cached result for the playlist's songs. */
+    String userId = ((KiaraActivity)getActivity()).sharedPreferences().getString(Constants.USER_ID, null);
+    if(userId != null) {
+      List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
+      if (songs == null) {
+        songs = playlists.get(position).getSongs();
+      }
+      i.putExtra(PlaylistSongListActivity.SONG_LIST_ARG_KEY, SongParcelable.convert(songs));
+    }
     i.putExtra(PlaylistSongListActivity.PLAYLIST_ID_ARG_KEY, playlistId);
+    i.putExtra(PlaylistSongListActivity.PLAYLIST_NAME_ARG_KEY, playlists.get(position).getPlaylist().getPlaylistName());
     getBus().post(new GetSongsForPlaylist(playlistId));
     startActivity(i);
   }
@@ -205,13 +220,14 @@ public class PlaylistListFragment extends KiaraFragment {
 
     // Post event to get all tracks for the playlist.
     getBus().post(new FetchPlaylistTracks(userId, playlistId));
+
     // Start the new Activity.
     FragmentManager fm = getFragmentManager();
     Intent intent = new Intent(mContext, BrowseActivity.class);
     intent.putExtra(CASE_PARAM, c);
     intent.putExtra(PLAYLIST_PARAM, playlistId);
     intent.putExtra(PLAYLIST_NAME_PARAM, playlistName);
+    intent.putExtra(PLAYLIST_ID_PARAM, playlists.get(position).getPlaylist().getId());
     startActivity(intent);
-//    FilterTracksDialog.newInstance(playlistId, playlistName).show(fm, "playlist_add_all");
   }
 }

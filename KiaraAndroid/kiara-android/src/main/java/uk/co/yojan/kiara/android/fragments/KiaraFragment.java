@@ -9,6 +9,8 @@ public class KiaraFragment extends Fragment {
   private Bus mBus;
   private boolean registeredToBus;
 
+
+
   @Override
   public void onStart() {
     super.onStart();

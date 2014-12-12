@@ -1,10 +1,13 @@
 package uk.co.yojan.kiara.android.fragments;
 
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,16 +20,24 @@ import com.nispok.snackbar.listeners.ActionClickListener;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import org.apache.commons.lang.StringUtils;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
+import uk.co.yojan.kiara.android.activities.PlaylistSongListActivity;
 import uk.co.yojan.kiara.android.adapters.FilterTracksAdapter;
 import uk.co.yojan.kiara.android.adapters.ParallaxRecyclerAdapter;
+import uk.co.yojan.kiara.android.events.BatchAddSongs;
+import uk.co.yojan.kiara.android.events.GetSongsForPlaylist;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.listeners.SwipeDismissRecyclerViewTouchListener;
+import uk.co.yojan.kiara.android.parcelables.SongParcelable;
+import uk.co.yojan.kiara.android.views.FloatingActionButton;
 import uk.co.yojan.kiara.android.views.FullImageView;
+import uk.co.yojan.kiara.client.data.Song;
 import uk.co.yojan.kiara.client.data.spotify.Playlist;
 import uk.co.yojan.kiara.client.data.spotify.Track;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,11 +54,11 @@ public class FilterTracksFragment extends KiaraFragment {
   @InjectView(R.id.tracks_list) RecyclerView tracksList;
   @InjectView(R.id.progressBar) ProgressBar progressBar;
 
-  private String playlistId;
+  private String spotifyPlaylistId;
   private String playlistName;
   private List<Track> tracks;
+  private long playlistId;
 
-  private FilterTracksAdapter mAdapter;
   private SwipeDismissRecyclerViewTouchListener touchListener;
   private ParallaxRecyclerAdapter<Track> parallaxAdapter;
   private RecyclerView.LayoutManager mLayoutManager;
@@ -55,7 +66,7 @@ public class FilterTracksFragment extends KiaraFragment {
 
   public static FilterTracksFragment newInstance(String spotifyPlaylistId, String playlistName) {
     FilterTracksFragment ftf = new FilterTracksFragment();
-    ftf.setPlaylistId(spotifyPlaylistId);
+    ftf.setSpotifyPlaylistId(spotifyPlaylistId);
     ftf.setPlaylistName(playlistName);
     return ftf;
   }
@@ -68,6 +79,7 @@ public class FilterTracksFragment extends KiaraFragment {
     ButterKnife.inject(this, view);
     this.mContext = view.getContext();
     picasso = Picasso.with(mContext);
+    picasso.setIndicatorsEnabled(false);
     initRecyclerView();
     return view;
   }
@@ -107,11 +119,12 @@ public class FilterTracksFragment extends KiaraFragment {
               mLayoutManager.removeView(mLayoutManager.getChildAt(position));
               Log.d("FilterTracksFragment", "Swiped " + removedTrack.getName());
               tracks.remove(position);
-              mAdapter.notifyDataSetChanged();
+              parallaxAdapter.notifyDataSetChanged();
 
               /* Display the Undo Snackbar */
               Snackbar.with(mContext).text(removedTrack.getName() + " removed.")
                   .actionLabel("Undo")
+                  .actionColor(getResources().getColor(R.color.pinkA100))
                   .actionListener(new ActionClickListener() {
                     @Override
                     public void onActionClicked() {
@@ -119,15 +132,12 @@ public class FilterTracksFragment extends KiaraFragment {
                       tracks.add(position, removedTrack);
                       parallaxAdapter.notifyDataSetChanged();
                     }
-                  })
-                  .show(activity);
+                  }).show(activity);
             }
           }
         });
     tracksList.setOnTouchListener(touchListener);
 
-    /* Set scroll listener so we don't look for swipes during scrolling. */
-//    tracksList.setOnScrollListener(touchListener.makeScrollListener());
     tracksList.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {
       @Override
       public void onItemClick(View view, int position) {
@@ -171,6 +181,12 @@ public class FilterTracksFragment extends KiaraFragment {
         return tracks.size();
       }
     });
+    parallaxAdapter.setOnParallaxScroll(new ParallaxRecyclerAdapter.OnParallaxScroll() {
+      @Override
+      public void onParallaxScroll(float percentage, float offset, View parallax) {
+        // TODO(yojan): change toolbar opacity
+      }
+    });
     this.parallaxAdapter.setSwipeDismissRecyclerViewTouchListener(touchListener);
   }
 
@@ -179,25 +195,61 @@ public class FilterTracksFragment extends KiaraFragment {
     Log.d("FilterTracksDialog", "Received Playlist consisting of " + playlist.getTrackList().size() + " tracks.");
     progressBar.setVisibility(View.INVISIBLE);
     tracksList.setVisibility(View.VISIBLE);
-//    playlistImg.setVisibility(View.VISIBLE);
-//    picasso.load(playlist.getImageUrl()).into(playlistImg);
     this.tracks = playlist.getTrackList();
-    this.mAdapter = new FilterTracksAdapter(tracks, mContext);
     initParallax();
     tracksList.setAdapter(parallaxAdapter);
-//    tracksList.setAdapter(mAdapter);
 
     View headerView = activity.getLayoutInflater().inflate(R.layout.header_image, null);
     parallaxAdapter.setParallaxHeader(headerView, tracksList);
     picasso.load(playlist.getImageUrl()).into((FullImageView)headerView.findViewById(R.id.header_image));
     ((TextView)headerView.findViewById(R.id.playlist_name)).setText(playlistName.toUpperCase());
+    setUpFab();
   }
 
-  public void setPlaylistId(String playlistId) {
-    this.playlistId = playlistId;
+  private void setUpFab() {
+    Drawable plus = getResources().getDrawable(R.drawable.ic_playlist_add_white_24dp);
+    FloatingActionButton fab = new FloatingActionButton.Builder(getActivity())
+        .withButtonColor(getResources().getColor(R.color.pinkA200))
+        .withDrawable(plus)
+        .withGravity(Gravity.BOTTOM | Gravity.RIGHT)
+        .withMargins(0, 0, 24, 24)
+        .create();
+    fab.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        getBus().post(new BatchAddSongs(new ArrayList<Track>(tracks), playlistId));
+
+        Intent i = new Intent(mContext, PlaylistSongListActivity.class);
+        /* Look for cached result for the playlist's songs. */
+        String userId = activity.sharedPreferences().getString(Constants.USER_ID, null);
+        if(userId != null) {
+          List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
+          if (songs != null) {
+            i.putExtra(PlaylistSongListActivity.SONG_LIST_ARG_KEY, SongParcelable.convert(songs));
+          }
+        }
+        i.putExtra(PlaylistSongListActivity.PLAYLIST_ID_ARG_KEY, spotifyPlaylistId);
+        i.putExtra(PlaylistSongListActivity.PLAYLIST_NAME_ARG_KEY, "Playlist");
+        getBus().post(new GetSongsForPlaylist(playlistId));
+        startActivity(i);
+      }
+    });
+    fab.showFloatingActionButton();
+  }
+
+  public void setSpotifyPlaylistId(String spotifyPlaylistId) {
+    this.spotifyPlaylistId = spotifyPlaylistId;
   }
 
   public void setPlaylistName(String name) {
     this.playlistName = name;
+  }
+
+  public long getPlaylistId() {
+    return playlistId;
+  }
+
+  public void setPlaylistId(long playlistId) {
+    this.playlistId = playlistId;
   }
 }

@@ -2,6 +2,7 @@ package uk.co.yojan.kiara.android.adapters;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,23 +13,20 @@ import butterknife.InjectView;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.comparators.SongComparatorByArtist;
+import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.Song;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 
 public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapter.ViewHolder> {
 
-  private List<Song> data;
+  private List<SongParcelable> data;
   private Context mContext;
   private static Picasso picasso;
 
-  public SongListViewAdapter(List<Song> songs, Context context) {
+  public SongListViewAdapter(List<SongParcelable> songs, Context context) {
     this.data = songs;
     this.mContext = context;
     picasso = Picasso.with(mContext);
@@ -51,7 +49,7 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
     viewHolder.artistName.setText(s.getArtistName());
     viewHolder.albumName.setText(s.getAlbumName());
     picasso.load(s.getImageURL())
-        .placeholder(R.drawable.placeholder)
+        .placeholder(R.drawable.ic_placeholder_150)
         .resize(150, 150)
         .into(viewHolder.albumArt);
   }
@@ -61,13 +59,15 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
     return data.size();
   }
 
-  public void addSong(Song song) {
+  public void addSong(SongParcelable song) {
+    Log.d("ADAPTER", "ADDSONG");
     data.add(song);
     Collections.sort(this.data, new SongComparatorByArtist());
     notifyDataSetChanged();
   }
 
-  public void updateSongs(List<Song> songs) {
+  public void updateSongs(List<SongParcelable> songs) {
+    Log.d("ADAPTER", "UPDATESONG");
     this.data.clear();
     this.data.addAll(songs);
     Collections.sort(this.data, new SongComparatorByArtist());
