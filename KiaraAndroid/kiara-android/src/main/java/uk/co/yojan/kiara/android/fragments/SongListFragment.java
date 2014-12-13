@@ -189,7 +189,7 @@ public class SongListFragment extends KiaraFragment {
         .withButtonColor(getResources().getColor(R.color.pinkA200))
         .withDrawable(plus)
         .withGravity(Gravity.BOTTOM | Gravity.RIGHT)
-        .withMargins(0, 0, 24, 24)
+        .withMargins(0, 0, 24, 24 + 50)
         .create();
 
     fab.setOnClickListener(new View.OnClickListener() {

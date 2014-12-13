@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.fragments.PlayerControlFragment;
 import uk.co.yojan.kiara.android.fragments.PlaylistListFragment;
 
 import java.net.MalformedURLException;
@@ -28,9 +29,8 @@ public class PlaylistViewActivity extends KiaraActivity {
       }
       Bundle args = intialiseArgs(urlData, subjData);
       if (savedInstanceState == null) {
-          getFragmentManager().beginTransaction()
-                  .add(R.id.container, PlaylistListFragment.newInstance(args))
-                  .commit();
+        getFragmentManager().beginTransaction()
+            .add(R.id.container, PlaylistListFragment.newInstance(args)).commit();
       } else {
         Log.d(log, "Fragment PlaylistListFragment already attached.");
         if(args != null) {
@@ -39,10 +39,21 @@ public class PlaylistViewActivity extends KiaraActivity {
       }
     }
 
+  @Override
+  protected void onResume() {
+    Log.d(log, "onResume");
+    super.onResume();
+    if(sharedPreferences().getBoolean(Constants.IN_SESSION, false)) {
+      Log.d(log, "adding control fragment to activity.");
+      getFragmentManager().beginTransaction()
+          .add(R.id.controller_container, PlayerControlFragment.newInstance()).commit();
+    }
+  }
+
   /* Spotify sharing URL patterns
-   * http://open.spotify.com/user/{userId}/playlist/{playlistId}
-   * http://open.spotify.com/album/{albumId}
-   * http://open.spotify.com/track/{trackId} */
+     * http://open.spotify.com/user/{userId}/playlist/{playlistId}
+     * http://open.spotify.com/album/{albumId}
+     * http://open.spotify.com/track/{trackId} */
   private Bundle intialiseArgs(String url, String title) {
     if (url != null) {
       Bundle args = new Bundle();

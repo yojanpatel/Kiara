@@ -3,12 +3,14 @@ package uk.co.yojan.kiara.android.fragments;
 import android.app.Fragment;
 import com.squareup.otto.Bus;
 import uk.co.yojan.kiara.android.KiaraApplication;
+import uk.co.yojan.kiara.android.activities.KiaraActivity;
 
 public class KiaraFragment extends Fragment {
 
   private Bus mBus;
   private boolean registeredToBus;
 
+  private KiaraActivity parent;
 
 
   @Override
@@ -42,5 +44,10 @@ public class KiaraFragment extends Fragment {
 
   public KiaraApplication getKiaraApplication() {
     return (KiaraApplication)getActivity().getApplication();
+  }
+
+  public KiaraActivity getKiaraActivity() {
+    if(parent == null) parent = (KiaraActivity) getActivity();
+    return parent;
   }
 }

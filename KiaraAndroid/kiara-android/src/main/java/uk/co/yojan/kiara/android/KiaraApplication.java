@@ -91,9 +91,11 @@ public class KiaraApplication extends Application {
 
   // Instantiate the KiaraService to handle the REST calls with Kiara server.
   public void initKiaraService(String userId) {
-    Log.d(log, "Initializing the Kiara Service and registering to the event bus.");
-    kiaraService = new KiaraService(kiaraApi, getBus(), userId, client);
-    getBus().register(kiaraService);
+    if(kiaraService == null) {
+      Log.d(log, "Initializing the Kiara Service and registering to the event bus.");
+      kiaraService = new KiaraService(kiaraApi, getBus(), userId, client);
+      getBus().register(kiaraService);
+    }
   }
 
   public EncryptedSharedPreferences sharedPreferences() {

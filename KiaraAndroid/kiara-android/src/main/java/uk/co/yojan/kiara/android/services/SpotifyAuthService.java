@@ -10,7 +10,6 @@ import uk.co.yojan.kiara.android.events.AuthCodeGrantRequest;
 import uk.co.yojan.kiara.android.events.AuthCodeGrantResponse;
 import uk.co.yojan.kiara.android.events.RefreshAccessTokenRequest;
 import uk.co.yojan.kiara.android.events.RefreshAccessTokenResponse;
-import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.SpotifyAuthInterface;
 import uk.co.yojan.kiara.client.data.AuthorizationCodeGrant;
 import uk.co.yojan.kiara.client.data.RefreshAccessToken;
@@ -62,6 +61,7 @@ public class SpotifyAuthService {
     api.refreshAccessToken(event.getRefreshToken(), new Callback<RefreshAccessToken>() {
       @Override
       public void success(RefreshAccessToken credentials, Response response) {
+        Log.d(log, "SUCCESS");
         bus.post(new RefreshAccessTokenResponse(
             credentials.getAccessToken(),
             credentials.getExpiresIn()));

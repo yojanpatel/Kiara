@@ -1,0 +1,55 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             tools:context="uk.co.yojan.kiara.android.fragments.PlayerControlFragment"
+    android:background="@color/grey900">
+
+  <View
+      android:layout_width="fill_parent"
+      android:layout_height="2dp"
+      android:id="@+id/divider"
+      android:background="@color/pinkA200"/>
+
+  <ImageView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:id="@+id/album_image"
+      android:padding="8dp"
+      android:src="@drawable/ic_placeholder_150"/>
+
+  <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:id="@+id/song_name"
+      android:textColor="@color/grey200"
+      android:textSize="16sp"
+      android:layout_toRightOf="@id/album_image"
+      android:padding="4dp"
+      android:text="Same Old Song"
+      android:singleLine="true"
+      android:layout_marginTop="8dp"/>
+
+  <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:id="@+id/detail"
+      android:textColor="@color/grey400"
+      android:textSize="14sp"
+      android:layout_below="@id/song_name"
+      android:layout_alignLeft="@id/song_name"
+      android:paddingLeft="4dp"
+      android:singleLine="true"
+      android:text="The Weeknd - Trilogy"
+      />
+
+  <ImageButton
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:background="@color/transparent"
+      android:id="@+id/playpause"
+      android:layout_alignParentRight="true"
+      android:layout_centerVertical="true"
+      android:padding="8dp"
+      android:src="@drawable/ic_play_arrow_grey300_48dp"/>
+</RelativeLayout>

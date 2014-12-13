@@ -6,7 +6,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.fragments.PlayerControlFragment;
 import uk.co.yojan.kiara.android.fragments.SongListFragment;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 
@@ -44,6 +46,17 @@ public class PlaylistSongListActivity extends KiaraActivity
       }
       addIndeterminateProgressBar();
     }
+
+  @Override
+  protected void onResume() {
+    Log.d(log, "onResume");
+    super.onResume();
+    if(sharedPreferences().getBoolean(Constants.IN_SESSION, false)) {
+      Log.d(log, "adding control fragment to activity.");
+      getFragmentManager().beginTransaction()
+          .add(R.id.controller_container, PlayerControlFragment.newInstance()).commit();
+    }
+  }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

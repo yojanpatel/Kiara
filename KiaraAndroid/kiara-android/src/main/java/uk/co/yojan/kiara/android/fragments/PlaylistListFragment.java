@@ -16,9 +16,11 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.android.volley.VolleyError;
 import com.squareup.otto.Subscribe;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
+import retrofit.RetrofitError;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.BrowseActivity;
@@ -179,7 +181,7 @@ public class PlaylistListFragment extends KiaraFragment {
         .withButtonColor(getResources().getColor(R.color.pinkA200))
         .withDrawable(plus)
         .withGravity(Gravity.BOTTOM | Gravity.RIGHT)
-        .withMargins(0, 0, 24, 24)
+        .withMargins(0, 0, 24, 24 + 60)
         .create();
 
     fab.setOnClickListener(new View.OnClickListener() {
@@ -229,5 +231,22 @@ public class PlaylistListFragment extends KiaraFragment {
     intent.putExtra(PLAYLIST_NAME_PARAM, playlistName);
     intent.putExtra(PLAYLIST_ID_PARAM, playlists.get(position).getPlaylist().getId());
     startActivity(intent);
+  }
+
+
+  @Subscribe
+  public void onError(VolleyError error) {
+    parent.toast("Oops. Something went wrong.");
+    parent.getBus().post(new GetAllPlaylists());
+    if(playlists == null)
+      parent.addIndeterminateProgressBar();
+  }
+
+  @Subscribe
+  public void onError(RetrofitError error) {
+    parent.toast("Oops. Something went wrong.");
+    parent.getBus().post(new GetAllPlaylists());
+    if(playlists == null)
+      parent.addIndeterminateProgressBar();
   }
 }

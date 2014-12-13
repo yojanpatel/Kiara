@@ -2,6 +2,9 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -9,22 +12,26 @@ import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-import com.android.volley.VolleyError;
+import com.spotify.sdk.android.authentication.AuthenticationResponse;
+import com.spotify.sdk.android.authentication.SpotifyAuthentication;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
-import retrofit.RetrofitError;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
 import uk.co.yojan.kiara.android.KiaraApplication;
 import uk.co.yojan.kiara.android.background.MusicService;
+import uk.co.yojan.kiara.android.events.*;
 import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
+import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
 /**
  * Base Activity class which performs functionality common to all activities
  * in the app.
  */
 public class KiaraActivity extends Activity {
+  private static final String LOG = KiaraActivity.class.getName();
 
   private boolean bound;
   private MusicService musicService;
@@ -35,15 +42,54 @@ public class KiaraActivity extends Activity {
 
   private boolean registeredToBus;
 
+  // callback for when all stages of authentication are complete
+  public AuthenticationCallback authCallback;
+
+  /**
+   * Every activity has responsibility to check Spotify access token is still valid,
+   * and refresh if not.
+   */
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    if (loggedIn()) {
+      if (accessExpired()) {
+        // If refreshToken exists, we can use that to get another access token.
+        Log.d(LOG, "Access Token has expired.");
+        String refreshToken = sharedPreferences().getString(Constants.REFRESH_TOKEN, null);
+        if (refreshToken != null) {
+          Log.d(LOG, "Requesting Access Token refresh using the refresh token.");
+          getBus().post(new RefreshAccessTokenRequest(refreshToken));
+        }
+      } else {
+        Log.d(LOG, "logged in and access token is still valid.");
+        authCallback();
+      }
+    } else {
+        // go to main activity and prompt to log in.
+        Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
+        SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
+            new String[]{"user-read-private", "streaming"}, null, this);
+    }
+
+
+  }
+
   @Override
   public void onStart() {
+    Log.d(LOG, "onStart()");
     super.onStart();
 
     Intent bind = new Intent(this, MusicService.class);
     // bindService(bind, mConnection, Context.BIND_AUTO_CREATE);
 
-    if(!registeredToBus)
+    if(!registeredToBus) {
       getBus().register(this);
+      getBus().register(authEventHandler);
+    }
+
+
     registeredToBus = true;
     getKiaraApplication().eventBuffer().stopAndProcess();
   }
@@ -60,12 +106,62 @@ public class KiaraActivity extends Activity {
     }*/
 
     getKiaraApplication().eventBuffer().startSaving();
-    if(registeredToBus)
+    if(registeredToBus) {
       getBus().unregister(this);
+      getBus().unregister(authEventHandler);
+    }
     registeredToBus = false;
 
     Crouton.cancelAllCroutons();
   }
+
+  @Override
+  protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    Uri uri = intent.getData();
+    if(uri != null) {
+      AuthenticationResponse response = SpotifyAuthentication.parseOauthResponse(uri);
+      String code = response.getCode();
+      getBus().post(new AuthCodeGrantRequest(code));
+    }
+  }
+
+  private final Object authEventHandler = new Object() {
+
+    @Subscribe
+    public void onAuthCodeGrantComplete(AuthCodeGrantResponse event) {
+      Log.d(LOG, "AuthCodeGrant flow complete.");
+      sharedPreferences().edit()
+          .putString(Constants.ACCESS_TOKEN, event.getAccessToken())
+          .putLong(Constants.ACCESS_DEADLINE, getTimestamp() + (1000 * (event.getExpiresIn() - 60)))
+          .putString(Constants.REFRESH_TOKEN, event.getRefreshToken())
+          .commit();
+      getBus().post(new CurrentUserRequest());
+    }
+
+    @Subscribe
+    public void onRefreshAccessComplete(RefreshAccessTokenResponse event) {
+      Log.d(LOG, "RefreshAccessComplete.");
+      sharedPreferences().edit()
+          .putString(Constants.ACCESS_TOKEN, event.getAccessToken())
+          .putLong(Constants.ACCESS_DEADLINE, getTimestamp() + (1000 * (event.getExpiresIn() - 60)))
+          .commit();
+      authCallback();
+    }
+
+    // Get basic user information and update the shared preferences.
+    @Subscribe
+    public void onCurrentUser(SpotifyUser user) {
+      sharedPreferences().edit()
+          .putString(Constants.USER_ID, user.getId())
+          .putString(Constants.USER_IMG_URL, user.getPrimaryImageURL())
+          .putString(Constants.USER_TYPE, user.getType()).commit();
+      getKiaraApplication().initKiaraService(user.getId());
+      Toast.makeText(getApplicationContext(), sharedPreferences().getString(Constants.USER_ID, null), Toast.LENGTH_SHORT).show();
+      authCallback();
+    }
+  };
+
 
   public Bus getBus() {
     if(mBus == null) {
@@ -96,6 +192,13 @@ public class KiaraActivity extends Activity {
 
   public MusicService getMusicService() {
     return musicService;
+  }
+
+  private void authCallback() {
+    getKiaraApplication().initKiaraService(getUserId());
+    if(authCallback != null) {
+      authCallback.onAccessTokenValidated();
+    }
   }
 
   public long getTimestamp() {
@@ -142,14 +245,25 @@ public class KiaraActivity extends Activity {
     }
   }
 
-
-  @Subscribe
-  public void onError(VolleyError error) {
-    toast("Oops. Something went wrong.");
+  public boolean accessExpired() {
+    String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
+    if(accessToken == null) {
+      return true;
+    }
+    return (sharedPreferences().getLong(Constants.ACCESS_DEADLINE, 0L) < getTimestamp());
   }
 
-  @Subscribe
-  public void onError(RetrofitError error) {
-    toast("Oops. Something went wrong.");
+  private boolean loggedIn() {
+    return getUserId() != null;
+  }
+
+  public String getUserId() {
+    return sharedPreferences().getString(Constants.USER_ID, null);
+  }
+
+
+  public void initialiseAuthCallbacks(AuthenticationCallback authCallback) {
+    Log.d(LOG, "init callbacks " + (authCallback == null));
+    this.authCallback = authCallback;
   }
 }

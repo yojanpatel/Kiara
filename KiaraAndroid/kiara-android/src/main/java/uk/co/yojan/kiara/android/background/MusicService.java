@@ -78,7 +78,7 @@ public class MusicService extends Service
     if(intent.getBooleanExtra(Constants.PLAY_ACTION, false)) {
       String spotifyUri = intent.getStringExtra(Constants.SONG_URI);
       if(spotifyUri != null) {
-        playSong(spotifyUri);
+//        playSong(spotifyUri);
       }
     }
     return START_STICKY;
@@ -110,6 +110,7 @@ public class MusicService extends Service
     Log.d(log, "onDestroy");
     application.getBus().unregister(this);
     Spotify.destroyPlayer(this);
+    sharedPreferences().edit().putBoolean(Constants.IN_SESSION, false).commit();
     super.onDestroy();
   }
 
@@ -164,19 +165,46 @@ public class MusicService extends Service
         if(player != null && playing) {
           player.getPlayerState(MusicService.this);
         }
-        mHandler.postDelayed(this, 1000);
+        mHandler.postDelayed(this, 500);
       }
     };
   }
 
-  public void setCurrentSong(Song song) {
-    currentSong = song;
-  }
 
   public void playSong(String spotifyUri) {
     Log.d(log, "Playing Song " + spotifyUri);
     playing = true;
     player.play("spotify:track:"+spotifyUri);
+    mHandler.post(mRunnable);
+    acquireLocks();
+  }
+
+  public void playSong(Song song) {
+    Log.d(log, "Playing song " + song.getSongName());
+    playing = true;
+    sharedPreferences().edit().putBoolean(Constants.IN_SESSION, true).commit();
+    currentSong = song;
+    player.play("spotify:track:" + song.getSpotifyId());
+
+    mHandler.post(mRunnable);
+    acquireLocks();
+  }
+
+  public void playSongWeak(Song song) {
+    playing = true;
+    if(currentSong == null || !currentSong.getSpotifyId().equals(song.getSpotifyId())) {
+      currentSong = song;
+      player.play("spotify:track:" + song.getSpotifyId());
+    } else {
+      if(isPlaying()) {
+        // pass
+      } else {
+        player.resume();
+      }
+    }
+
+    sharedPreferences().edit().putBoolean(Constants.IN_SESSION, true).commit();
+    playing = true;
     mHandler.post(mRunnable);
     acquireLocks();
   }
@@ -227,6 +255,7 @@ public class MusicService extends Service
    */
   public boolean toggleFav() {
     favourited = !favourited;
+    Log.d(log, currentSong.getSongName() + " favourited ? " + favourited);
     return favourited;
   }
 
@@ -258,7 +287,6 @@ public class MusicService extends Service
       public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
         currentSongAlbumCover = bitmap;
         startForeground(37, buildNotif());
-        playSong(currentSong.getSpotifyId());
       }
 
       @Override
@@ -314,6 +342,17 @@ public class MusicService extends Service
     }
   }
 
+  public Song getCurrentSong() {
+    if(currentSong != null)
+      Log.d(log, "Current song is " + currentSong.getSongName());
+    else
+      Log.d(log, "Current song is null");
+    return currentSong;
+  }
+
+  public boolean isPlaying() {
+    return playing;
+  }
 
   /**
    * Class used for the client Binder.  Because we know this service always

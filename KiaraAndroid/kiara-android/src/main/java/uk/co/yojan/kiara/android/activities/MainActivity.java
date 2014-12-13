@@ -2,27 +2,19 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.content.Intent;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import com.spotify.sdk.android.authentication.AuthenticationResponse;
-import com.spotify.sdk.android.authentication.SpotifyAuthentication;
 import com.spotify.sdk.android.playback.ConnectionStateCallback;
-import com.squareup.otto.Subscribe;
-import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.events.*;
-import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
 
 public class MainActivity extends KiaraActivity
-  implements ConnectionStateCallback {
+  implements ConnectionStateCallback, AuthenticationCallback {
 
   private String LOG = MainActivity.class.getName();
 
@@ -30,16 +22,19 @@ public class MainActivity extends KiaraActivity
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    initialiseAuthCallbacks(this);
+
     super.onCreate(savedInstanceState);
 
+    removeTitleBar();
+    setContentView(R.layout.activity_main);
+    ButterKnife.inject(this);
+    Typeface tf = Typeface.createFromAsset(getAssets(), "fonts/basictitlefont.ttf");
+    kiaraTitle.setTypeface(tf);
+    addIndeterminateProgressBar();
+
+    /*
     if(accessExpired()) {
-      // Inflate the layout to display while authentication, data flow is carried out.
-      removeTitleBar();
-      setContentView(R.layout.activity_main);
-      ButterKnife.inject(this);
-      Typeface tf = Typeface.createFromAsset(getAssets(), "fonts/basictitlefont.ttf");
-      kiaraTitle.setTypeface(tf);
-      addIndeterminateProgressBar();
 
       // If refreshToken exists, we can use that to get another access token.
       Log.d(LOG, "Access Token has expired.");
@@ -54,9 +49,9 @@ public class MainActivity extends KiaraActivity
       }
     } else {
       String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
-      getBus().post(new RefreshAccessTokenResponse(accessToken, -1));
+//      getBus().post(new RefreshAccessTokenResponse(accessToken, -1));
       finishLoading();
-    }
+    } */
   }
 
   @Override
@@ -65,6 +60,7 @@ public class MainActivity extends KiaraActivity
     getMenuInflater().inflate(R.menu.main, menu);
     return true;
   }
+  /*
 
   @Override
   protected void onNewIntent(Intent intent) {
@@ -76,7 +72,7 @@ public class MainActivity extends KiaraActivity
       Log.d(LOG, "Code: " + code);
       getBus().post(new AuthCodeGrantRequest(code));
     }
-  }
+  } */
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
@@ -90,69 +86,14 @@ public class MainActivity extends KiaraActivity
     return super.onOptionsItemSelected(item);
   }
 
-  public boolean accessExpired() {
-    String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
-    if(accessToken == null) {
-      return true;
-    }
-    return (sharedPreferences().getLong(Constants.ACCESS_DEADLINE, 0L) < getTimestamp());
-  }
-
-  // Event Bus listeners.
-  @Subscribe
-  public void onAuthCodeGrantComplete(AuthCodeGrantResponse event) {
-    Log.d(LOG, "AuthCodeGrant flow complete.");
-    sharedPreferences().edit()
-        .putString(Constants.ACCESS_TOKEN, event.getAccessToken())
-        .putLong(Constants.ACCESS_DEADLINE, getTimestamp() + (1000 * (event.getExpiresIn() - 60)))
-        .putString(Constants.REFRESH_TOKEN, event.getRefreshToken())
-        .commit();
-    finishLoading();
-  }
-
-  @Subscribe
-  public void onRefreshAccessComplete(RefreshAccessTokenResponse event) {
-    sharedPreferences().edit()
-        .putString(Constants.ACCESS_TOKEN, event.getAccessToken())
-        .putLong(Constants.ACCESS_DEADLINE, getTimestamp() + (1000 * (event.getExpiresIn() - 60)))
-        .commit();
-    finishLoading();
-  }
-
-  public void finishLoading() {
-    // UI change, intent triggered for next screen.
-    toast("Authenticated.");
-
-    // Get the current user's details since they may have been updated.
-    String userId = sharedPreferences().getString(Constants.USER_ID, null);
-    if(userId != null) {
-      getKiaraApplication().initKiaraService(userId);
-      goToPlaylistViewActivity();
-    } else {
-      getBus().post(new CurrentUserRequest());
-    }
-  }
-
-  // Get basic user information and update the shared preferences.
-  @Subscribe
-  public void onCurrentUser(SpotifyUser user) {
-    sharedPreferences().edit()
-        .putString(Constants.USER_ID, user.getId())
-        .putString(Constants.USER_IMG_URL, user.getPrimaryImageURL())
-        .putString(Constants.USER_TYPE, user.getType()).commit();
-    getKiaraApplication().initKiaraService(user.getId());
-    Toast.makeText(getApplicationContext(), sharedPreferences().getString(Constants.USER_ID, null), Toast.LENGTH_SHORT).show();
-
-    goToPlaylistViewActivity();
-  }
-
-  private void goToPlaylistViewActivity() {
+  @Override
+  public void onAccessTokenValidated() {
+    Log.d(LOG, "onAccessTokenValidated");
     Intent i = new Intent(this, PlaylistViewActivity.class);
     i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
     startActivity(i);
     finish();
   }
-
 
   // ConnectionState Callbacks.
 

@@ -26,7 +26,6 @@ import com.spotify.sdk.android.playback.PlayerStateCallback;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.background.MusicService;
 import uk.co.yojan.kiara.android.background.MusicStateCallback;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
@@ -41,7 +40,6 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
   private static final String log = PlayerFragment.class.getName();
   public static final String SONG_PARAM = "SONG";
 
-  private KiaraActivity parent;
   private Context mContext;
   private static Picasso picasso;
 
@@ -99,7 +97,6 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
     ButterKnife.inject(this, rootView);
     this.mContext = rootView.getContext();
 
-    parent = (KiaraActivity) getActivity();
     Resources res = getResources();
     pause = res.getDrawable(R.drawable.ic_pause_circle_fill_white_48dp);
     play = res.getDrawable(R.drawable.ic_play_circle_fill_white_48dp);
@@ -108,9 +105,9 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
 
 
     Intent startService = new Intent(mContext, MusicService.class);
-    parent.startService(startService);
+    getKiaraActivity().startService(startService);
     Intent bind = new Intent(mContext, MusicService.class);
-    parent.bindService(bind, mConnection, Context.BIND_AUTO_CREATE);
+    getKiaraActivity().bindService(bind, mConnection, Context.BIND_AUTO_CREATE);
 
     initButtons();
     initialiseSeekBar();
@@ -129,7 +126,7 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
     ButterKnife.reset(this);
     Spotify.destroyPlayer(this);
     if (bound) {
-      parent.unbindService(mConnection);
+      getKiaraActivity().unbindService(mConnection);
       bound = false;
     }
   }
@@ -178,6 +175,14 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
     });
   }
 
+  private void setPlayPauseImageResource(boolean playing) {
+    if(playing) {
+      playpause.setImageDrawable(pause);
+    } else {
+      playpause.setImageDrawable(play);
+    }
+  }
+
   @Override
   public void onPlaybackEvent(EventType eventType, PlayerState playerState) {
     Log.d(log, "Playback event received " + eventType.name());
@@ -214,7 +219,7 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
       int seconds = currentPosition % 60;
       String elapsedText  = "";
       if(hours > 0) elapsedText = hours + ".";
-      elapsedText += mins + "." + seconds;
+      elapsedText += mins + "." + (seconds < 10 ? "0" : "") + seconds;
       elapsed.setText(elapsedText);
     }
   }
@@ -229,8 +234,9 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
       MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
       musicService = binder.getService();
       bound = true;
-      musicService.setCurrentSong(currentSong);
+      musicService.playSongWeak(currentSong);
       musicService.startForeground();
+      setPlayPauseImageResource(musicService.isPlaying());
     }
 
     @Override

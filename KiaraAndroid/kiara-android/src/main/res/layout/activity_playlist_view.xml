@@ -1,8 +1,22 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/grey900"
-    tools:context="uk.co.yojan.kiara.android.activities.PlaylistViewActivity"
-    tools:ignore="MergeRootFrame" />
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                tools:context="uk.co.yojan.kiara.android.activities.PlaylistViewActivity"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent">
+
+  <FrameLayout
+      android:id="@+id/controller_container"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_alignParentBottom="true"/>
+
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/grey900"
+        android:layout_above="@id/controller_container"/>
+
+
+
+</RelativeLayout>
