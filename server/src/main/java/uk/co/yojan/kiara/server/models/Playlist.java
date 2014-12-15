@@ -36,15 +36,23 @@ public class Playlist {
 
   // Sliding window of the recent listening history
   private int WINDOW_SIZE = 5;
-  public Queue<String> history;
+  public LinkedList<String> history;
 
   public void nowPlaying(String songId) {
     if(history == null) history = new LinkedList<>();
-
+    log.info(history.size() + " size");
     if(history.size() >= WINDOW_SIZE) {
+      log.info(history.size() + " window full, removing.");
       history.poll();
     }
     history.add(songId);
+    ofy().save().entity(this).now();
+  }
+
+  public String previousSong() {
+    if(history.size() > 0)
+      return history.getLast();
+    else return null;
   }
 
 

@@ -65,8 +65,8 @@ public class QLearner {
    * @param currentSong the song on what the action was carried out
    * @param reward  the reward emitted from the reward function
    */
-  public void foo(LeafCluster previousSong, LeafCluster currentSong, double reward) {
-    
+  public static void update(LeafCluster previousSong, LeafCluster currentSong, double reward) {
+
     // LCA is the first NodeCluster going towards the root (i.e. following parent links)
     // such that the shadow contains both the previous song id, and the current song id.
     NodeCluster ancestor = ofy().load().key(previousSong.getParent()).now();
@@ -105,7 +105,7 @@ public class QLearner {
    * @param songIdB the song id for the second song.
    * @return true if the songs represented by songIdA and songIdB have node as a common ancestor.
    */
-  public boolean commonAncestor(NodeCluster node, String songIdA, String songIdB) {
+  public static boolean commonAncestor(NodeCluster node, String songIdA, String songIdB) {
     return node.getSongIds().contains(songIdA) && node.getSongIds().contains(songIdB);
   }
 }

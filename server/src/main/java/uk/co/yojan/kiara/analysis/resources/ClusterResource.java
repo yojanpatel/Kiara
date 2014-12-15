@@ -38,6 +38,17 @@ public class ClusterResource {
     if(root == null) return Response.noContent().build();
 
     StringBuilder html = new StringBuilder();
+
+
+    List<List<Double>> Q = root.getQ();
+    for(List<Double> stateRow : Q) {
+      for(Double q : stateRow) {
+        html.append(q + " || ");
+      }
+      html.append("<br>");
+    }
+    html.append("<br><br>");
+
     Stack<Cluster> stack = new Stack<>();
     stack.push(root);
 

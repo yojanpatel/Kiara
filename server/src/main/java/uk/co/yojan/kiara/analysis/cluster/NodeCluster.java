@@ -2,6 +2,7 @@ package uk.co.yojan.kiara.analysis.cluster;
 
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
+import com.googlecode.objectify.annotation.Serialize;
 import com.googlecode.objectify.annotation.Subclass;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class NodeCluster extends Cluster {
   // Each row contains the Q-values for a given state (one of the child clusters).
   // The value Q(s, a) represents the expected sum of rewards the agent expects to receive by
   // executing the action a from. state s.
-  List<List<Double>> Q;
+  @Serialize List<List<Double>> Q;
 
   public NodeCluster() {
     leaves = new HashSet<>();
@@ -73,6 +74,9 @@ public class NodeCluster extends Cluster {
   }
 
   public List<List<Double>> getQ() {
+    if(Q == null || Q.isEmpty()) {
+      initialiseIdentity(Q);
+    }
     return Q;
   }
 
@@ -169,5 +173,14 @@ public class NodeCluster extends Cluster {
     return -1;
   }
 
-
+  private void initialiseIdentity(List<List<Double>> Q) {
+    for(int i = 0; i < children.size(); i++) {
+      ArrayList<Double> stateRow = new ArrayList<>();
+      for(int j = 0; j < children.size(); j++) {
+        stateRow.add(0.0);
+      }
+      stateRow.set(i, 1.0);
+      Q.add(stateRow);
+    }
+  }
 }

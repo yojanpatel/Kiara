@@ -181,10 +181,14 @@ public class FeatureResource {
 
     Playlist p = ofy().load().key(Key.create(Playlist.class, 5348024557502464L)).now();
     Queue<String> h = p.history;
-    String s = h.poll();
-    for(String t : h) s += " " + t;
+    String t = h.size() + " ";
+    for(String s : h) {
+      t += " " + s;
+    }
+
+    t += "<br> " + p.previousSong();
 
 
-    return Response.ok().entity(s).build();
+    return Response.ok().entity(t).build();
   }
 }

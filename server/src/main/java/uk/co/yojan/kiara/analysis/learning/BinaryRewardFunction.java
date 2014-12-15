@@ -14,7 +14,7 @@ public class BinaryRewardFunction implements RewardFunction {
 
   @Override
   public double rewardQueue() {
-    return -1; // technically 0, but -1 for symmetry.
+    return 1; // technically 0, but -1 for symmetry.
   }
 
   @Override
