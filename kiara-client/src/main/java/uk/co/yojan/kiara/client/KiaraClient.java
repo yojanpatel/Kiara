@@ -2,16 +2,12 @@ package uk.co.yojan.kiara.client;
 
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
-import retrofit.client.OkClient;
-import uk.co.yojan.kiara.client.data.Playlist;
-import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
-
-import java.util.List;
 
 public class KiaraClient {
 
   // Singletons
   private static KiaraApiInterface sKiaraApi;
+  private static KiaraLearningInterface sKiaraLearningApi;
   private static SpotifyAuthInterface spotifyAuthApi;
 
 
@@ -29,6 +25,18 @@ public class KiaraClient {
       sKiaraApi = restAdapter.create(KiaraApiInterface.class);
     }
     return sKiaraApi;
+  }
+
+  public static KiaraLearningInterface getKiaraLearningClient() {
+    if(sKiaraLearningApi == null) {
+      RestAdapter restAdapter = new RestAdapter.Builder()
+                    .setEndpoint("http://localhost:8080")
+//          .setEndpoint("http://kiara-analysis.kiara-yojan.appspot.com")
+          .setLogLevel(RestAdapter.LogLevel.FULL)
+          .build();
+      sKiaraLearningApi = restAdapter.create(KiaraLearningInterface.class);
+    }
+    return sKiaraLearningApi;
   }
 
 

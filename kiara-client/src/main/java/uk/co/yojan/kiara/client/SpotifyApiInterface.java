@@ -4,7 +4,9 @@ package uk.co.yojan.kiara.client;
 import retrofit.Callback;
 import retrofit.http.GET;
 import retrofit.http.Headers;
+import retrofit.http.Path;
 import retrofit.http.Query;
+import uk.co.yojan.kiara.client.data.spotify.Playlist;
 import uk.co.yojan.kiara.client.data.spotify.SearchResult;
 import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
@@ -30,5 +32,10 @@ public interface SpotifyApiInterface {
 
   @GET("/v1/me")
   public void getCurrentUser(Callback<SpotifyUser> cb);
+
+  @GET("/v1/users/{userId}/playlists/{playlistId}?fields=(images.url,tracks.items(track(album(name),artists(name),id,name)))")
+  public void getTrackIdsForPlaylist(@Path("userId") String userId,
+                                     @Path("playlistId") String playlistId,
+                                     Callback<Playlist> cb);
 
 }

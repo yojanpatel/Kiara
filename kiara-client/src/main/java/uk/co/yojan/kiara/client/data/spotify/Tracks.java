@@ -1,11 +1,10 @@
 package uk.co.yojan.kiara.client.data.spotify;
 
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 
-@Generated("org.jsonschema2pojo")
+import java.util.ArrayList;
+import java.util.List;
+
 public class Tracks {
 
   @Expose

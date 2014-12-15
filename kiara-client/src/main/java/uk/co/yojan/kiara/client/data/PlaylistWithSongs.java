@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.client.data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PlaylistWithSongs {
@@ -9,7 +10,10 @@ public class PlaylistWithSongs {
 
   public PlaylistWithSongs(Playlist playlist, List<Song> songs) {
     this.playlist = playlist;
-    this.songs = songs;
+    if(songs == null)
+      this.songs = new ArrayList<Song>();
+    else
+      this.songs = songs;
   }
 
   public List<Song> getSongs() {
@@ -26,5 +30,11 @@ public class PlaylistWithSongs {
 
   public void setPlaylist(Playlist playlist) {
     this.playlist = playlist;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if(!(obj instanceof Playlist)) return false;
+    return playlist.getId().equals(((Playlist)obj).getId());
   }
 }
