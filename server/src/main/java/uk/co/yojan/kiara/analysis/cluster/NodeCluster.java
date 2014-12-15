@@ -4,7 +4,9 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Subclass;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
@@ -53,7 +55,11 @@ public class NodeCluster extends Cluster {
   public LeafCluster convertToLeaf() {
     if(songIds.size() == 1) {
       LeafCluster lc = new LeafCluster(songIds.get(0));
-      lc.setId(getId());
+
+      // create leaf id as <playlistId>-<songId>
+      String playlistId = getId().split("-")[0];
+      lc.setId(playlistId + "-" + lc.getSongId());
+
       lc.setLevel(getLevel());
       lc.setParent(getParent());
       return lc;
@@ -107,7 +113,7 @@ public class NodeCluster extends Cluster {
     this.children = children;
   } */
 
-  public Collection<Cluster> getChildren() {
+  public ArrayList<Cluster> getChildren() {
 
     ArrayList<Key<NodeCluster>> nodeKeys = new ArrayList<>();
     ArrayList<Key<LeafCluster>> leafKeys = new ArrayList<>();
@@ -120,7 +126,7 @@ public class NodeCluster extends Cluster {
       }
     }
 
-    Collection<Cluster> children = new ArrayList<>();
+    ArrayList<Cluster> children = new ArrayList<>();
     children.addAll(ofy().load().keys(nodeKeys).values());
     children.addAll(ofy().load().keys(leafKeys).values());
     return children;
@@ -142,6 +148,25 @@ public class NodeCluster extends Cluster {
 
   public void addChild(NodeCluster c ) {
     children.add(c.getId());
+  }
+
+  // return the cluster index in the children list that contains songId in the shadow.
+  public int clusterIndex(String songId) {
+    for(int clusterIndex = 0; clusterIndex < getChildren().size(); clusterIndex++) {
+      Cluster cluster = getChildren().get(clusterIndex);
+
+      if (cluster instanceof LeafCluster) {
+        if(((LeafCluster) cluster).getSongId().equals(songId)) {
+          return clusterIndex;
+        }
+      } else if(cluster instanceof NodeCluster) {
+        if(((NodeCluster) cluster).getSongIds().contains(songId)) {
+          return clusterIndex;
+        }
+      }
+    }
+
+    return -1;
   }
 
 

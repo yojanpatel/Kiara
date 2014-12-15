@@ -8,6 +8,8 @@ import java.util.List;
 
 /**
  * Base leaf node in the hierarchically constructed tree. It represents the song.
+ *
+ * Identified with a string id formatted as: <playlist id>-<song id>
  */
 @Entity
 public class LeafCluster extends Cluster {

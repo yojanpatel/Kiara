@@ -1,22 +1,20 @@
 package uk.co.yojan.kiara.analysis.resources;
 
-import com.googlecode.objectify.Key;
-import com.googlecode.objectify.Result;
+import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.learning.BinaryRewardFunction;
 import uk.co.yojan.kiara.analysis.learning.RewardFunction;
 import uk.co.yojan.kiara.server.models.Playlist;
-import uk.co.yojan.kiara.server.models.User;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import static uk.co.yojan.kiara.server.OfyService.ofy;
-
 @Path("/events/{userId}/{playlistId}")
 public class EventResource {
 
+  // TODO dynamically change based on some setting parameter
+  // Change the object to choose the reward function.
   public static RewardFunction reward = new BinaryRewardFunction();
 
   @POST
@@ -27,8 +25,7 @@ public class EventResource {
 
 
     // update the listening history sliding window and other session state.
-    Playlist playlist = loadPlaylist(userId, playlistId);
-
+    Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
     playlist.nowPlaying(songId);
     return Response.ok().build();
   }
@@ -70,14 +67,5 @@ public class EventResource {
   public Response favourite(@PathParam("songId") String songId) {
     double r = reward.rewardFavourite();
     return Response.ok().build();
-  }
-
-
-  public Result<User> loadUser(String userId) {
-    return ofy().load().key(Key.create(User.class, userId));
-  }
-
-  public Playlist loadPlaylist(String userId, Long playlistId) {
-    return loadUser(userId).now().getPlaylist(playlistId);
   }
 }
