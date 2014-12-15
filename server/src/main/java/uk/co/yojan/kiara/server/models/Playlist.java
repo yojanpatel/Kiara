@@ -21,6 +21,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 @JsonDeserialize(using = PlaylistDeserializer.class)
 @Entity(name = "Playlist")
 public class Playlist {
+
   private static Logger log = Logger.getLogger(Playlist.class.getName());
 
   @Id private Long id; // Auto-generate.
@@ -29,8 +30,23 @@ public class Playlist {
   private long lastViewedTimestamp;
   private Map<String, Key<Song>> songIdKeyMap = new HashMap<String, Key<Song>>(); // spotifyId ---> Key(spotifyId)
 
-  // version for caching.
+  // version for caching
   private long v;
+
+
+  // Sliding window of the recent listening history
+  private int WINDOW_SIZE = 5;
+  public Queue<String> history;
+
+  public void nowPlaying(String songId) {
+    if(history == null) history = new LinkedList<>();
+
+    if(history.size() >= WINDOW_SIZE) {
+      history.poll();
+    }
+    history.add(songId);
+  }
+
 
   public synchronized void incrementCounter() {
     this.v++;
@@ -129,4 +145,6 @@ public class Playlist {
     ofy().save().entity(this).now();
     return this;
   }
+
+
 }

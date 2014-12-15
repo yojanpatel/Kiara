@@ -30,6 +30,9 @@ public class NodeCluster extends Cluster {
   List<String> songIds;
 
   // Q-learning matrix
+  // Each row contains the Q-values for a given state (one of the child clusters).
+  // The value Q(s, a) represents the expected sum of rewards the agent expects to receive by
+  // executing the action a from. state s.
   List<List<Double>> Q;
 
   public NodeCluster() {
@@ -63,14 +66,6 @@ public class NodeCluster extends Cluster {
     this.songIds = songIds;
   }
 
-  /*public List<Cluster> getChildren() {
-    return children;
-  }
-
-  public void setChildren(List<Cluster> children) {
-    this.children = children;
-  }*/
-
   public List<List<Double>> getQ() {
     return Q;
   }
@@ -83,15 +78,6 @@ public class NodeCluster extends Cluster {
     return Q.get(row);
   }
 
-  /*
-  public String getId() {
-    return id;
-  }
-
-  public void setId(String id) {
-    this.id = id;
-  } */
-
   public int getLevel() {
     return level;
   }
@@ -100,13 +86,6 @@ public class NodeCluster extends Cluster {
     this.level = level;
   }
 
-  /*public Cluster getParent() {
-    return parent;
-  }
-
-  public void setParent(Cluster parent) {
-    this.parent = parent;
-  }*/
 
   public Key<NodeCluster> getParent() {
     return parent;
@@ -164,4 +143,6 @@ public class NodeCluster extends Cluster {
   public void addChild(NodeCluster c ) {
     children.add(c.getId());
   }
+
+
 }

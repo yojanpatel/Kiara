@@ -178,6 +178,13 @@ public class FeatureResource {
   @GET
   @Path("/test")
   public Response test() {
-    return Response.ok().entity("Testing..").build();
+
+    Playlist p = ofy().load().key(Key.create(Playlist.class, 5348024557502464L)).now();
+    Queue<String> h = p.history;
+    String s = h.poll();
+    for(String t : h) s += " " + t;
+
+
+    return Response.ok().entity(s).build();
   }
 }
