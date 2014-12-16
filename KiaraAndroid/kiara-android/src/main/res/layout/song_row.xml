@@ -2,8 +2,8 @@
 
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:paddingTop="4dp"
     android:paddingBottom="4dp">
 
@@ -12,8 +12,9 @@
       android:layout_height="wrap_content"
       android:id="@+id/song_img"
       android:contentDescription="@string/album_art"
-      android:padding="4dp"
-      android:src="@android:drawable/ic_delete"/>
+      android:paddingLeft="8dp"
+      android:transitionName="@string/transition_album_cover"
+      android:src="@drawable/ic_placeholder_200"/>
 
   <TextView
       android:layout_width="match_parent"
@@ -22,8 +23,9 @@
       android:textSize="16sp"
       android:text="Song Name"
       android:paddingTop="4dp"
-      android:paddingLeft="4dp"
-      android:paddingBottom="2dp"
+      android:paddingLeft="8dp"
+      android:singleLine="true"
+      android:paddingBottom="1dp"
       android:textColor="@color/grey50"
       android:layout_toRightOf="@+id/song_img"/>
 
@@ -31,30 +33,22 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:id="@+id/artist_name"
-      android:paddingLeft="4dp"
-      android:textColor="@color/grey50"
-      android:paddingRight="4dp"
+      android:paddingLeft="8dp"
+      android:singleLine="true"
+      android:layout_marginRight="8dp"
+      android:textColor="@color/grey400"
       android:layout_alignLeft="@+id/song_name"
       android:layout_below="@+id/song_name"
       android:text="Artist Name"/>
 
-  <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:id="@+id/album_name"
-      android:textColor="@color/grey50"
-      android:layout_toRightOf="@+id/artist_name"
-      android:layout_below="@+id/song_name"
-      android:paddingLeft="8dp"
-      android:text="Album Name"/>
-
   <View
       android:id="@+id/divider"
       android:layout_width="fill_parent"
-      android:layout_height="1dp"
-      android:layout_alignParentBottom="true"
-      android:background="@color/grey400"
+      android:layout_height="0.5dp"
+      android:layout_alignBottom="@+id/song_img"
+      android:layout_marginLeft="8dp"
+      android:layout_alignLeft="@id/song_name"
+      android:background="@color/grey700"
       android:visibility="gone"/>
-
 
 </RelativeLayout>

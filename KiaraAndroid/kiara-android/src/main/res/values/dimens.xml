@@ -18,4 +18,7 @@
 
     <dimen name="fab_actions_spacing">16dp</dimen>
     <dimen name="fab_labels_margin">8dp</dimen>
+
+    <dimen name="double_action_bar">112dp</dimen>
+    <dimen name="one_and_half_action_bar">84dp</dimen>
 </resources>

@@ -36,7 +36,7 @@ public class PlaylistListViewAdapter
     this.data = new ArrayList<PlaylistWithSongs>();
     this.mContext = context;
     picasso = Picasso.with(mContext);
-    picasso.setIndicatorsEnabled(true);
+    picasso.setIndicatorsEnabled(false);
   }
 
   // Create a new view. This method is invoked by the layout manager.
@@ -76,7 +76,7 @@ public class PlaylistListViewAdapter
     } else {
       viewHolder.details.setText("No songs.");
       viewHolder.size.setText("");
-      picasso.load(R.drawable.ic_placeholder).resize(200,200).into(viewHolder.image);
+      picasso.load(R.drawable.ic_placeholder_200).resize(200,200).into(viewHolder.image);
     }
   }
 

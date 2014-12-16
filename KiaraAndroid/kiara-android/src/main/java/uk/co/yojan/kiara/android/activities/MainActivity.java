@@ -26,12 +26,10 @@ public class MainActivity extends KiaraActivity
 
     super.onCreate(savedInstanceState);
 
-    removeTitleBar();
     setContentView(R.layout.activity_main);
     ButterKnife.inject(this);
     Typeface tf = Typeface.createFromAsset(getAssets(), "fonts/basictitlefont.ttf");
     kiaraTitle.setTypeface(tf);
-    addIndeterminateProgressBar();
 
     /*
     if(accessExpired()) {

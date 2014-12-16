@@ -1,6 +1,5 @@
 package uk.co.yojan.kiara.android.fragments;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -9,16 +8,20 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.squareup.otto.Subscribe;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
@@ -31,7 +34,6 @@ import uk.co.yojan.kiara.android.dialogs.AddSongDialog;
 import uk.co.yojan.kiara.android.events.SongAdded;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
-import uk.co.yojan.kiara.android.views.FloatingActionButton;
 import uk.co.yojan.kiara.client.data.Song;
 
 import java.util.ArrayList;
@@ -58,6 +60,7 @@ public class SongListFragment extends KiaraFragment {
 
   @InjectView(R.id.progressBar) ProgressBar progressBar;
   @InjectView(R.id.song_recycler_view) RecyclerView mRecyclerView;
+  FloatingActionButton fab;
 
   private RecyclerView.LayoutManager mLayoutManager;
   private KiaraActivity activity;
@@ -106,10 +109,7 @@ public class SongListFragment extends KiaraFragment {
 
     this.mContext = rootView.getContext();
     this.activity = (KiaraActivity) getActivity();
-
-    ActionBar ab = activity.getActionBar();
-    if(ab != null)
-      ab.setTitle(playlistName);
+    ((TextView) activity.getToolbar().findViewById(R.id.toolbarTitle)).setText(playlistName);
 
     // Use previous set of songs (the ones cached already) until the network call is returned.
     this.mAdapter = new SongListViewAdapter(songs, mContext);
@@ -125,8 +125,14 @@ public class SongListFragment extends KiaraFragment {
           public void onItemClick(View view, int position) {
             Log.d(log, "Item clicked at position " + position);
             Intent i = new Intent(mContext, PlayerActivity.class);
+
+            ActivityOptionsCompat options =
+                ActivityOptionsCompat.makeSceneTransitionAnimation(activity,
+                    new Pair<View, String>(view.findViewById(R.id.song_img), getString(R.string.transition_album_cover)),
+                    new Pair<View, String>(fab, getString(R.string.transition_fab)));
+
             i.putExtra(PlayerFragment.SONG_PARAM, new SongParcelable(songs.get(position)));
-            startActivity(i);
+            ActivityCompat.startActivity(activity, i, options.toBundle());
           }
         }));
     progressBar.setVisibility(View.INVISIBLE);
@@ -185,13 +191,7 @@ public class SongListFragment extends KiaraFragment {
 
   private void setUpFab() {
     Drawable plus = getResources().getDrawable(R.drawable.ic_add_white_24dp);
-    FloatingActionButton fab = new FloatingActionButton.Builder(getActivity())
-        .withButtonColor(getResources().getColor(R.color.pinkA200))
-        .withDrawable(plus)
-        .withGravity(Gravity.BOTTOM | Gravity.RIGHT)
-        .withMargins(0, 0, 24, 24 + 50)
-        .create();
-
+    fab = getKiaraActivity().getFab();
     fab.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -199,7 +199,6 @@ public class SongListFragment extends KiaraFragment {
         AddSongDialog.newInstance(id).show(fm, "fragment_add_song");
       }
     });
-    fab.showFloatingActionButton();
   }
 
     /**

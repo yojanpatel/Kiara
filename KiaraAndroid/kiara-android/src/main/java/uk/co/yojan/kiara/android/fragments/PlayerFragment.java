@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -133,17 +135,30 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
 
   private void initialiseSeekBar() {
     seekBar.setMax(255);
+
+    if(Build.VERSION.SDK_INT >= 16) {
+      seekBar.getThumb().setColorFilter(
+          getResources().getColor(R.color.pinkA200),
+          PorterDuff.Mode.SRC_IN);
+
+      seekBar.getProgressDrawable().setColorFilter(
+          getResources().getColor(R.color.pinkA400),
+          PorterDuff.Mode.SRC_IN);
+    }
+
     seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-       getBus().post(new SeekbarProgressChanged(seekBar, progress, fromUser));
+        getBus().post(new SeekbarProgressChanged(seekBar, progress, fromUser));
       }
 
       @Override
-      public void onStartTrackingTouch(SeekBar seekBar) {}
+      public void onStartTrackingTouch(SeekBar seekBar) {
+      }
 
       @Override
-      public void onStopTrackingTouch(SeekBar seekBar) {}
+      public void onStopTrackingTouch(SeekBar seekBar) {
+      }
     });
   }
 

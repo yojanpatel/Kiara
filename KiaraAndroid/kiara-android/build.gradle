@@ -14,7 +14,7 @@ repositories {
 
 android {
     compileSdkVersion 21
-    buildToolsVersion "20.0.0"
+    buildToolsVersion "21.1.1"
 
     dexOptions {
         preDexLibraries = false
@@ -78,7 +78,8 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
     // Support library for API 13 and above.
-    compile 'com.android.support:support-v4:21.0.2'
+    compile 'com.android.support:support-v4:21.0.3'
+    compile 'com.android.support:appcompat-v7:21.0.3'
 
     // Spotify Android SDK
     compile 'com.spotify.sdk:spotifysdk:1.0.0-beta4@aar'

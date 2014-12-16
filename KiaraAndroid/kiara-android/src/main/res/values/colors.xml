@@ -131,5 +131,14 @@
   <color name="yellowA700">#ffd600</color>
 
   <color name="transparent">#00000000</color>
+  <color name="half_transparent">#80FFFFFF</color>
+  <color name="quarter_transparent">#40FFFFFF</color>
+  <color name="eighth_transparent">#20FFFFFF</color>
+
+  <color name="half_transparent_black">#80000000</color>
+  <color name="quarter_transparent_black">#40000000</color>
+  <color name="eighth_transparent_black">#20000000</color>
+
+
 
 </resources>

@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +20,9 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.activities.PlayerActivity;
 import uk.co.yojan.kiara.android.background.MusicService;
+import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.Song;
 
 
@@ -70,7 +75,7 @@ public class PlayerControlFragment extends KiaraFragment {
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
-    View rootView = inflater.inflate(R.layout.fragment_player_control, container, false);
+    final View rootView = inflater.inflate(R.layout.fragment_player_control, container, false);
     mContext = rootView.getContext();
 
     Intent bind = new Intent(mContext, MusicService.class);
@@ -82,6 +87,20 @@ public class PlayerControlFragment extends KiaraFragment {
       public void onClick(View v) {
         boolean playing = musicService.pauseplay();
         setPlayPauseImageResource(playing);
+      }
+    });
+
+    rootView.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Intent i = new Intent(mContext, PlayerActivity.class);
+
+        ActivityOptionsCompat options =
+            ActivityOptionsCompat.makeSceneTransitionAnimation(getKiaraActivity(),
+                new Pair<View, String>(rootView.findViewById(R.id.album_image), getString(R.string.transition_album_cover)));
+
+        i.putExtra(PlayerFragment.SONG_PARAM, new SongParcelable(currentSong));
+        ActivityCompat.startActivity(getKiaraActivity(), i, options.toBundle());
       }
     });
 
@@ -118,9 +137,9 @@ public class PlayerControlFragment extends KiaraFragment {
 
   private void setPlayPauseImageResource(boolean playing) {
     if(playing) {
-      playpause.setImageResource(R.drawable.ic_pause_grey300_48dp);
+      playpause.setImageResource(R.drawable.ic_pause_circle_outline_white_36dp);
     } else {
-      playpause.setImageResource(R.drawable.ic_play_arrow_grey300_48dp);
+      playpause.setImageResource(R.drawable.ic_play_circle_outline_white_36dp);
     }
   }
 

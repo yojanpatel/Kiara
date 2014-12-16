@@ -39,6 +39,8 @@ public class PlaylistSongListActivity extends KiaraActivity
       }
 
       setContentView(R.layout.activity_playlist_song_list);
+      getSupportActionBar().setDisplayShowTitleEnabled(false);
+
       if (savedInstanceState == null) {
           getFragmentManager().beginTransaction()
                   .add(R.id.container, SongListFragment.newInstance(id, playlistName, songs))

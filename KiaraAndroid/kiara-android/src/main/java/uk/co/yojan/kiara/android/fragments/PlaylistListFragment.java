@@ -4,12 +4,10 @@ package uk.co.yojan.kiara.android.fragments;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +15,7 @@ import android.widget.ProgressBar;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.android.volley.VolleyError;
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.squareup.otto.Subscribe;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
@@ -34,7 +33,6 @@ import uk.co.yojan.kiara.android.events.GetAllPlaylists;
 import uk.co.yojan.kiara.android.events.GetSongsForPlaylist;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
-import uk.co.yojan.kiara.android.views.FloatingActionButton;
 import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
 import uk.co.yojan.kiara.client.data.Song;
 
@@ -85,6 +83,7 @@ public class PlaylistListFragment extends KiaraFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
     Log.d("PVA", "onCreate");
     Bundle args = getArguments();
     if (args != null) {
@@ -140,14 +139,11 @@ public class PlaylistListFragment extends KiaraFragment {
   public void onResume() {
     super.onResume();
     parent.getBus().post(new GetAllPlaylists());
-    if(playlists == null)
-      parent.addIndeterminateProgressBar();
   }
 
   @Subscribe
   public void onPlaylistsReceived(final ArrayList<PlaylistWithSongs> rcvd) {
     //noinspection ConstantConditions
-    parent.setProgressBarVisibility(View.INVISIBLE);
     progressBar.setVisibility(View.INVISIBLE);
     if(rcvd.size() > 0 && rcvd.get(0) instanceof  PlaylistWithSongs) {
       if(playlists != null) Log.d(log, playlists.size() + "<" + rcvd.size());
@@ -176,13 +172,7 @@ public class PlaylistListFragment extends KiaraFragment {
   }
 
   private void setUpFab() {
-    Drawable plus = getResources().getDrawable(R.drawable.ic_add_white_24dp);
-    FloatingActionButton fab = new FloatingActionButton.Builder(getActivity())
-        .withButtonColor(getResources().getColor(R.color.pinkA200))
-        .withDrawable(plus)
-        .withGravity(Gravity.BOTTOM | Gravity.RIGHT)
-        .withMargins(0, 0, 24, 24 + 60)
-        .create();
+    FloatingActionButton fab = getKiaraActivity().getFab();
 
     fab.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -191,7 +181,6 @@ public class PlaylistListFragment extends KiaraFragment {
         new CreatePlaylistDialog().show(fm, "fragment_create_playlist");
       }
     });
-    fab.showFloatingActionButton();
   }
 
 

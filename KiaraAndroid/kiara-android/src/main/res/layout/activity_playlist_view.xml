@@ -1,21 +1,64 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:tools="http://schemas.android.com/tools"
+                xmlns:fab="http://schemas.android.com/apk/res-auto"
                 tools:context="uk.co.yojan.kiara.android.activities.PlaylistViewActivity"
                 android:layout_height="match_parent"
                 android:layout_width="match_parent">
 
   <FrameLayout
+      android:id="@+id/container"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="@color/grey900"
+      android:layout_below="@+id/toolbar"
+      android:layout_above="@id/controller_container"/>
+
+  <FrameLayout
       android:id="@+id/controller_container"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:elevation="5dp"
       android:layout_alignParentBottom="true"/>
 
-    <FrameLayout
-        android:id="@+id/container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/grey900"
-        android:layout_above="@id/controller_container"/>
+  <android.support.v7.widget.Toolbar
+      android:id="@+id/toolbar"
+      android:layout_width="match_parent"
+      android:layout_height="@dimen/one_and_half_action_bar"
+      android:minHeight="?attr/actionBarSize"
+      android:background="?attr/colorPrimary"
+      android:gravity="bottom"
+      android:popupTheme="@style/ThemeOverlay.AppCompat.Dark">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/toolbarTitle"
+        android:textSize="22sp"
+        android:layout_marginBottom="24dp"
+        android:textStyle="bold"
+        android:layout_marginLeft="36dp"
+        android:textColor="@color/white"/>
+
+  </android.support.v7.widget.Toolbar>
+
+  <View
+      android:layout_below="@id/toolbar"
+      android:layout_width="match_parent"
+      android:layout_height="5dp"
+      android:background="@drawable/opacity_gradient_half_empty"/>
+
+  <com.getbase.floatingactionbutton.FloatingActionButton
+      android:id="@+id/fab"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentRight="true"
+      android:layout_alignBottom="@+id/toolbar"
+      android:layout_marginBottom="-28dp"
+      android:layout_marginRight="16dp"
+      fab:fab_colorNormal="@color/pinkA200"
+      fab:fab_size="mini"
+      fab:fab_icon="@drawable/ic_add_white_24dp"
+      android:transitionName="@string/transition_fab"/>
 
 
 

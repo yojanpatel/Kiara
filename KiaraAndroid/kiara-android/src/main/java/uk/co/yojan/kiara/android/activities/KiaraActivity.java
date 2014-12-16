@@ -1,17 +1,19 @@
 package uk.co.yojan.kiara.android.activities;
 
-import android.app.Activity;
 import android.content.Intent;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.spotify.sdk.android.authentication.SpotifyAuthentication;
 import com.squareup.otto.Bus;
@@ -20,6 +22,7 @@ import de.keyboardsurfer.android.widget.crouton.Crouton;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
 import uk.co.yojan.kiara.android.KiaraApplication;
+import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.background.MusicService;
 import uk.co.yojan.kiara.android.events.*;
 import uk.co.yojan.kiara.client.KiaraApiInterface;
@@ -30,7 +33,7 @@ import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
  * Base Activity class which performs functionality common to all activities
  * in the app.
  */
-public class KiaraActivity extends Activity {
+public class KiaraActivity extends ActionBarActivity {
   private static final String LOG = KiaraActivity.class.getName();
 
   private boolean bound;
@@ -38,6 +41,8 @@ public class KiaraActivity extends Activity {
 
   private Bus mBus;
 
+  Toolbar toolbar;
+  FloatingActionButton fab;
   ProgressBar progressBar;
 
   private boolean registeredToBus;
@@ -72,8 +77,17 @@ public class KiaraActivity extends Activity {
         SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
             new String[]{"user-read-private", "streaming"}, null, this);
     }
+  }
 
-
+  @Override
+  public void setContentView(int layoutResID) {
+    super.setContentView(layoutResID);
+    toolbar = (Toolbar) findViewById(R.id.toolbar);
+    if(toolbar != null) {
+      setSupportActionBar(toolbar);
+      Log.d(LOG, (getSupportActionBar() == null) + " gsab");
+    }
+    fab = (FloatingActionButton) findViewById(R.id.fab);
   }
 
   @Override
@@ -213,15 +227,12 @@ public class KiaraActivity extends Activity {
     Toast.makeText(this, text, lengthShort ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();
   }
 
-  public void removeTitleBar() {
-    this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-//    this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-  }
-
   public void addIndeterminateProgressBar() {
     // create new ProgressBar and style it
     progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
     progressBar.setIndeterminate(true);
+    progressBar.getIndeterminateDrawable().setColorFilter(
+        getResources().getColor(R.color.pinkA200), PorterDuff.Mode.SRC_IN);
     progressBar.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 24));
     final FrameLayout decorView = (FrameLayout) getWindow().getDecorView();
     decorView.addView(progressBar);
@@ -243,6 +254,14 @@ public class KiaraActivity extends Activity {
     if(progressBar != null) {
       progressBar.setVisibility(visible);
     }
+  }
+
+  public Toolbar getToolbar() {
+    return toolbar;
+  }
+
+  public FloatingActionButton getFab() {
+    return fab;
   }
 
   public boolean accessExpired() {

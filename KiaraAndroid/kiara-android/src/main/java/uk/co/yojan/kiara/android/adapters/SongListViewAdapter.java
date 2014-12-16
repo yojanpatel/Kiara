@@ -30,7 +30,7 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
     this.data = songs;
     this.mContext = context;
     picasso = Picasso.with(mContext);
-    picasso.setIndicatorsEnabled(true);
+    picasso.setIndicatorsEnabled(false);
   }
 
   @Override
@@ -46,8 +46,8 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
   public void onBindViewHolder(ViewHolder viewHolder, int position) {
     Song s = data.get(position);
     viewHolder.songName.setText(s.getSongName());
-    viewHolder.artistName.setText(s.getArtistName());
-    viewHolder.albumName.setText(s.getAlbumName());
+    viewHolder.artistName.setText(s.getArtistName() + " - " + s.getAlbumName());
+//    viewHolder.albumName.setText(s.getAlbumName());
     picasso.load(s.getImageURL())
         .placeholder(R.drawable.ic_placeholder_150)
         .resize(150, 150)
@@ -80,7 +80,7 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
     @InjectView(R.id.song_img) ImageView albumArt;
     @InjectView(R.id.song_name) TextView songName;
     @InjectView(R.id.artist_name) TextView artistName;
-    @InjectView(R.id.album_name) TextView albumName;
+//    @InjectView(R.id.album_name) TextView albumName;
 
     public ViewHolder(View itemView) {
       super(itemView);

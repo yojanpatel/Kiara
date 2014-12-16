@@ -1,15 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="android:Theme.Material">
+    <style name="AppTheme" parent="Theme.AppCompat">
       <!-- Main theme colors -->
       <!--  for the app bar -->
-      <item name="android:colorPrimary">@color/indigo500</item>
+      <!--<item name="android:colorPrimary">@color/indigo500</item>-->
+      <!--&lt;!&ndash;   darker variant for the status bar and contextual app bars &ndash;&gt;-->
+      <!--<item name="android:colorPrimaryDark">@color/indigo700</item>-->
+      <!--&lt;!&ndash;   theme UI controls like checkboxes and text fields &ndash;&gt;-->
+      <!--<item name="android:colorAccent">@color/pinkA200</item>-->
+      <!--&lt;!&ndash; primary colour for the text &ndash;&gt;-->
+      <!--<item name="android:windowBackground">@color/grey900</item>-->
+      <item name="colorPrimary">@color/indigo500</item>
       <!--   darker variant for the status bar and contextual app bars -->
-      <item name="android:colorPrimaryDark">@color/indigo700</item>
+      <item name="colorPrimaryDark">@color/indigo700</item>
       <!--   theme UI controls like checkboxes and text fields -->
-      <item name="android:colorAccent">@color/pinkA200</item>
+      <item name="colorAccent">@color/pinkA200</item>
       <!-- primary colour for the text -->
-      <item name="android:textColorPrimary">@color/grey50</item>
-      <item name="android:windowBackground">@color/grey900</item>
+      <item name="android:windowNoTitle">true</item>
+      <item name="windowActionBar">false</item>
     </style>
+
 </resources>

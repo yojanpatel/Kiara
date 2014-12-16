@@ -2,9 +2,11 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.fragments.PlayerControlFragment;
@@ -20,6 +22,14 @@ public class PlaylistViewActivity extends KiaraActivity {
     protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       setContentView(R.layout.activity_playlist_view);
+
+      Toolbar toolbar = getToolbar();
+      getSupportActionBar().setDisplayShowTitleEnabled(false);
+      if(toolbar != null) {
+        Log.d(log, "toolbar is not null.");
+        ((TextView) toolbar.findViewById(R.id.toolbarTitle)).setText("Playlists");
+
+      }
 
       Intent trigger = getIntent();
       String urlData = trigger.getStringExtra(Intent.EXTRA_TEXT);
