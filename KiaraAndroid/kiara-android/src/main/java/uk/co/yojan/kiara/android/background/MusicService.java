@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.android.background;
 
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -79,6 +80,14 @@ public class MusicService extends Service
       String spotifyUri = intent.getStringExtra(Constants.SONG_URI);
       if(spotifyUri != null) {
 //        playSong(spotifyUri);
+      }
+    } else if(intent.getAction() != null) {
+      if (intent.getAction().equals(Constants.ACTION_STOP_SERVICE)) {
+        Log.d(log, "Stopping service from intent.");
+        stopSelf();
+      } else if (intent.getAction().equals(Constants.ACTION_PLAY_PAUSE)) {
+        Log.d(log, "play/pause from intent.");
+        pauseplay();
       }
     }
     return START_STICKY;
@@ -308,12 +317,22 @@ public class MusicService extends Service
 //        new Intent(this, MainActivity.class),
 //        PendingIntent.FLAG_UPDATE_CURRENT);
 
+    Intent stopIntent = new Intent(this, MusicService.class);
+    stopIntent.setAction(Constants.ACTION_STOP_SERVICE);
+    PendingIntent stopService = PendingIntent.getService(this, 0, stopIntent, 0);
+
+    Intent playpauseIntent = new Intent(this, MusicService.class);
+    playpauseIntent.setAction(Constants.ACTION_PLAY_PAUSE);
+    PendingIntent playpauseService = PendingIntent.getService(this, 0, playpauseIntent, 0);
+
     NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
     Notification notification = builder
         .setContentTitle(currentSong.getSongName())
         .setSmallIcon(R.drawable.ic_play_arrow_white_18dp)
         .setLargeIcon(currentSongAlbumCover)
         .setContentText(currentSong.getArtistName() + " - " + currentSong.getAlbumName())
+        .addAction(R.drawable.ic_close_white_24dp, "Stop", stopService)
+        .addAction(R.drawable.ic_shuffle_white_24dp, "Pause/Play", playpauseService)
         .build();
     return notification;
   }

@@ -68,7 +68,8 @@ public class FloatingActionButton extends ImageButton {
     mIcon = attr.getResourceId(R.styleable.FloatingActionButton_fab_icon, 0);
     mTitle = attr.getString(R.styleable.FloatingActionButton_fab_title);
     attr.recycle();
-
+    if(Build.VERSION.SDK_INT >= 21)
+      setTransitionName("transition_fab");
     updateCircleSize();
     mShadowRadius = getDimension(R.dimen.fab_shadow_radius);
     mShadowOffset = getDimension(R.dimen.fab_shadow_offset);
