@@ -2,14 +2,21 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import com.faradaj.blurbehind.BlurBehind;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.fragments.PlayerFragment;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
+import uk.co.yojan.kiara.client.data.Song;
+
+import java.util.List;
 
 public class PlayerActivity extends KiaraActivity {
 
+  long playlistId;
   SongParcelable song;
 
   @Override
@@ -18,7 +25,10 @@ public class PlayerActivity extends KiaraActivity {
 
     Intent trigger = getIntent();
     if(trigger != null) {
-      song = trigger.getParcelableExtra(PlayerFragment.SONG_PARAM);
+      song = trigger.getParcelableExtra(Constants.ARG_SONG);
+
+      playlistId = trigger.getLongExtra(Constants.ARG_PLAYLIST_ID, -1);
+      Log.d("PlayerActivity", playlistId+"");
     }
 
     setContentView(R.layout.activity_player);
@@ -48,8 +58,19 @@ public class PlayerActivity extends KiaraActivity {
       if (id == R.id.action_settings) {
           return true;
       } else if (id == R.id.action_queue) {
-        // TODO open queue activity, with dynamic search.
-        toast("QUEUE");
+        Runnable run = new Runnable() {
+          @Override
+          public void run() {
+            String userId = sharedPreferences().getString(Constants.USER_ID, null);
+            List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
+            Intent intent = new Intent(PlayerActivity.this, QueueActivity.class);
+            intent.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(intent);
+          }
+        };
+        BlurBehind.getInstance().execute(PlayerActivity.this, run);
+
       }
       return super.onOptionsItemSelected(item);
     }

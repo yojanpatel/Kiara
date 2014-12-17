@@ -9,22 +9,9 @@
                 tools:context="uk.co.yojan.kiara.android.activities.QueueActivity$PlaceholderFragment">
 
 
-  <TextView
-      android:id="@+id/queueTitle"
-      android:text="@string/queue"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:textAllCaps="true"
-      android:textSize="22sp"
-      android:textStyle="bold"
-      android:layout_marginBottom="8dp"/>
-
-
-
   <android.support.v7.widget.RecyclerView
       android:layout_height="match_parent"
       android:layout_width="match_parent"
-      android:id="@+id/song_recycler_view"
-      android:layout_below="@+id/queueTitle"/>
+      android:id="@+id/queue_recycler_view"/>
 
 </RelativeLayout>

@@ -27,6 +27,7 @@ import com.spotify.sdk.android.playback.PlayerState;
 import com.spotify.sdk.android.playback.PlayerStateCallback;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.background.MusicService;
 import uk.co.yojan.kiara.android.background.MusicStateCallback;
@@ -40,7 +41,8 @@ import uk.co.yojan.kiara.client.data.Song;
 public class PlayerFragment extends KiaraFragment implements PlayerNotificationCallback, PlayerStateCallback, MusicStateCallback {
 
   private static final String log = PlayerFragment.class.getName();
-  public static final String SONG_PARAM = "SONG";
+//  public static final String SONG_PARAM = "SONG";
+//  public static final String PLAYLIST_ID_PARAM = "PLAYLIST_ID_PARAM";
 
   private Context mContext;
   private static Picasso picasso;
@@ -72,7 +74,7 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
   public static PlayerFragment newInstance(Song song) {
     PlayerFragment fragment =  new PlayerFragment();
     Bundle args = new Bundle();
-    args.putParcelable(SONG_PARAM, new SongParcelable(song));
+    args.putParcelable(Constants.ARG_SONG, new SongParcelable(song));
     fragment.setArguments(args);
     return fragment;
   }
@@ -85,7 +87,7 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     if (getArguments() != null) {
-      currentSong = (Song)getArguments().getParcelable(SONG_PARAM);
+      currentSong = getArguments().getParcelable(Constants.ARG_SONG);
     }
 
     picasso = Picasso.with(mContext);

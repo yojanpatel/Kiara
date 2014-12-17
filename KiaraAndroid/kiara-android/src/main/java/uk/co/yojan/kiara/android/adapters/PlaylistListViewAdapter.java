@@ -60,7 +60,7 @@ public class PlaylistListViewAdapter
 
     if(numSongs > 0) {
       picasso.load(pws.getSongs().get(0).getImageURL())
-          .placeholder(R.drawable.placeholder)
+          .placeholder(R.drawable.ic_placeholder_200)
           .resize(200, 200)
               //           .transform(new CircularCropTransformation())
           .into(viewHolder.image);

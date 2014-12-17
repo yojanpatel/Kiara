@@ -25,6 +25,7 @@ import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.squareup.otto.Subscribe;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
@@ -50,9 +51,6 @@ import java.util.Collections;
  */
 public class SongListFragment extends KiaraFragment {
   private static final String log = SongListFragment.class.getName();
-  private static final String ID_PARAM = "id_param";
-  private static final String NAME_PARAM = "name_param";
-  private static final String SONG_PARAM = "song_param";
 
   private OnFragmentInteractionListener mListener;
   private Context mContext;
@@ -66,7 +64,7 @@ public class SongListFragment extends KiaraFragment {
   private KiaraActivity activity;
 
   private ArrayList<SongParcelable> songs;
-  private long id;
+  private long playlistId;
   private String playlistName;
 
   /*
@@ -76,9 +74,9 @@ public class SongListFragment extends KiaraFragment {
   public static SongListFragment newInstance(long id, String name, ArrayList<SongParcelable> songs) {
     SongListFragment fragment =  new SongListFragment();
     Bundle args = new Bundle();
-    args.putParcelableArrayList(SONG_PARAM, songs);
-    args.putLong(ID_PARAM, id);
-    args.putString(NAME_PARAM, name);
+    args.putParcelableArrayList(Constants.ARG_PLAYLIST_SONG_LIST, songs);
+    args.putLong(Constants.ARG_PLAYLIST_ID, id);
+    args.putString(Constants.ARG_PLAYLIST_NAME, name);
     fragment.setArguments(args);
     return fragment;
   }
@@ -93,10 +91,10 @@ public class SongListFragment extends KiaraFragment {
     super.onCreate(savedInstanceState);
     if (getArguments() != null) {
       // The values passed from the playlist with songs.
-      songs = getArguments().getParcelableArrayList(SONG_PARAM);
+      songs = getArguments().getParcelableArrayList(Constants.ARG_PLAYLIST_SONG_LIST);
       Collections.sort(songs, new SongComparatorByArtist());
-      id = getArguments().getLong(ID_PARAM);
-      playlistName = getArguments().getString(NAME_PARAM);
+      playlistId = getArguments().getLong(Constants.ARG_PLAYLIST_ID);
+      playlistName = getArguments().getString(Constants.ARG_PLAYLIST_NAME);
       Log.d(log, playlistName);
     }
   }
@@ -131,7 +129,8 @@ public class SongListFragment extends KiaraFragment {
                     new Pair<View, String>(view.findViewById(R.id.song_img), getString(R.string.transition_album_cover)),
                     new Pair<View, String>(fab, getString(R.string.transition_fab)));
 
-            i.putExtra(PlayerFragment.SONG_PARAM, new SongParcelable(songs.get(position)));
+            i.putExtra(Constants.ARG_SONG, new SongParcelable(songs.get(position)));
+            i.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
             ActivityCompat.startActivity(activity, i, options.toBundle());
           }
         }));
@@ -196,7 +195,7 @@ public class SongListFragment extends KiaraFragment {
       @Override
       public void onClick(View view) {
         FragmentManager fm = getFragmentManager();
-        AddSongDialog asd = AddSongDialog.newInstance(id);
+        AddSongDialog asd = AddSongDialog.newInstance(playlistId);
         asd.show(fm, "fragment_add_song");
       }
     });

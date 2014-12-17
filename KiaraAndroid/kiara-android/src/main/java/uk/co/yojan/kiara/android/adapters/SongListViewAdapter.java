@@ -70,7 +70,7 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
     Log.d("ADAPTER", "UPDATESONG");
     this.data.clear();
     this.data.addAll(songs);
-    Collections.sort(this.data, new SongComparatorByArtist());
+//    Collections.sort(this.data, new SongComparatorByArtist());
     notifyDataSetChanged();
   }
 

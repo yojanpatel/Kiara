@@ -19,6 +19,7 @@ import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.squareup.picasso.Picasso;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
 import uk.co.yojan.kiara.android.background.MusicService;
@@ -99,7 +100,7 @@ public class PlayerControlFragment extends KiaraFragment {
             ActivityOptionsCompat.makeSceneTransitionAnimation(getKiaraActivity(),
                 new Pair<View, String>(rootView.findViewById(R.id.album_image), getString(R.string.transition_album_cover)));
 
-        i.putExtra(PlayerFragment.SONG_PARAM, new SongParcelable(currentSong));
+        i.putExtra(Constants.ARG_SONG, new SongParcelable(currentSong));
         ActivityCompat.startActivity(getKiaraActivity(), i, options.toBundle());
       }
     });

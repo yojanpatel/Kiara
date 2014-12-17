@@ -19,9 +19,9 @@ public class PlaylistSongListActivity extends KiaraActivity
 
     private static final String log = PlaylistSongListActivity.class.getName();
 
-    public static final String SONG_LIST_ARG_KEY = "SONG_LIST_KEY";
-    public static final String PLAYLIST_ID_ARG_KEY = "PLAYLIST_ID_ARG_KEY";
-    public static final String PLAYLIST_NAME_ARG_KEY = "PLAYLIST_NAME_ARG_KEY";
+//    public static final String SONG_LIST_ARG_KEY = "SONG_LIST_KEY";
+//    public static final String PLAYLIST_ID_ARG_KEY = "PLAYLIST_ID_ARG_KEY";
+//    public static final String PLAYLIST_NAME_ARG_KEY = "PLAYLIST_NAME_ARG_KEY";
 
     private ArrayList<SongParcelable> songs;
     private long id;
@@ -32,9 +32,9 @@ public class PlaylistSongListActivity extends KiaraActivity
       super.onCreate(savedInstanceState);
       Intent trigger = getIntent();
       if(trigger != null) {
-        songs = trigger.getParcelableArrayListExtra(SONG_LIST_ARG_KEY);
-        id = trigger.getLongExtra(PLAYLIST_ID_ARG_KEY, -1);
-        playlistName = trigger.getStringExtra(PLAYLIST_NAME_ARG_KEY);
+        songs = trigger.getParcelableArrayListExtra(Constants.ARG_PLAYLIST_SONG_LIST);
+        id = trigger.getLongExtra(Constants.ARG_PLAYLIST_ID, -1);
+        playlistName = trigger.getStringExtra(Constants.ARG_PLAYLIST_NAME);
         Log.d(log, playlistName);
       }
 

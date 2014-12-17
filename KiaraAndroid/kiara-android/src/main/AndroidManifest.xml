@@ -6,13 +6,13 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
-        android:name=".KiaraApplication"
+        android:name="uk.co.yojan.kiara.android.KiaraApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".activities.MainActivity"
+            android:name="uk.co.yojan.kiara.android.activities.MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleInstance" >
             <intent-filter>
@@ -32,36 +32,41 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.PlaylistViewActivity"
+            android:name="uk.co.yojan.kiara.android.activities.PlaylistViewActivity"
             android:label="@string/title_activity_playlist_view"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop" >
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
 
-          <intent-filter>
-            <action android:name="android.intent.action.SEND"/>
-            <category android:name="android.intent.category.DEFAULT"/>
-            <data android:mimeType="text/plain"/>
-          </intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
         <activity
-            android:name=".activities.SearchActivity"
+            android:name="uk.co.yojan.kiara.android.activities.SearchActivity"
             android:label="@string/title_activity_search" >
         </activity>
         <activity
-            android:name=".activities.PlaylistSongListActivity"
+            android:name="uk.co.yojan.kiara.android.activities.PlaylistSongListActivity"
             android:label="@string/title_activity_playlist_song_list" >
         </activity>
         <activity
-            android:name=".activities.PlayerActivity"
+            android:name="uk.co.yojan.kiara.android.activities.PlayerActivity"
             android:label="@string/title_activity_player"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask" >
         </activity>
         <activity
-            android:name=".activities.BrowseActivity"
-            android:label="@string/title_activity_browse_activity">
+            android:name="uk.co.yojan.kiara.android.activities.BrowseActivity"
+            android:label="@string/title_activity_browse_activity" >
         </activity>
 
+        <service android:name="uk.co.yojan.kiara.android.background.MusicService" />
 
-      <service android:name=".background.MusicService"/>
+        <activity
+            android:name="uk.co.yojan.kiara.android.activities.QueueActivity"
+            android:label="@string/title_activity_queue" >
+        </activity>
     </application>
 
 </manifest>

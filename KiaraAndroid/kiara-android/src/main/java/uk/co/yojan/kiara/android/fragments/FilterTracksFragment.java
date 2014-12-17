@@ -55,9 +55,11 @@ public class FilterTracksFragment extends KiaraFragment {
   @InjectView(R.id.progressBar) ProgressBar progressBar;
 
   private String spotifyPlaylistId;
-  private String playlistName;
+  private String spotifyPlaylistName;
   private List<Track> tracks;
+
   private long playlistId;
+  private String playlistName;
 
   private SwipeDismissRecyclerViewTouchListener touchListener;
   private ParallaxRecyclerAdapter<Track> parallaxAdapter;
@@ -67,7 +69,7 @@ public class FilterTracksFragment extends KiaraFragment {
   public static FilterTracksFragment newInstance(String spotifyPlaylistId, String playlistName) {
     FilterTracksFragment ftf = new FilterTracksFragment();
     ftf.setSpotifyPlaylistId(spotifyPlaylistId);
-    ftf.setPlaylistName(playlistName);
+    ftf.setSpotifyPlaylistName(playlistName);
     return ftf;
   }
 
@@ -202,7 +204,7 @@ public class FilterTracksFragment extends KiaraFragment {
     View headerView = activity.getLayoutInflater().inflate(R.layout.header_image, null);
     parallaxAdapter.setParallaxHeader(headerView, tracksList);
     picasso.load(playlist.getImageUrl()).into((FullImageView)headerView.findViewById(R.id.header_image));
-    ((TextView)headerView.findViewById(R.id.playlist_name)).setText(playlistName.toUpperCase());
+    ((TextView)headerView.findViewById(R.id.playlist_name)).setText(spotifyPlaylistName.toUpperCase());
     setUpFab();
   }
 
@@ -225,11 +227,11 @@ public class FilterTracksFragment extends KiaraFragment {
         if(userId != null) {
           List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
           if (songs != null) {
-            i.putExtra(PlaylistSongListActivity.SONG_LIST_ARG_KEY, SongParcelable.convert(songs));
+            i.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
           }
         }
-        i.putExtra(PlaylistSongListActivity.PLAYLIST_ID_ARG_KEY, spotifyPlaylistId);
-        i.putExtra(PlaylistSongListActivity.PLAYLIST_NAME_ARG_KEY, "Playlist");
+        i.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
+        i.putExtra(Constants.ARG_PLAYLIST_NAME, spotifyPlaylistName);
         getBus().post(new GetSongsForPlaylist(playlistId));
         startActivity(i);
       }
@@ -241,8 +243,8 @@ public class FilterTracksFragment extends KiaraFragment {
     this.spotifyPlaylistId = spotifyPlaylistId;
   }
 
-  public void setPlaylistName(String name) {
-    this.playlistName = name;
+  public void setSpotifyPlaylistName(String name) {
+    this.spotifyPlaylistName = name;
   }
 
   public long getPlaylistId() {
@@ -251,5 +253,13 @@ public class FilterTracksFragment extends KiaraFragment {
 
   public void setPlaylistId(long playlistId) {
     this.playlistId = playlistId;
+  }
+
+  public String getPlaylistName() {
+    return playlistName;
+  }
+
+  public void setPlaylistName(String playlistName) {
+    this.playlistName = playlistName;
   }
 }

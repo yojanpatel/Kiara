@@ -69,6 +69,12 @@ public class SongParcelable extends Song implements Parcelable {
     return l;
   }
 
+  public static ArrayList<SongParcelable> clone(List<SongParcelable> songs) {
+    ArrayList<SongParcelable> l = new ArrayList<SongParcelable>();
+    for(SongParcelable sp : songs) l.add(new SongParcelable(sp));
+    return l;
+  }
+
   @Override
   public boolean equals(Object o) {
     if(o == null || !(o instanceof SongParcelable)) return false;

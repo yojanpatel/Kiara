@@ -78,26 +78,26 @@ public class PlaylistViewActivity extends KiaraActivity {
         // CASE playlist
         if (parts.length == 5) {
           String user = parts[2];
-          String playlistId = parts[4];
-          Log.d(log, "Playlist shared: " + user + " " + playlistId);
-          args.putString(PlaylistListFragment.USER_PARAM, user);
-          args.putString(PlaylistListFragment.PLAYLIST_PARAM, playlistId);
-          args.putString(PlaylistListFragment.PLAYLIST_NAME_PARAM, title);
-          args.putSerializable(PlaylistListFragment.CASE_PARAM, Constants.Case.Playlist);
+          String spotifyPlaylistId = parts[4];
+          Log.d(log, "Playlist shared: " + user + " " + spotifyPlaylistId);
+          args.putString(Constants.ARG_USER_ID, user);
+          args.putString(Constants.ARG_PLAYLIST_SPOTIFY_ID, spotifyPlaylistId);
+          args.putString(Constants.ARG_PLAYLIST_SPOTIFY_NAME, title);
+          args.putSerializable(Constants.ARG_CASE, Constants.Case.Playlist);
         }
         // CASE album
         else if (parts[1].equals("album")) {
           String albumId = parts[2];
           Log.d(log, "Album shared: " + albumId);
-          args.putString(PlaylistListFragment.ALBUM_PARAM, albumId);
-          args.putSerializable(PlaylistListFragment.CASE_PARAM, Constants.Case.Album);
+          args.putString(Constants.ARG_ALBUM_ID, albumId);
+          args.putSerializable(Constants.ARG_CASE, Constants.Case.Album);
         }
         // CASE track
         else if (parts[1].equals("track")) {
           String trackId = parts[2];
           Log.d(log, "Track shared: " + trackId);
-          args.putString(PlaylistListFragment.TRACK_PARAM, trackId);
-          args.putSerializable(PlaylistListFragment.CASE_PARAM, Constants.Case.Track);
+          args.putString(Constants.ARG_SONG_SPOTIFY_ID, trackId);
+          args.putSerializable(Constants.ARG_CASE, Constants.Case.Track);
         }
       } catch (MalformedURLException e) {
         Log.e(log, e.toString());

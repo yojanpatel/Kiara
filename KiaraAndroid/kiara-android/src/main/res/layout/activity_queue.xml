@@ -8,6 +8,7 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       tools:context="uk.co.yojan.kiara.android.activities.QueueActivity"
+      android:layout_below="@id/toolbar"
       tools:ignore="MergeRootFrame" />
 
   <android.support.v7.widget.Toolbar
@@ -16,13 +17,41 @@
       android:layout_height="wrap_content"
       android:background="@color/transparent">
 
-    <EditText
-        android:id="@+id/searchEditText"
-        android:hint="@string/search_playlist"
+    <RelativeLayout
+        android:id="@+id/toolbarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-      <requestFocus/>
-    </EditText>
+        android:layout_height="match_parent">
+
+      <EditText
+          android:id="@+id/searchEditText"
+          android:hint="@string/search_playlist"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginRight="16dp"
+          android:paddingLeft="36dp"
+          android:paddingRight="36dp"
+          android:paddingTop="8dp"
+          android:paddingBottom="8dp"/>
+
+      <ImageView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:padding="8dp"
+          android:layout_alignLeft="@+id/searchEditText"
+          android:layout_alignTop="@id/searchEditText"
+          android:src="@drawable/ic_search_grey600_24dp"
+          />
+
+      <ImageButton
+          android:id="@+id/resetQueryButton"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignRight="@+id/searchEditText"
+          android:src="@drawable/ic_close_grey600_24dp"
+          android:padding="8dp"
+          android:background="@color/transparent"
+          android:visibility="gone"/>
+    </RelativeLayout>
 
   </android.support.v7.widget.Toolbar>
 

@@ -44,13 +44,13 @@ public class PlaylistListFragment extends KiaraFragment {
 
   private static final String log = PlaylistListFragment.class.getName();
 
-  public static final String CASE_PARAM = "CASE_PARAM";
-  public static final String USER_PARAM = "USER_PARAM";
-  public static final String PLAYLIST_PARAM = "PLAYLIST_PARAM";
-  public static final String PLAYLIST_ID_PARAM = "PLAYLIST_ID_PARAM";
-  public static final String PLAYLIST_NAME_PARAM = "PLAYLIST_NAME_PARAM";
-  public static final String ALBUM_PARAM = "ALBUM_PARAM";
-  public static final String TRACK_PARAM = "TRACK_PARAM";
+//  public static final String CASE_PARAM = "CASE_PARAM";
+//  public static final String USER_PARAM = "USER_PARAM";
+//  public static final String PLAYLIST_PARAM = "PLAYLIST_PARAM";
+//  public static final String PLAYLIST_ID_PARAM = "PLAYLIST_ID_PARAM";
+//  public static final String PLAYLIST_NAME_PARAM = "PLAYLIST_NAME_PARAM";
+//  public static final String ALBUM_PARAM = "ALBUM_PARAM";
+//  public static final String TRACK_PARAM = "TRACK_PARAM";
 
   private KiaraActivity parent;
   private Context mContext;
@@ -64,10 +64,10 @@ public class PlaylistListFragment extends KiaraFragment {
 
   private Constants.Case c;
   private String userId;
-  private String playlistId;
+  private String spotifyPlaylistId;
   private String playlistName;
   private String albumId;
-  private String trackId;
+  private String songId;
 
   /*
    * Construct a PlaylistListFragment to allow user to choose which playlist
@@ -87,16 +87,16 @@ public class PlaylistListFragment extends KiaraFragment {
     Log.d("PVA", "onCreate");
     Bundle args = getArguments();
     if (args != null) {
-      c = (Constants.Case)args.getSerializable(CASE_PARAM);
+      c = (Constants.Case)args.getSerializable(Constants.ARG_CASE);
       switch(c) {
         case Playlist:
-          userId = args.getString(USER_PARAM);
-          playlistName = args.getString(PLAYLIST_NAME_PARAM);
-          playlistId = args.getString(PLAYLIST_PARAM);
+          userId = args.getString(Constants.ARG_USER_ID);
+          playlistName = args.getString(Constants.ARG_PLAYLIST_SPOTIFY_NAME);
+          spotifyPlaylistId = args.getString(Constants.ARG_PLAYLIST_SPOTIFY_ID);
         case Track:
-          trackId = args.getString(TRACK_PARAM);
+          songId = args.getString(Constants.ARG_SONG_ID);
         case Album:
-          albumId = args.getString(ALBUM_PARAM);
+          albumId = args.getString(Constants.ARG_ALBUM_ID);
       }
     } else {
       c = Constants.Case.Default;
@@ -110,7 +110,7 @@ public class PlaylistListFragment extends KiaraFragment {
     ButterKnife.inject(this, rootView);
     this.mContext = rootView.getContext();
     if(getArguments() != null)
-      Log.d("PVA", "CASE: " + (Constants.Case)getArguments().getSerializable(CASE_PARAM));
+      Log.d("PVA", "CASE: " + (Constants.Case)getArguments().getSerializable(Constants.ARG_CASE));
     mRecyclerView.setHasFixedSize(true);
 
     mLayoutManager = new LinearLayoutManager(getActivity());
@@ -186,21 +186,22 @@ public class PlaylistListFragment extends KiaraFragment {
 
   public void defaultOnItemClick(View view, int position) {
     Log.d(log, "default - Item clicked at position " + position);
+
     long playlistId = playlists.get(position).getPlaylist().getId();
+    String userId = ((KiaraActivity)getActivity()).sharedPreferences().getString(Constants.USER_ID, null);
 
     Intent i = new Intent(mContext, PlaylistSongListActivity.class);
 
     /* Look for cached result for the playlist's songs. */
-    String userId = ((KiaraActivity)getActivity()).sharedPreferences().getString(Constants.USER_ID, null);
     if(userId != null) {
       List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
       if (songs == null) {
         songs = playlists.get(position).getSongs();
       }
-      i.putExtra(PlaylistSongListActivity.SONG_LIST_ARG_KEY, SongParcelable.convert(songs));
+      i.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
     }
-    i.putExtra(PlaylistSongListActivity.PLAYLIST_ID_ARG_KEY, playlistId);
-    i.putExtra(PlaylistSongListActivity.PLAYLIST_NAME_ARG_KEY, playlists.get(position).getPlaylist().getPlaylistName());
+    i.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
+    i.putExtra(Constants.ARG_PLAYLIST_NAME, playlists.get(position).getPlaylist().getPlaylistName());
     getBus().post(new GetSongsForPlaylist(playlistId));
     startActivity(i);
   }
@@ -210,15 +211,16 @@ public class PlaylistListFragment extends KiaraFragment {
     Log.d(log, "playlist - Item clicked at position " + position);
 
     // Post event to get all tracks for the playlist.
-    getBus().post(new FetchPlaylistTracks(userId, playlistId));
+    getBus().post(new FetchPlaylistTracks(userId, spotifyPlaylistId));
 
     // Start the new Activity.
     FragmentManager fm = getFragmentManager();
     Intent intent = new Intent(mContext, BrowseActivity.class);
-    intent.putExtra(CASE_PARAM, c);
-    intent.putExtra(PLAYLIST_PARAM, playlistId);
-    intent.putExtra(PLAYLIST_NAME_PARAM, playlistName);
-    intent.putExtra(PLAYLIST_ID_PARAM, playlists.get(position).getPlaylist().getId());
+    intent.putExtra(Constants.ARG_CASE, c);
+    intent.putExtra(Constants.ARG_PLAYLIST_SPOTIFY_ID, spotifyPlaylistId);
+    intent.putExtra(Constants.ARG_PLAYLIST_SPOTIFY_NAME, playlistName);
+    intent.putExtra(Constants.ARG_PLAYLIST_ID, playlists.get(position).getPlaylist().getId());
+    intent.putExtra(Constants.ARG_PLAYLIST_NAME, playlists.get(position).getPlaylist().getPlaylistName());
     startActivity(intent);
   }
 
