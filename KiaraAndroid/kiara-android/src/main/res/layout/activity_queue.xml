@@ -1,0 +1,29 @@
+<RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+                 xmlns:tools="http://schemas.android.com/tools"
+                 android:layout_height="match_parent"
+                 android:layout_width="match_parent">
+
+  <FrameLayout
+      android:id="@+id/container"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      tools:context="uk.co.yojan.kiara.android.activities.QueueActivity"
+      tools:ignore="MergeRootFrame" />
+
+  <android.support.v7.widget.Toolbar
+      android:id="@+id/toolbar"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:background="@color/transparent">
+
+    <EditText
+        android:id="@+id/searchEditText"
+        android:hint="@string/search_playlist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+      <requestFocus/>
+    </EditText>
+
+  </android.support.v7.widget.Toolbar>
+
+</RelativeLayout>

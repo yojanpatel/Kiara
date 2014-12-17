@@ -19,10 +19,13 @@
     <string name="search_song_query_hint">Search song</string>
     <string name="add_song_dialog">Add Song</string>
     <string name="title_activity_fake">FakeActivity</string>
-  <string name="add_all">Add All</string>
-  <string name="title_activity_browse_activity">Browse Tracks</string>
+    <string name="add_all">Add All</string>
+    <string name="title_activity_browse_activity">Browse Tracks</string>
     <string name="transition_album_cover">transition_album_cover</string>
     <string name="transition_fab">transition_fab</string>
     <string name="queue">Queue</string>
+    <string name="title_activity_queue">QueueActivity</string>
+    <string name="search_playlist">Search Playlist</string>
+    <string name="search">Search</string>
 
 </resources>

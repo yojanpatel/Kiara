@@ -4,13 +4,15 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -64,37 +66,34 @@ public class AddSongDialog extends DialogFragment {
     View view = activity.getLayoutInflater().inflate(R.layout.search_song_dialog, null);
     ButterKnife.inject(this, view);
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-    builder.setView(view)
-        .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialogInterface, int i) {
-            String query = queryEdit.getText().toString();
-            Crouton.makeText(getActivity(), "Searching for " + query, Style.INFO).show();
-            ((KiaraActivity) getActivity()).getBus()
-                .post(new SearchRequest(query, id, 0, 2));
-          }
-        })
-        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialogInterface, int i) {
-            // User cancelled the dialog, do nothing.
-            dialogInterface.cancel();
-          }
-        });
+    builder.setView(view);
 
     mLayoutManager = new LinearLayoutManager(activity);
     resultList.setLayoutManager(mLayoutManager);
 
+
+    queryEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+      @Override
+      public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        boolean handled = false;
+        if (actionId == EditorInfo.IME_ACTION_GO) {
+          Log.d("AddSongDialog", "search ime action rcvd.");
+          searchClick();
+          handled = true;
+        }
+        return handled;      }
+    });
+
     searchBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        searchClick(v);
+        searchClick();
       }
     });
     return builder.create();
   }
 
-  public void searchClick(View view) {
+  public void searchClick() {
     String query = queryEdit.getText().toString();
 
     Crouton.cancelAllCroutons();
@@ -116,6 +115,13 @@ public class AddSongDialog extends DialogFragment {
   public void onResume() {
     super.onResume();
     activity.getBus().register(this);
+  }
+
+  @Override
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    getDialog().getWindow().setSoftInputMode(
+        WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
   }
 
   // Maximise dialog to take up the entire screen.

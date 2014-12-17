@@ -196,7 +196,8 @@ public class SongListFragment extends KiaraFragment {
       @Override
       public void onClick(View view) {
         FragmentManager fm = getFragmentManager();
-        AddSongDialog.newInstance(id).show(fm, "fragment_add_song");
+        AddSongDialog asd = AddSongDialog.newInstance(id);
+        asd.show(fm, "fragment_add_song");
       }
     });
   }
