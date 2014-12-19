@@ -1,6 +1,6 @@
 package uk.co.yojan.kiara.android.background;
 
-import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -16,19 +16,24 @@ import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import com.spotify.sdk.android.Spotify;
-import com.spotify.sdk.android.playback.Player;
-import com.spotify.sdk.android.playback.PlayerNotificationCallback;
-import com.spotify.sdk.android.playback.PlayerState;
-import com.spotify.sdk.android.playback.PlayerStateCallback;
+import com.spotify.sdk.android.playback.*;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
 import uk.co.yojan.kiara.android.KiaraApplication;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.activities.PlayerActivity;
+import uk.co.yojan.kiara.android.events.PlaybackEvent;
+import uk.co.yojan.kiara.android.events.QueueSongRequest;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
+import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.Song;
+
+import java.util.LinkedList;
 
 /**
  * Background, long-running service that handles the Spotify streaming and
@@ -42,17 +47,25 @@ public class MusicService extends Service
   private KiaraApplication application;
 
   private Player player;
+  public enum RepeatState {FALSE, ONE, TRUE}
+  private RepeatState repeating;
   private boolean playing;
   private boolean favourited;
 
+
+  private long playlistId;
   private Song currentSong;
   private int duration;
   private Bitmap currentSongAlbumCover;
-  private Song predictedNextSong;
+
+  public LinkedList<Song> playQueue;
 
   // Locks that have to be acquired from Android if streaming is taking place.
   private PowerManager.WakeLock wakeLock;
   private WifiManager.WifiLock wifiLock;
+
+  private NotificationManager mNotificationManager;
+
 
   private Handler mHandler = new Handler();
   private Runnable mRunnable;
@@ -72,22 +85,28 @@ public class MusicService extends Service
     initialise();
   }
 
+  /**
+   * Called every time a new intent is sent to this service.
+   */
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     Log.d(log, "onStartCommand");
 
     if(intent.getBooleanExtra(Constants.PLAY_ACTION, false)) {
       String spotifyUri = intent.getStringExtra(Constants.SONG_URI);
-      if(spotifyUri != null) {
-//        playSong(spotifyUri);
-      }
+      Log.d(log, "Play action received " + spotifyUri);
+
     } else if(intent.getAction() != null) {
       if (intent.getAction().equals(Constants.ACTION_STOP_SERVICE)) {
         Log.d(log, "Stopping service from intent.");
         stopSelf();
+
       } else if (intent.getAction().equals(Constants.ACTION_PLAY_PAUSE)) {
         Log.d(log, "play/pause from intent.");
         pauseplay();
+      } else if (intent.getAction().equals(Constants.ACTION_FAVOURITE)) {
+        Log.d(log, "fav from intent");
+        toggleFav();
       }
     }
     return START_STICKY;
@@ -104,6 +123,10 @@ public class MusicService extends Service
     wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakeLockTag");
     wifiLock = ((WifiManager) getSystemService(Context.WIFI_SERVICE))
         .createWifiLock(WifiManager.WIFI_MODE_FULL, "MyWifiLockTag");
+
+    mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+    playQueue = new LinkedList<Song>();
 
     initialisePlayer();
   }
@@ -128,16 +151,16 @@ public class MusicService extends Service
   }
 
   private void initialisePlayer() {
-    Log.d(log, "initialising player");
     String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
     if(accessToken != null) {
-      Spotify spotify = new Spotify(accessToken);
-      player = spotify.getPlayer(this, "Kiara", this,
+
+      Spotify spotify = new Spotify();
+      Config playerConfig = new Config(this, accessToken, Constants.CLIENT_ID);
+      player = spotify.getPlayer(playerConfig, this,
           new Player.InitializationObserver() {
 
             @Override
             public void onInitialized() {
-              Log.d(log, "onInitialized");
               player.addPlayerNotificationCallback(MusicService.this);
             }
 
@@ -151,18 +174,82 @@ public class MusicService extends Service
 
   @Override
   public void onPlaybackEvent(EventType eventType, PlayerState playerState) {
-    Log.d(log, "Playback event received " + eventType);
-    switch(eventType) {
-      default:
-        break;
+
+    // TRACK_START: called every time a new track starts playing
+    if (eventType == EventType.TRACK_START) {
+      Log.d(log, "Track started " + playerState.trackUri);
+      application.learningApi().trackStarted(
+          application.userId(),
+          playlistId,
+          stripSpotifyUri(playerState.trackUri),
+          emptyCallback);
+
+      if (repeating == RepeatState.ONE) {
+        player.setRepeat(false);
+        repeating = RepeatState.FALSE;
+      }
+
+    // END_OF_CONTEXT: end of a song that finished playing
+    } else if (eventType == EventType.END_OF_CONTEXT) {
+      Log.d(log, "Track ended " + playerState.trackUri);
+      application.learningApi().trackFinished(
+          application.userId(),
+          playlistId,
+          stripSpotifyUri(playerState.trackUri),
+          emptyCallback);
+      nextSong();
+
+      if(favourited) {
+        Log.d(log, "Track actually favourited");
+        application.learningApi().trackFavourited(
+            application.userId(),
+            playlistId,
+            stripSpotifyUri(playerState.trackUri),
+            emptyCallback);
+      }
+
+    // TRACK_END: the song was skipped (nextSong() was called)
+    } else if (eventType == EventType.TRACK_END) {
+      Log.d(log, "Track ended due to skip " + playerState.trackUri);
+      application.learningApi().trackFinished(
+          application.userId(),
+          playlistId,
+          stripSpotifyUri(playerState.trackUri),
+          emptyCallback);
+
+      if(favourited) {
+        Log.d(log, "Track actually favourited");
+        application.learningApi().trackFavourited(
+            application.userId(),
+            playlistId,
+            stripSpotifyUri(playerState.trackUri),
+            emptyCallback);
+      }
+
+
+    } else if (eventType == EventType.LOST_PERMISSION) {
+        Log.d(log, "Lost permission, pausing.");
+
+    } else if (eventType == EventType.SKIP_NEXT) {
+      Log.d(log, "Skipping to next song.");
+      application.learningApi().trackSkipped(
+          application.userId(),
+          playlistId,
+          stripSpotifyUri(playerState.trackUri),
+          playerState.positionInMs,
+          emptyCallback);
     }
 
-    application.getBus().post(eventType);
+    application.getBus().post(new PlaybackEvent(eventType, playerState));
+  }
+
+  @Override
+  public void onPlaybackError(ErrorType errorType, String s) {
+    Log.e(log, s);
   }
 
   @Override
   public void onPlayerState(PlayerState playerState) {
-    Log.d(log, "playerState received. " + playerState.durationInMs);
     duration = playerState.durationInMs;
     application.getBus().post(playerState);
   }
@@ -180,61 +267,109 @@ public class MusicService extends Service
   }
 
 
-  public void playSong(String spotifyUri) {
-    Log.d(log, "Playing Song " + spotifyUri);
-    playing = true;
-    player.play("spotify:track:"+spotifyUri);
-    mHandler.post(mRunnable);
-    acquireLocks();
-  }
+  // Music Playback Control Methods
 
   public void playSong(Song song) {
     Log.d(log, "Playing song " + song.getSongName());
+
+    // update state regarding the playback
     playing = true;
-    sharedPreferences().edit().putBoolean(Constants.IN_SESSION, true).commit();
+    favourited = false;
     currentSong = song;
+
+    // play song on the spotify player
     player.play("spotify:track:" + song.getSpotifyId());
 
+
+    // signal playback session is in progress, runnable, acquire wake locks etc.
+    sharedPreferences().edit().putBoolean(Constants.IN_SESSION, true).commit();
     mHandler.post(mRunnable);
     acquireLocks();
+
+    startForeground(Constants.MUSIC_NOTIF_ID, buildNotif(playing, favourited).build());
+    // update the notification album image
+    albumNotif();
   }
 
   public void playSongWeak(Song song) {
-    playing = true;
+
+    // Either not playing a song, or we want to play a different song
     if(currentSong == null || !currentSong.getSpotifyId().equals(song.getSpotifyId())) {
-      currentSong = song;
-      player.play("spotify:track:" + song.getSpotifyId());
+      playSong(song);
     } else {
       if(isPlaying()) {
         // pass
       } else {
-        player.resume();
+        resumeSong();
       }
     }
-
-    sharedPreferences().edit().putBoolean(Constants.IN_SESSION, true).commit();
-    playing = true;
-    mHandler.post(mRunnable);
     acquireLocks();
   }
 
-  /* TODO(yojan): event transfer between app and Kiara. */
+  public void resumeSong() {
+    Log.d(log, "Resuming song.");
+    if(currentSong != null) {
+      Log.d(log, "Current song is not null. " + currentSong.getSongName());
+      player.resume();
+      playing = true;
+      mHandler.post(mRunnable);
+      acquireLocks();
+    }
+  }
+
+  public void pause() {
+    Log.d(log, "Pausing song.");
+    player.pause();
+    player.getPlayerState(this);
+    playing = false;
+    mHandler.removeCallbacks(mRunnable);
+    releaseLocks();
+  }
 
   public void nextSong() {
-    player.skipToNext();
+    if(playQueue.size() > 0) {
+      Log.d(log, "playing the nextSong " + playQueue.getFirst().getSongName());
+      playSong(playQueue.getFirst());
+      playQueue.removeFirst();
+    } else {
+      playing = false;
+      pause();
+    }
     favourited = false;
-    /* post event to kiara saying song was skipped, with duration etc. */
   }
 
   public void previousSong() {
     player.skipToPrevious();
     favourited = false;
-    /* post event to kiara saying song was replayed, with duration etc. */
   }
 
-  public void queueSong(String spotifyUri) {
-    player.queue(spotifyUri);
-    /* post event to kiara saying song was queued. */
+  public void queueSong(Song song) {
+    playQueue.addLast(song);
+    application.learningApi().trackQueued(
+        application.userId(),
+        playlistId,
+        currentSong.getSpotifyId(),
+        song.getSpotifyId(),
+        emptyCallback);
+  }
+
+  public RepeatState repeat() {
+    if(repeating == RepeatState.FALSE) {
+      repeating = RepeatState.ONE;
+      player.setRepeat(true);
+    } else if(repeating == RepeatState.ONE) {
+      repeating  = RepeatState.TRUE;
+      player.setRepeat(true);
+    } else if(repeating == RepeatState.TRUE) {
+      repeating = RepeatState.FALSE;
+      player.setRepeat(false);
+    }
+    return repeating;
+  }
+
+  @Subscribe
+  public void onQueueRequest(QueueSongRequest request) {
+    queueSong(request.getSong());
   }
 
   /**
@@ -245,33 +380,28 @@ public class MusicService extends Service
   public boolean pauseplay() {
     if(playing) {
       // Pause the player
-      player.pause();
-      player.getPlayerState(this);
-      playing = !playing;
-      releaseLocks();
+      pause();
     } else {
       // Start playing
-      player.resume();
-      playing = !playing;
-      acquireLocks();
+      resumeSong();
     }
+    updateNotif(playing, favourited);
     return playing;
   }
 
   /**
    * toggle whether the current song is favourited or not.
-   *
    */
   public boolean toggleFav() {
     favourited = !favourited;
     Log.d(log, currentSong.getSongName() + " favourited ? " + favourited);
+    updateNotif(playing, favourited);
     return favourited;
   }
 
   @Subscribe
   public void onProgressChanged(SeekbarProgressChanged event) {
     if(player != null && event.fromUser) {
-      Log.d(log, "progress changed: " + duration + " " + event.progress);
       int position = (int)(duration * ((float)event.progress/255.0));
       Log.d(log, "seeking to " + (duration*(event.progress/255)) + " " + position);
       player.seekToPosition(position);
@@ -279,23 +409,21 @@ public class MusicService extends Service
   }
 
   private void acquireLocks() {
-    Log.i(log, "Acquiring Wake and Wifi Locks.");
     wakeLock.acquire();
     wifiLock.acquire();
   }
 
   private void releaseLocks() {
-    Log.i(log, "Releasing Wake and Wifi Locks.");
     wakeLock.release();
     wifiLock.release();
   }
 
-  public void startForeground() {
+  public void albumNotif() {
     Target target = new Target() {
       @Override
       public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
         currentSongAlbumCover = bitmap;
-        startForeground(37, buildNotif());
+        updateNotif(currentSongAlbumCover);
       }
 
       @Override
@@ -310,12 +438,12 @@ public class MusicService extends Service
   }
 
   // TODO(yojan) tweak : change drawables, text etc.
-  private Notification buildNotif() {
+  private NotificationCompat.Builder buildNotif(boolean playing, boolean favourited) {
     String text = currentSong.getArtistName() + " - " + currentSong.getSongName();
 
-//    PendingIntent pi = PendingIntent.getActivity(this, 0,
-//        new Intent(this, MainActivity.class),
-//        PendingIntent.FLAG_UPDATE_CURRENT);
+    Intent i = new Intent(this, PlayerActivity.class);
+    i.putExtra(Constants.ARG_SONG, new SongParcelable(currentSong));
+    PendingIntent pi = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
 
     Intent stopIntent = new Intent(this, MusicService.class);
     stopIntent.setAction(Constants.ACTION_STOP_SERVICE);
@@ -325,16 +453,42 @@ public class MusicService extends Service
     playpauseIntent.setAction(Constants.ACTION_PLAY_PAUSE);
     PendingIntent playpauseService = PendingIntent.getService(this, 0, playpauseIntent, 0);
 
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-    Notification notification = builder
+    Intent favIntent = new Intent(this, MusicService.class);
+    favIntent.setAction(Constants.ACTION_FAVOURITE);
+    PendingIntent favService = PendingIntent.getService(this, 0, favIntent, 0);
+
+    NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
         .setContentTitle(currentSong.getSongName())
-        .setSmallIcon(R.drawable.ic_play_arrow_white_18dp)
-        .setLargeIcon(currentSongAlbumCover)
+        .setContentIntent(pi)
+        .setSmallIcon(R.drawable.ic_new_releases_white_24dp)
         .setContentText(currentSong.getArtistName() + " - " + currentSong.getAlbumName())
-        .addAction(R.drawable.ic_close_white_24dp, "Stop", stopService)
-        .addAction(R.drawable.ic_shuffle_white_24dp, "Pause/Play", playpauseService)
-        .build();
-    return notification;
+        .addAction(R.drawable.ic_close_white_24dp, "Stop", stopService);
+
+    notificationBuilder.addAction(
+        favourited ? R.drawable.ic_favorite_white_24dp : R.drawable.ic_favorite_outline_white_24dp,
+        "Favourite", favService
+    );
+
+    notificationBuilder.addAction(
+        playing ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp,
+        playing ? "Pause" : "Play",
+        playpauseService
+    );
+
+    if(currentSongAlbumCover != null) {
+      notificationBuilder.setLargeIcon(currentSongAlbumCover);
+    }
+
+    return notificationBuilder;
+  }
+
+  private void updateNotif(boolean playing, boolean favourited) {
+    mNotificationManager.notify(Constants.MUSIC_NOTIF_ID, buildNotif(playing, favourited).build());
+  }
+
+  private void updateNotif(Bitmap largeIcon) {
+    Log.d(log, "updating notification with a large icon");
+    mNotificationManager.notify(Constants.MUSIC_NOTIF_ID, buildNotif(playing, favourited).setLargeIcon(largeIcon).build());
   }
 
   @Override
@@ -373,6 +527,14 @@ public class MusicService extends Service
     return playing;
   }
 
+  private static String stripSpotifyUri(String spotifyUri) {
+    return spotifyUri.substring("spotify:track:".length());
+  }
+
+  public void setPlaylistId(long playlistId) {
+    this.playlistId = playlistId;
+  }
+
   /**
    * Class used for the client Binder.  Because we know this service always
    * runs in the same process as its clients, we don't need to deal with IPC.
@@ -382,4 +544,14 @@ public class MusicService extends Service
       return MusicService.this;
     }
   }
+
+  retrofit.Callback<String> emptyCallback =  new retrofit.Callback<String>() {
+    @Override
+    public void success(String s, Response response) {}
+
+    @Override
+    public void failure(RetrofitError error) {
+      Log.e(log, error.getMessage());
+    }
+  };
 }

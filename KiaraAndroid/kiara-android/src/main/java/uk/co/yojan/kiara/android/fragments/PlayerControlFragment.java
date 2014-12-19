@@ -18,11 +18,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.spotify.sdk.android.playback.PlayerNotificationCallback;
+import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
 import uk.co.yojan.kiara.android.background.MusicService;
+import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.Song;
 
@@ -64,14 +67,6 @@ public class PlayerControlFragment extends KiaraFragment {
     // Required empty public constructor
   }
 
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-//    if (getArguments() != null) {
-//      mParam1 = getArguments().getString(ARG_PARAM1);
-//      mParam2 = getArguments().getString(ARG_PARAM2);
-//    }
-  }
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -127,9 +122,7 @@ public class PlayerControlFragment extends KiaraFragment {
   private void updateCurrentSong(Song currentSong) {
     this.currentSong = currentSong;
     if(currentSong != null) {
-      Picasso.with(mContext).load(currentSong.getImageURL()).resize(150, 150).into(albumImage);
-      songName.setText(currentSong.getSongName());
-      detail.setText(currentSong.getArtistName() + " - " + currentSong.getAlbumName());
+      updateUi(currentSong);
     } else {
       Log.d("PlayerControlFragment", "updateCurrentSong with null, leaving it.");
       getView().setVisibility(View.GONE);
@@ -142,6 +135,28 @@ public class PlayerControlFragment extends KiaraFragment {
     } else {
       playpause.setImageResource(R.drawable.ic_play_circle_outline_white_36dp);
     }
+  }
+
+  @Subscribe
+  public void onPlaybackEvent(PlaybackEvent event) {
+    PlayerNotificationCallback.EventType eventType = event.getEvent();
+
+    if(eventType == PlayerNotificationCallback.EventType.PLAY) {
+      playpause.setImageResource(R.drawable.ic_pause_circle_outline_white_36dp);
+
+    } else if(eventType == PlayerNotificationCallback.EventType.TRACK_START) {
+      updateUi(musicService.getCurrentSong());
+    } else if(eventType == PlayerNotificationCallback.EventType.PAUSE ||
+        eventType == PlayerNotificationCallback.EventType.LOST_PERMISSION) {
+      playpause.setImageResource(R.drawable.ic_play_circle_outline_white_36dp);
+    }
+  }
+
+  private void updateUi(Song currentSong) {
+    this.currentSong = currentSong;
+    Picasso.with(mContext).load(currentSong.getImageURL()).resize(150, 150).into(albumImage);
+    songName.setText(currentSong.getSongName());
+    detail.setText(currentSong.getArtistName() + " - " + currentSong.getAlbumName());
   }
 
   private ServiceConnection mConnection = new ServiceConnection() {

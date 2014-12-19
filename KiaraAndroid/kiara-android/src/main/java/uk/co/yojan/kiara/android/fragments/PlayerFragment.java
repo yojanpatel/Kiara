@@ -24,13 +24,12 @@ import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.spotify.sdk.android.Spotify;
 import com.spotify.sdk.android.playback.PlayerNotificationCallback;
 import com.spotify.sdk.android.playback.PlayerState;
-import com.spotify.sdk.android.playback.PlayerStateCallback;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.background.MusicService;
-import uk.co.yojan.kiara.android.background.MusicStateCallback;
+import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.Song;
@@ -38,11 +37,9 @@ import uk.co.yojan.kiara.client.data.Song;
 /**
  * Fragment that handles the song streaming from Spotify.
  */
-public class PlayerFragment extends KiaraFragment implements PlayerNotificationCallback, PlayerStateCallback, MusicStateCallback {
+public class PlayerFragment extends KiaraFragment {
 
   private static final String log = PlayerFragment.class.getName();
-//  public static final String SONG_PARAM = "SONG";
-//  public static final String PLAYLIST_ID_PARAM = "PLAYLIST_ID_PARAM";
 
   private Context mContext;
   private static Picasso picasso;
@@ -58,7 +55,11 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
   @InjectView(R.id.playpause) ImageButton playpause;
   @InjectView(R.id.favouritefab) FloatingActionButton favouriteFab;
   @InjectView(R.id.elapsed) TextView elapsed;
+  @InjectView(R.id.prev_track) ImageButton previousTrackButton;
+  @InjectView(R.id.next_track) ImageButton nextTrackButton;
+  @InjectView(R.id.replay_track) ImageButton repeatButton;
 
+  private long playlistId;
   private Song currentSong;
 
   MusicService musicService;
@@ -67,11 +68,13 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
   Drawable play;
   Drawable favOutline;
   Drawable favFilled;
+  Drawable repeatOne;
+  Drawable repeat;
 
   private int currentPosition;
   private int duration;
 
-  public static PlayerFragment newInstance(Song song) {
+  public static PlayerFragment newInstance(long playlistId, Song song) {
     PlayerFragment fragment =  new PlayerFragment();
     Bundle args = new Bundle();
     args.putParcelable(Constants.ARG_SONG, new SongParcelable(song));
@@ -107,6 +110,18 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
     favOutline = res.getDrawable(R.drawable.ic_favorite_outline_white_24dp);
     favFilled = res.getDrawable(R.drawable.ic_favorite_white_24dp);
 
+    repeatOne = res.getDrawable(R.drawable.ic_repeat_one_white_24dp);
+    repeat = res.getDrawable(R.drawable.ic_repeat_white_24dp);
+    if(Build.VERSION.SDK_INT >= 16) {
+      repeatOne.setColorFilter(
+          getResources().getColor(R.color.pinkA200),
+          PorterDuff.Mode.SRC_IN);
+
+      repeat.setColorFilter(
+          getResources().getColor(R.color.pinkA400),
+          PorterDuff.Mode.SRC_IN);
+    }
+
 
     Intent startService = new Intent(mContext, MusicService.class);
     getKiaraActivity().startService(startService);
@@ -115,11 +130,7 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
 
     initButtons();
     initialiseSeekBar();
-
-    picasso.load(currentSong.getImageURL()).into(albumArt);
-    songName.setText(currentSong.getSongName());
-    artistName.setText(currentSong.getArtistName());
-    albumName.setText(currentSong.getAlbumName());
+    updateUi(currentSong);
 
     return rootView;
   }
@@ -168,13 +179,7 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
     playpause.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if(musicService.pauseplay()) {
-          // Playing
-          playpause.setImageDrawable(pause);
-        } else {
-          // Paused
-          playpause.setImageDrawable(play);
-        }
+        musicService.pauseplay();
       }
     });
 
@@ -190,42 +195,68 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
         }
       }
     });
+
+    nextTrackButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        musicService.nextSong();
+      }
+    });
+
+    previousTrackButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        musicService.previousSong();
+      }
+    });
+
+    repeatButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        MusicService.RepeatState repeatState = musicService.repeat();
+        if (repeatState == MusicService.RepeatState.FALSE) {
+          repeatButton.setImageResource(R.drawable.ic_repeat_white_24dp);
+        }
+        if (repeatState == MusicService.RepeatState.ONE) {
+          repeatButton.setImageDrawable(repeatOne);
+        }
+        if (repeatState == MusicService.RepeatState.TRUE) {
+          repeatButton.setImageDrawable(repeat);
+        }
+      }
+    });
   }
 
-  private void setPlayPauseImageResource(boolean playing) {
-    if(playing) {
+  private void updateUi(Song currentSong) {
+    this.currentSong = currentSong;
+    picasso.load(currentSong.getImageURL()).into(albumArt);
+    songName.setText(currentSong.getSongName());
+    artistName.setText(currentSong.getArtistName());
+    albumName.setText(currentSong.getAlbumName());
+  }
+
+  @Subscribe
+  public void onPlaybackEvent(PlaybackEvent event) {
+    Log.d(log, "PlaybackEvent " + event.getEvent().toString());
+    PlayerNotificationCallback.EventType eventType = event.getEvent();
+    PlayerState state = event.getState();
+
+    if(eventType == PlayerNotificationCallback.EventType.PLAY ||
+       eventType == PlayerNotificationCallback.EventType.TRACK_START) {
       playpause.setImageDrawable(pause);
-    } else {
-      playpause.setImageDrawable(play);
-    }
-  }
 
-  @Override
-  public void onPlaybackEvent(EventType eventType, PlayerState playerState) {
-    Log.d(log, "Playback event received " + eventType.name());
-    switch(eventType) {
-      default:
-        break;
-    }
-  }
+      updateUi(musicService.getCurrentSong());
 
-  @Override
-  public void onPlayingStateChanged(boolean nowPlaying) {
-    if(nowPlaying) {
-      // player is now playing.
-      playpause.setImageDrawable(pause);
-    } else {
-      // player is now paused.
+    } else if(eventType == PlayerNotificationCallback.EventType.PAUSE ||
+              eventType == PlayerNotificationCallback.EventType.LOST_PERMISSION) {
       playpause.setImageDrawable(play);
     }
   }
 
   @Subscribe
-  @Override
   public void onPlayerState(PlayerState playerState) {
     currentPosition = playerState.positionInMs;
     duration = playerState.durationInMs;
-    Log.d(log, "playerState received. " + playerState.durationInMs);
     if(duration > 0) {
       seekBar.setProgress((currentPosition * 255) / duration);
 
@@ -251,9 +282,12 @@ public class PlayerFragment extends KiaraFragment implements PlayerNotificationC
       MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
       musicService = binder.getService();
       bound = true;
+
+      musicService.setPlaylistId(playlistId);
       musicService.playSongWeak(currentSong);
-      musicService.startForeground();
-      setPlayPauseImageResource(musicService.isPlaying());
+      playpause.setImageDrawable(
+          musicService.isPlaying() ? pause : play
+      );
     }
 
     @Override

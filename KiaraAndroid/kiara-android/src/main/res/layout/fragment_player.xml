@@ -122,6 +122,16 @@
      android:layout_alignTop="@id/playpause"
      android:layout_marginTop="6dp"/>
 
+    <ImageButton android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+        android:id="@+id/replay_track"
+        android:padding="8dp"
+        android:src="@drawable/ic_repeat_white_24dp"
+                 android:layout_marginTop="6dp"
+        android:background="@color/transparent"
+        android:layout_toLeftOf="@id/prev_track"
+        android:layout_alignTop="@id/prev_track"/>
+
 
     <!-- Explicit Action Buttons - Like/Dislike // Favourite-->
 

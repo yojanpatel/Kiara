@@ -12,10 +12,7 @@ import uk.co.yojan.kiara.android.services.SpotifyAuthService;
 import uk.co.yojan.kiara.android.services.SpotifyWebService;
 import uk.co.yojan.kiara.android.utils.BusProvider;
 import uk.co.yojan.kiara.android.utils.OttoEventBuffer;
-import uk.co.yojan.kiara.client.KiaraApiInterface;
-import uk.co.yojan.kiara.client.KiaraClient;
-import uk.co.yojan.kiara.client.SpotifyApiInterface;
-import uk.co.yojan.kiara.client.SpotifyAuthInterface;
+import uk.co.yojan.kiara.client.*;
 
 public class KiaraApplication extends Application {
 
@@ -28,6 +25,7 @@ public class KiaraApplication extends Application {
   private KiaraService kiaraService;
 
   private KiaraApiInterface kiaraApi;
+  private KiaraLearningInterface kiaraLearningApi;
   private SpotifyAuthInterface authApi;
   private SpotifyApiInterface spotifyWebApi;
   private uk.co.yojan.kiara.android.client.KiaraClient client;
@@ -42,6 +40,7 @@ public class KiaraApplication extends Application {
     // Construct the Api for various interactions.
     client = new uk.co.yojan.kiara.android.client.KiaraClient(getApplicationContext());
     kiaraApi = KiaraClient.getKiaraApiClient();
+    kiaraLearningApi = KiaraClient.getKiaraLearningClient();
     authApi = KiaraClient.getSpotifyAuth();
 
     // Create the services that subscribe to the event bus.
@@ -74,6 +73,11 @@ public class KiaraApplication extends Application {
   public uk.co.yojan.kiara.android.client.KiaraClient kiaraClient() {
     return client;
   }
+
+  public KiaraLearningInterface learningApi() {
+    return kiaraLearningApi;
+  }
+
   public SpotifyApiInterface spotifyApi() {
     return spotifyWebApi;
   }
@@ -111,6 +115,10 @@ public class KiaraApplication extends Application {
   @Subscribe
   public void onRefreshTokenComplete(RefreshAccessTokenResponse credentials) {
     updateSpotifyService(credentials.getAccessToken());
+  }
+
+  public String userId() {
+    return sharedPreferences().getString(Constants.USER_ID, null);
   }
 
 }

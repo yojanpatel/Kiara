@@ -88,7 +88,7 @@ public class MainActivity extends KiaraActivity
   public void onAccessTokenValidated() {
     Log.d(LOG, "onAccessTokenValidated");
     Intent i = new Intent(this, PlaylistViewActivity.class);
-    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NO_ANIMATION);
     startActivity(i);
     finish();
   }

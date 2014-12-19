@@ -18,6 +18,7 @@ import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.adapters.SongListViewAdapter;
 import uk.co.yojan.kiara.android.comparators.SongComparatorByArtist;
+import uk.co.yojan.kiara.android.events.QueueSongRequest;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 
@@ -104,8 +105,8 @@ public class QueueFragment extends KiaraFragment {
         new RecyclerItemTouchListener.OnItemClickListener() {
           @Override
           public void onItemClick(View view, int position) {
-            Log.d(log, "Item clicked at position " + position);
-            // TODO: send queue message to MusicService
+            Log.d(log, "Queueing " + mAdapter.getData().get(position).getSongName());
+            getBus().post(new QueueSongRequest(mAdapter.getData().get(position)));
           }
         }));
 

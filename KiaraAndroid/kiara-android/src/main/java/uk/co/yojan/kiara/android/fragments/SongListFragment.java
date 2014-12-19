@@ -126,7 +126,7 @@ public class SongListFragment extends KiaraFragment {
 
             ActivityOptionsCompat options =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(activity,
-                    new Pair<View, String>(view.findViewById(R.id.song_img), getString(R.string.transition_album_cover)),
+//                    new Pair<View, String>(view.findViewById(R.id.song_img), getString(R.string.transition_album_cover)),
                     new Pair<View, String>(fab, getString(R.string.transition_fab)));
 
             i.putExtra(Constants.ARG_SONG, new SongParcelable(songs.get(position)));

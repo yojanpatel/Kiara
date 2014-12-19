@@ -2,7 +2,6 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import com.faradaj.blurbehind.BlurBehind;
@@ -26,9 +25,7 @@ public class PlayerActivity extends KiaraActivity {
     Intent trigger = getIntent();
     if(trigger != null) {
       song = trigger.getParcelableExtra(Constants.ARG_SONG);
-
       playlistId = trigger.getLongExtra(Constants.ARG_PLAYLIST_ID, -1);
-      Log.d("PlayerActivity", playlistId+"");
     }
 
     setContentView(R.layout.activity_player);
@@ -36,7 +33,7 @@ public class PlayerActivity extends KiaraActivity {
 
     if (savedInstanceState == null) {
         getFragmentManager().beginTransaction()
-                .add(R.id.container, PlayerFragment.newInstance(song))
+                .add(R.id.container, PlayerFragment.newInstance(playlistId, song))
                 .commit();
     }
   }

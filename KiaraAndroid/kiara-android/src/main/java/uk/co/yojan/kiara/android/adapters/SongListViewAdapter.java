@@ -74,6 +74,9 @@ public class SongListViewAdapter extends RecyclerView.Adapter<SongListViewAdapte
     notifyDataSetChanged();
   }
 
+  public List<SongParcelable> getData() {
+    return data;
+  }
 
   public static class ViewHolder extends RecyclerView.ViewHolder {
 
