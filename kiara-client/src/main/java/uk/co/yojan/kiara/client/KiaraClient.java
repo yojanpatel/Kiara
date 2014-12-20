@@ -30,8 +30,8 @@ public class KiaraClient {
   public static KiaraLearningInterface getKiaraLearningClient() {
     if(sKiaraLearningApi == null) {
       RestAdapter restAdapter = new RestAdapter.Builder()
-                    .setEndpoint("http://localhost:8080")
-//          .setEndpoint("http://kiara-analysis.kiara-yojan.appspot.com")
+//                    .setEndpoint("http://localhost:8080")
+          .setEndpoint("http://kiara-analysis.kiara-yojan.appspot.com")
           .setLogLevel(RestAdapter.LogLevel.FULL)
           .build();
       sKiaraLearningApi = restAdapter.create(KiaraLearningInterface.class);
