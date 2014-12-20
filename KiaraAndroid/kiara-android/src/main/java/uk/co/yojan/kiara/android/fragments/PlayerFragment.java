@@ -78,6 +78,7 @@ public class PlayerFragment extends KiaraFragment {
     PlayerFragment fragment =  new PlayerFragment();
     Bundle args = new Bundle();
     args.putParcelable(Constants.ARG_SONG, new SongParcelable(song));
+    args.putLong(Constants.ARG_PLAYLIST_ID, playlistId);
     fragment.setArguments(args);
     return fragment;
   }
@@ -91,6 +92,7 @@ public class PlayerFragment extends KiaraFragment {
     super.onCreate(savedInstanceState);
     if (getArguments() != null) {
       currentSong = getArguments().getParcelable(Constants.ARG_SONG);
+      playlistId = getArguments().getLong(Constants.ARG_PLAYLIST_ID);
     }
 
     picasso = Picasso.with(mContext);
@@ -120,6 +122,10 @@ public class PlayerFragment extends KiaraFragment {
       repeat.setColorFilter(
           getResources().getColor(R.color.pinkA400),
           PorterDuff.Mode.SRC_IN);
+    }
+
+    if(Build.VERSION.SDK_INT >= 21) {
+      albumArt.setBackground(getResources().getDrawable(R.drawable.ripple));
     }
 
 
@@ -284,6 +290,7 @@ public class PlayerFragment extends KiaraFragment {
       bound = true;
 
       musicService.setPlaylistId(playlistId);
+      Log.d("PLAYLISTID", playlistId + " ");
       musicService.playSongWeak(currentSong);
       playpause.setImageDrawable(
           musicService.isPlaying() ? pause : play

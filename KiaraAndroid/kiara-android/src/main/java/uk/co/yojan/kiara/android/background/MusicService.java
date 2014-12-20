@@ -545,9 +545,11 @@ public class MusicService extends Service
     }
   }
 
-  retrofit.Callback<String> emptyCallback =  new retrofit.Callback<String>() {
+  retrofit.Callback<Song> emptyCallback =  new retrofit.Callback<Song>() {
     @Override
-    public void success(String s, Response response) {}
+    public void success(Song s, Response response) {
+      playQueue.addLast(s);
+    }
 
     @Override
     public void failure(RetrofitError error) {
