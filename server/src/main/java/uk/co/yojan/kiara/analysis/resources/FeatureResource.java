@@ -2,14 +2,20 @@ package uk.co.yojan.kiara.analysis.resources;
 
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
-import uk.co.yojan.kiara.analysis.cluster.*;
+import uk.co.yojan.kiara.analysis.cluster.DistanceMatrix;
+import uk.co.yojan.kiara.analysis.cluster.DistanceMatrixBuilder;
+import uk.co.yojan.kiara.analysis.cluster.HierarchicalClustering;
+import uk.co.yojan.kiara.analysis.cluster.SongCluster;
 import uk.co.yojan.kiara.analysis.cluster.linkage.MeanDistance;
 import uk.co.yojan.kiara.analysis.tasks.FeatureExtractionTask;
 import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.echonest.EchoNestApi;
 import uk.co.yojan.kiara.server.models.*;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.logging.Logger;
@@ -176,14 +182,16 @@ public class FeatureResource {
   }
 
   @GET
-  @Path("/test")
-  public Response test() {
+  @Path("/history/{playlistId}")
+  public Response test(@PathParam("playlistId") Long playlistId) {
 
-    Playlist p = ofy().load().key(Key.create(Playlist.class, 5348024557502464L)).now();
+    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
     Queue<String> h = p.history;
-    String t = h.size() + " ";
+    String t = h.size() + "<br>";
     for(String s : h) {
-      t += " " + s;
+
+
+      t += s  + "<br>";
     }
 
     t += "<br> " + p.previousSong();

@@ -2,24 +2,27 @@ package uk.co.yojan.kiara.analysis.resources;
 
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
-import uk.co.yojan.kiara.analysis.learning.BinaryRewardFunction;
-import uk.co.yojan.kiara.analysis.learning.QLearner;
-import uk.co.yojan.kiara.analysis.learning.RewardFunction;
+import uk.co.yojan.kiara.analysis.learning.*;
 import uk.co.yojan.kiara.server.models.Playlist;
+import uk.co.yojan.kiara.server.models.Song;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.logging.Logger;
 
 @Path("/events/{userId}/{playlistId}")
+@Produces(MediaType.APPLICATION_JSON)
 public class EventResource {
   private static final Logger log = Logger.getLogger(EventResource.class.getName());
 
   // TODO dynamically change based on some setting parameter
   // Change the object to choose the reward function.
   public static RewardFunction reward = new BinaryRewardFunction();
+  public static Recommender recommender = new ClusterRecommender();
 
   @POST
   @Path("/start/{songId}")
@@ -31,7 +34,9 @@ public class EventResource {
     // update the listening history sliding window and other session state.
     Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
     playlist.nowPlaying(songId);
-    return Response.ok().build();
+
+    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
+    return Response.ok().entity(next).build();
   }
 
   @POST
@@ -47,7 +52,8 @@ public class EventResource {
     LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
     QLearner.update(previous, current, r);
 
-    return Response.ok().build();
+    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
+    return Response.ok().entity(next).build();
   }
 
   @POST
@@ -64,7 +70,8 @@ public class EventResource {
 
     QLearner.update(previous, current, r);
 
-    return Response.ok().build();
+    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
+    return Response.ok().entity(next).build();
   }
 
 
@@ -82,8 +89,8 @@ public class EventResource {
 
     QLearner.update(current, queued, r);
 
-    return Response.ok().build();
-  }
+    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
+    return Response.ok().entity(next).build();  }
 
   @POST
   @Path("/favourite/{songId}")
@@ -98,6 +105,7 @@ public class EventResource {
 
     QLearner.update(previous, current, r);
 
-    return Response.ok().build();
+    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
+    return Response.ok().entity(next).build();
   }
 }
