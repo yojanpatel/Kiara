@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.server.models;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.appengine.api.datastore.ReadPolicy;
 import com.google.appengine.repackaged.com.google.common.collect.BiMap;
 import com.google.appengine.repackaged.com.google.common.collect.HashBiMap;
 import com.googlecode.objectify.Key;
@@ -153,7 +154,7 @@ public class User {
   public Playlist getPlaylist(Long id) {
     String idStr = id.toString();
     if(playlistKeyMap.containsKey(idStr)) {
-      return ofy().load().key(playlistKeyMap.get(idStr)).now();
+      return ofy().consistency(ReadPolicy.Consistency.STRONG).cache(false).load().key(playlistKeyMap.get(idStr)).now();
     } else {
       return null;
     }

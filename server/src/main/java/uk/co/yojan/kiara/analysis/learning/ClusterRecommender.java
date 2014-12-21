@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.analysis.learning;
 
+import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
@@ -16,7 +17,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
  */
 public class ClusterRecommender implements Recommender {
 
-  private static final int PERIMETER_SIZE = 2;
+  private static final int PERIMETER_SIZE = 4;
 
   /**
    * @param userId     the id of the user
@@ -25,30 +26,35 @@ public class ClusterRecommender implements Recommender {
    */
   @Override
   public String recommend(String userId, Long playlistId) {
-    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
+//    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
+    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+
     LinkedList<String> history = p.history;
     String recentSongId = p.previousSong();
     ArrayList<String> perimeter = new ArrayList<>();
 
     LeafCluster leaf = OfyUtils.loadLeafCluster(playlistId, recentSongId).now();
     NodeCluster parent = ofy().load().key(leaf.getParent()).now();
-    if(parent != null)
-      while(perimeter.size() < PERIMETER_SIZE) {
+
+    if(parent != null) {
+      while (perimeter.size() < PERIMETER_SIZE) {
 
         List<String> shadow = parent.getSongIds();
-        for(String id : shadow) {
-          if(perimeter.size() >= PERIMETER_SIZE) break;
+        for (String id : shadow) {
+          if (perimeter.size() >= PERIMETER_SIZE) break;
 
-          if(!history.contains(id) && !perimeter.contains(id)) {
+
+          if (!history.contains(id) && !perimeter.contains(id)) {
             perimeter.add(id);
           }
         }
 
-        if(parent.getParent() != null)
+        if (parent.getParent() != null)
           parent = ofy().load().key(parent.getParent()).now();
         else
           break;
-      } else {
+      }
+    } else {
       return null;
     }
 

@@ -36,7 +36,11 @@ public class EventResource {
     playlist.nowPlaying(songId);
 
     Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
-    return Response.ok().entity(next).build();
+    String t = "";
+    for(String s : playlist.history) t += s + " ";
+    log.warning(t);
+
+    return Response.ok(next).build();
   }
 
   @POST

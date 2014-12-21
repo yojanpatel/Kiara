@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.server;
 
+import com.google.appengine.api.datastore.ReadPolicy;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyFactory;
 import com.googlecode.objectify.ObjectifyService;
@@ -32,7 +33,8 @@ public class OfyService {
   }
 
   public static Objectify ofy() {
-    return ObjectifyService.ofy();
+//    ObjectifyService.ofy().clear();
+    return ObjectifyService.ofy().consistency(ReadPolicy.Consistency.STRONG).cache(false);
   }
 
   public static ObjectifyFactory factory() {

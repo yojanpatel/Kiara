@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.analysis;
 
+import com.google.appengine.api.datastore.ReadPolicy;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.LoadResult;
 import com.googlecode.objectify.Result;
@@ -17,7 +18,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 public class OfyUtils {
 
   public static Result<User> loadUser(String userId) {
-    return ofy().load().key(Key.create(User.class, userId));
+    return ofy().consistency(ReadPolicy.Consistency.STRONG).load().key(Key.create(User.class, userId));
   }
 
   public static Playlist loadPlaylist(String userId, Long playlistId) {

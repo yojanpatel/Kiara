@@ -34,13 +34,12 @@ public class Playlist {
   private long v;
 
 
-  // Sliding window of the recent listening history
-  private int WINDOW_SIZE = 5;
   public LinkedList<String> history;
 
   public void nowPlaying(String songId) {
     if(history == null) history = new LinkedList<>();
     log.info(history.size() + " size");
+    int WINDOW_SIZE = 50;
     if(history.size() >= WINDOW_SIZE) {
       log.info(history.size() + " window full, removing.");
       history.poll();

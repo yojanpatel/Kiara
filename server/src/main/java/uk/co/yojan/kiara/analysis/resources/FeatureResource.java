@@ -184,19 +184,14 @@ public class FeatureResource {
   @GET
   @Path("/history/{playlistId}")
   public Response test(@PathParam("playlistId") Long playlistId) {
-
+    ofy().clear();
     Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
     Queue<String> h = p.history;
-    String t = h.size() + "<br>";
+    String t = h.size() + "  ";
     for(String s : h) {
-
-
-      t += s  + "<br>";
+      t += s;
     }
 
-    t += "<br> " + p.previousSong();
-
-
-    return Response.ok().entity(t).build();
+    return Response.ok().entity("\"" + t + "\"").build();
   }
 }
