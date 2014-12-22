@@ -3,6 +3,7 @@
     <application>kiara-yojan</application>
     <version>v1</version>
     <threadsafe>true</threadsafe>
+    <module>default</module>
     
     <system-properties>
         <property name="java.util.logging.config.file" value="WEB-INF/logging.properties"/>

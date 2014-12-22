@@ -6,10 +6,17 @@
   <servlet>
     <servlet-name>Jersey Web Application</servlet-name>
     <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+
     <init-param>
       <param-name>jersey.config.server.provider.packages</param-name>
-      <param-value>uk.co.yojan.kiara.server.resources;org.codehaus.jackson.jaxrs</param-value>
+      <param-value>uk.co.yojan.kiara.server.resources;org.codehaus.jackson.jaxrs;uk.co.yojan.kiara.server.filters</param-value>
     </init-param>
+
+    <init-param>
+      <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
+      <param-value>uk.co.yojan.kiara.server.filters.AuthFilter</param-value>
+    </init-param>
+
     <load-on-startup>1</load-on-startup>
   </servlet>
   <servlet-mapping>
@@ -25,4 +32,16 @@
     <filter-name>ObjectifyFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
+
+
+
+  <security-constraint>
+    <web-resource-collection>
+      <!--<web-resource-name>profile</web-resource-name>-->
+      <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <user-data-constraint>
+      <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
 </web-app>

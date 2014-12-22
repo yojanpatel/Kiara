@@ -30,6 +30,8 @@ public class OfyService {
     register(Cluster.class);
     register(NodeCluster.class);
     register(LeafCluster.class);
+
+    register(UserToken.class);
   }
 
   public static Objectify ofy() {
