@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.client;
 
 import retrofit.Callback;
+import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Path;
 import uk.co.yojan.kiara.client.data.Song;
@@ -41,4 +42,7 @@ public interface KiaraLearningInterface {
                               @Path("playlistId") Long playlistId,
                               @Path("songId") String songId,
                               Callback<Song> cb);
+
+  @GET("/features/history/{playlistId}")
+  public String getHistory(@Path("playlistId") long playlistId);
 }

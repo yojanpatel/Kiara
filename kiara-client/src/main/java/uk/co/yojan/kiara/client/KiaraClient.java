@@ -9,31 +9,42 @@ public class KiaraClient {
   private static KiaraApiInterface sKiaraApi;
   private static KiaraLearningInterface sKiaraLearningApi;
   private static SpotifyAuthInterface spotifyAuthApi;
+  private static SpotifyApiInterface spotifyApi;
 
 
   /*
    * Interface to interact with various Kiara related methods.
    */
-  public static KiaraApiInterface getKiaraApiClient() {
+  public static KiaraApiInterface getKiaraApiClient(final AccessTokenCallback callback) {
     if(sKiaraApi == null) {
       RestAdapter restAdapter = new RestAdapter.Builder()
-          .setEndpoint("http://kiara-yojan.appspot.com")
+          .setEndpoint("https://kiara-yojan.appspot.com")
 //          .setEndpoint("http://localhost:8080")
           .setLogLevel(RestAdapter.LogLevel.FULL)
-          .build();
+          .setRequestInterceptor(new RequestInterceptor() {
+            @Override
+            public void intercept(RequestFacade request) {
+              request.addHeader("Authorization", callback.getAccessToken());
+            }
+          }).build();
 
       sKiaraApi = restAdapter.create(KiaraApiInterface.class);
     }
     return sKiaraApi;
   }
 
-  public static KiaraLearningInterface getKiaraLearningClient() {
+  public static KiaraLearningInterface getKiaraLearningClient(final AccessTokenCallback callback) {
     if(sKiaraLearningApi == null) {
       RestAdapter restAdapter = new RestAdapter.Builder()
 //                    .setEndpoint("http://localhost:8080")
-          .setEndpoint("http://kiara-analysis.kiara-yojan.appspot.com")
-          .setLogLevel(RestAdapter.LogLevel.FULL)
-          .build();
+          .setEndpoint("https://kiara-analysis-dot-kiara-yojan.appspot.com")
+          .setLogLevel(RestAdapter.LogLevel.NONE)
+          .setRequestInterceptor(new RequestInterceptor() {
+            @Override
+            public void intercept(RequestFacade request) {
+              request.addHeader("Authorization", callback.getAccessToken());
+            }
+          }).build();
       sKiaraLearningApi = restAdapter.create(KiaraLearningInterface.class);
     }
     return sKiaraLearningApi;
@@ -47,7 +58,7 @@ public class KiaraClient {
   public static SpotifyAuthInterface getSpotifyAuth() {
     if(spotifyAuthApi == null) {
       RestAdapter restAdapter = new RestAdapter.Builder()
-          .setEndpoint("http://kiara-spotify-auth.appspot.com")
+          .setEndpoint("https://auth-dot-kiara-yojan.appspot.com")
           .setLogLevel(RestAdapter.LogLevel.FULL)
           .build();
       spotifyAuthApi = restAdapter.create(SpotifyAuthInterface.class);
@@ -60,19 +71,20 @@ public class KiaraClient {
    * This interface provides requests to interact with the Spotify Web API
    * to query various meta-data related to songs, albums, artists etc.
    */
-  public static SpotifyApiInterface getSpotifyApi(final String accessToken) {
-    RestAdapter.Builder builder = new RestAdapter.Builder()
+  public static SpotifyApiInterface getSpotifyApi(final AccessTokenCallback callback) {
+    if(spotifyApi == null) {
+    RestAdapter restAdapter = new RestAdapter.Builder()
         .setEndpoint("https://api.spotify.com")
-        .setLogLevel(RestAdapter.LogLevel.FULL);
-    if (accessToken != null) {
-      builder.setRequestInterceptor(new RequestInterceptor() {
-        @Override
-        public void intercept(RequestFacade request) {
-          request.addHeader("Authorization", "Bearer " + accessToken);
-        }
-      });
+        .setLogLevel(RestAdapter.LogLevel.FULL)
+        .setRequestInterceptor(new RequestInterceptor() {
+          @Override
+          public void intercept(RequestFacade request) {
+            request.addHeader("Authorization", "Bearer " + callback.getAccessToken());
+          }
+        }).build();
+      spotifyApi = restAdapter.create(SpotifyApiInterface.class);
     }
 
-    return builder.build().create(SpotifyApiInterface.class);
+    return spotifyApi;
   }
 }
