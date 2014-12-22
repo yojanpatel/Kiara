@@ -14,6 +14,8 @@ import uk.co.yojan.kiara.client.SpotifyAuthInterface;
 import uk.co.yojan.kiara.client.data.AuthorizationCodeGrant;
 import uk.co.yojan.kiara.client.data.RefreshAccessToken;
 
+import java.util.HashMap;
+
 /*
  * EventBus service.
  *
@@ -34,8 +36,17 @@ public class SpotifyAuthService {
     this.bus = bus;
   }
 
+  HashMap<Object, Integer> retries = new HashMap<Object, Integer>();
+
   @Subscribe
-  public void onAuthCodeGrantRequest(AuthCodeGrantRequest event) {
+  public void onAuthCodeGrantRequest(final AuthCodeGrantRequest event) {
+    if(!retries.containsKey(event)) {
+      retries.put(event, 5);
+    } else {
+      retries.put(event, retries.get(event) - 1);
+    }
+
+    Log.d(log, event.getCode());
     api.authorizeCode(event.getCode(), new Callback<AuthorizationCodeGrant>() {
       @Override
       public void success(AuthorizationCodeGrant credentials, Response response) {
@@ -50,6 +61,8 @@ public class SpotifyAuthService {
       @Override
       public void failure(RetrofitError error) {
         Log.d(getClass().getName(), error.getMessage());
+        if(retries.get(event) > 0)
+          bus.post(event);
       }
     });
 
@@ -58,7 +71,7 @@ public class SpotifyAuthService {
 
   @Subscribe
   public void onRefreshAccessTokenRequest(RefreshAccessTokenRequest event) {
-    api.refreshAccessToken(event.getRefreshToken(), new Callback<RefreshAccessToken>() {
+    api.refreshAccessToken(event.getRefreshToken(), event.getUserId(), new Callback<RefreshAccessToken>() {
       @Override
       public void success(RefreshAccessToken credentials, Response response) {
         Log.d(log, "SUCCESS");

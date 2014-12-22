@@ -82,8 +82,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
       ViewHolderTrack vhTrack = (ViewHolderTrack) viewHolder;
       Track track = data.getTracks().getTracks().get(position - 1);
       vhTrack.songName.setText(track.getName());
-      vhTrack.artistName.setText(track.getArtists().get(0).getName());
-      vhTrack.albumName.setText(track.getAlbum().getName());
+      vhTrack.artistName.setText(track.getArtists().get(0).getName() + " - " + track.getAlbum().getName());
       if(track.getAlbum().getImages().size() > 0) {
         picasso.load(track.getAlbum().getImages().get(0).getUrl())
             .placeholder(R.drawable.ic_placeholder_200)
@@ -149,7 +148,6 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @InjectView(R.id.song_img) ImageView albumArt;
     @InjectView(R.id.song_name) TextView songName;
     @InjectView(R.id.artist_name) TextView artistName;
-    @InjectView(R.id.album_name) TextView albumName;
     @InjectView(R.id.divider) View divider;
 
     public ViewHolderTrack(View itemView) {
@@ -157,7 +155,6 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
       ButterKnife.inject(this, itemView);
       songName.setTextColor(mContext.getResources().getColor(R.color.grey900));
       artistName.setTextColor(mContext.getResources().getColor(R.color.grey900));
-      albumName.setTextColor(mContext.getResources().getColor(R.color.grey900));
       divider.setVisibility(View.VISIBLE);
     }
   }

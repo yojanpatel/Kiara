@@ -57,7 +57,6 @@ public class KiaraActivity extends ActionBarActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
     if (loggedIn()) {
       if (accessExpired()) {
         // If refreshToken exists, we can use that to get another access token.
@@ -65,7 +64,7 @@ public class KiaraActivity extends ActionBarActivity {
         String refreshToken = sharedPreferences().getString(Constants.REFRESH_TOKEN, null);
         if (refreshToken != null) {
           Log.d(LOG, "Requesting Access Token refresh using the refresh token.");
-          getBus().post(new RefreshAccessTokenRequest(refreshToken));
+          getBus().post(new RefreshAccessTokenRequest(getUserId(), refreshToken));
         }
       } else {
         Log.d(LOG, "logged in and access token is still valid.");
@@ -210,6 +209,9 @@ public class KiaraActivity extends ActionBarActivity {
 
   private void authCallback() {
     getKiaraApplication().initKiaraService(getUserId());
+    String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
+//    if(accessToken != null)
+//      getKiaraApplication().updateSpotifyService(accessToken);
     if(authCallback != null) {
       authCallback.onAccessTokenValidated();
     }
@@ -274,6 +276,7 @@ public class KiaraActivity extends ActionBarActivity {
 
   private boolean loggedIn() {
     return getUserId() != null;
+//    return false;
   }
 
   public String getUserId() {

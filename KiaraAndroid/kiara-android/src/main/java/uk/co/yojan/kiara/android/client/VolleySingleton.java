@@ -8,9 +8,9 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
+import uk.co.yojan.kiara.android.KiaraApplication;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 
 /**
  * RequestQueue singleton.
@@ -22,10 +22,10 @@ public class VolleySingleton {
 
   private static VolleySingleton instance;
   private RequestQueue requestQueue;
+  private KiaraApplication application;
 
   private VolleySingleton(Context context) {
     requestQueue = Volley.newRequestQueue(context);
-
   }
 
   public static VolleySingleton getInstance(Context context) {

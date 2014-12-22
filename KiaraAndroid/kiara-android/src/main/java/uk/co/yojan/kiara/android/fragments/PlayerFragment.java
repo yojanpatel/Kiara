@@ -125,7 +125,7 @@ public class PlayerFragment extends KiaraFragment {
     }
 
     if(Build.VERSION.SDK_INT >= 21) {
-      albumArt.setBackground(getResources().getDrawable(R.drawable.ripple));
+      albumArt.setBackground(mContext.getDrawable(R.drawable.ripple));
     }
 
 

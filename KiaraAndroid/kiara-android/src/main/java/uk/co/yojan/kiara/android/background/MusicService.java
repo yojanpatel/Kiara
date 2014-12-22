@@ -20,6 +20,7 @@ import com.spotify.sdk.android.playback.*;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
+import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import uk.co.yojan.kiara.android.Constants;
@@ -182,7 +183,7 @@ public class MusicService extends Service
           application.userId(),
           playlistId,
           stripSpotifyUri(playerState.trackUri),
-          emptyCallback);
+          updateOnCallback);
 
       if (repeating == RepeatState.ONE) {
         player.setRepeat(false);
@@ -196,7 +197,7 @@ public class MusicService extends Service
           application.userId(),
           playlistId,
           stripSpotifyUri(playerState.trackUri),
-          emptyCallback);
+          updateOnCallback);
       nextSong();
 
       if(favourited) {
@@ -205,16 +206,17 @@ public class MusicService extends Service
             application.userId(),
             playlistId,
             stripSpotifyUri(playerState.trackUri),
-            emptyCallback);
+            updateOnCallback);
       }
 
     // TRACK_END: the song was skipped (nextSong() was called)
     } else if (eventType == EventType.TRACK_END) {
       Log.d(log, "Track ended due to skip " + playerState.trackUri);
-      application.learningApi().trackFinished(
+      application.learningApi().trackSkipped(
           application.userId(),
           playlistId,
           stripSpotifyUri(playerState.trackUri),
+          playerState.positionInMs,
           emptyCallback);
 
       if(favourited) {
@@ -223,7 +225,7 @@ public class MusicService extends Service
             application.userId(),
             playlistId,
             stripSpotifyUri(playerState.trackUri),
-            emptyCallback);
+            updateOnCallback);
       }
 
 
@@ -237,7 +239,7 @@ public class MusicService extends Service
           playlistId,
           stripSpotifyUri(playerState.trackUri),
           playerState.positionInMs,
-          emptyCallback);
+          updateOnCallback);
     }
 
     application.getBus().post(new PlaybackEvent(eventType, playerState));
@@ -350,7 +352,7 @@ public class MusicService extends Service
         playlistId,
         currentSong.getSpotifyId(),
         song.getSpotifyId(),
-        emptyCallback);
+        updateOnCallback);
   }
 
   public RepeatState repeat() {
@@ -545,15 +547,30 @@ public class MusicService extends Service
     }
   }
 
-  retrofit.Callback<Song> emptyCallback =  new retrofit.Callback<Song>() {
+  retrofit.Callback<Song> updateOnCallback =  new retrofit.Callback<Song>() {
     @Override
     public void success(Song s, Response response) {
-      playQueue.addLast(s);
+      playQueue.clear();
+      playQueue.add(s);
+      application.getBus().post(s);
+      Log.d(log, playQueue.size() + " pqueue size");
     }
 
     @Override
     public void failure(RetrofitError error) {
       Log.e(log, error.getMessage());
+    }
+  };
+
+  retrofit.Callback<Song> emptyCallback = new Callback<Song>() {
+    @Override
+    public void success(Song song, Response response) {
+//      Log.d(log, song.getSongName());
+    }
+
+    @Override
+    public void failure(RetrofitError error) {
+
     }
   };
 }

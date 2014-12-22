@@ -7,6 +7,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
 import com.example.android.GsonRequest;
+import uk.co.yojan.kiara.client.AccessTokenCallback;
 import uk.co.yojan.kiara.client.data.Playlist;
 import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
 import uk.co.yojan.kiara.client.data.Song;
@@ -20,11 +21,13 @@ import java.util.Map;
 
 public class KiaraClient {
 
-  private static final String base = "http://kiara-yojan.appspot.com/";
+  private static final String base = "https://kiara-yojan.appspot.com/";
   private VolleySingleton volley;
+  private AccessTokenCallback callback;
 
-  public KiaraClient(Context context) {
+  public KiaraClient(Context context, AccessTokenCallback callback) {
     volley = VolleySingleton.getInstance(context);
+    this.callback = callback;
   }
 
 
@@ -39,7 +42,12 @@ public class KiaraClient {
         User.class,
         success,
         error
-    );
+    ) {
+      @Override
+      public Map<String, String> getHeaders() throws AuthFailureError {
+        return defaultHeaders();
+      }
+    };
 
     volley.addToRequestQueue(userReq);
   }
@@ -55,7 +63,12 @@ public class KiaraClient {
         Playlist[].class,
         success,
         error
-    );
+    ) {
+      @Override
+      public Map<String, String> getHeaders() throws AuthFailureError {
+        return defaultHeaders();
+      }
+    };
     volley.addToRequestQueue(playlistReq);
   }
 
@@ -70,7 +83,12 @@ public class KiaraClient {
         PlaylistWithSongs[].class,
         success,
         error
-    );
+    ) {
+      @Override
+      public Map<String, String> getHeaders() throws AuthFailureError {
+        return defaultHeaders();
+      }
+    };
     volley.addToRequestQueue(playlistReq);
   }
 
@@ -85,7 +103,12 @@ public class KiaraClient {
         Song[].class,
         success,
         error
-    );
+    ) {
+      @Override
+      public Map<String, String> getHeaders() throws AuthFailureError {
+        return defaultHeaders();
+      }
+    };
     volley.addToRequestQueue(songReq);
   }
 
@@ -136,7 +159,7 @@ public class KiaraClient {
 
       @Override
       public Map<String, String> getHeaders() throws AuthFailureError {
-        HashMap<String, String> headers = new HashMap<String, String>();
+        HashMap<String, String> headers = defaultHeaders();
         headers.put("content-type", "text-plain");
         return headers;
       }
@@ -161,7 +184,7 @@ public class KiaraClient {
       ) {
         @Override
         public Map<String, String> getHeaders() throws AuthFailureError {
-          HashMap<String, String> headers = new HashMap<String, String>();
+          HashMap<String, String> headers = defaultHeaders();
           headers.put("Content-Type", "application/json");
           headers.put("Accept", "application/json");
           return headers;
@@ -178,5 +201,11 @@ public class KiaraClient {
         base + "users/" + userId + "/playlists/" + playlistId + "/songs",
         Song[].class);
     return cachedSongs == null ? null : new ArrayList<Song>(Arrays.asList(cachedSongs));
+  }
+
+  private HashMap<String, String> defaultHeaders() {
+    HashMap<String, String> headers = new HashMap<String, String>();
+    headers.put("Authorization", callback.getAccessToken());
+    return headers;
   }
 }

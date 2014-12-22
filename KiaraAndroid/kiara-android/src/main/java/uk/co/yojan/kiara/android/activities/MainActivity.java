@@ -23,7 +23,6 @@ public class MainActivity extends KiaraActivity
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     initialiseAuthCallbacks(this);
-
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_main);
@@ -59,7 +58,6 @@ public class MainActivity extends KiaraActivity
     return true;
   }
   /*
-
   @Override
   protected void onNewIntent(Intent intent) {
     super.onNewIntent(intent);

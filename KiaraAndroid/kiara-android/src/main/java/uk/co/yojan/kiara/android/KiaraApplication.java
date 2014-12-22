@@ -14,7 +14,7 @@ import uk.co.yojan.kiara.android.utils.BusProvider;
 import uk.co.yojan.kiara.android.utils.OttoEventBuffer;
 import uk.co.yojan.kiara.client.*;
 
-public class KiaraApplication extends Application {
+public class KiaraApplication extends Application implements AccessTokenCallback {
 
   private static final String log = KiaraApplication.class.getName();
 
@@ -38,19 +38,23 @@ public class KiaraApplication extends Application {
     sharedPreferences = EncryptedSharedPreferences.getPrefs(this, Constants.PREFERENCE_STRING, Context.MODE_PRIVATE);
 
     // Construct the Api for various interactions.
-    client = new uk.co.yojan.kiara.android.client.KiaraClient(getApplicationContext());
-    kiaraApi = KiaraClient.getKiaraApiClient();
-    kiaraLearningApi = KiaraClient.getKiaraLearningClient();
+    client = new uk.co.yojan.kiara.android.client.KiaraClient(getApplicationContext(), this);
+    kiaraApi = KiaraClient.getKiaraApiClient(this);
+    kiaraLearningApi = KiaraClient.getKiaraLearningClient(this);
     authApi = KiaraClient.getSpotifyAuth();
+    spotifyWebApi =  KiaraClient.getSpotifyApi(this);
 
     // Create the services that subscribe to the event bus.
     spotifyAuthService = new SpotifyAuthService(authApi, getBus());
+    spotifyWebService = new SpotifyWebService(spotifyWebApi, getBus());
+
 
     // Instantiate event buffer wrt to the global event bus.
     eventBuffer = new OttoEventBuffer(getBus());
     eventBuffer.startSaving();
 
     getBus().register(spotifyAuthService);
+    getBus().register(spotifyWebService);
     getBus().register(this); // Listen to global events.
   }
 
@@ -84,12 +88,16 @@ public class KiaraApplication extends Application {
 
   public SpotifyApiInterface updateSpotifyService(final String accessToken) {
     Log.d(log, "Updating the access token. Unregistering the Spotify web service and re-registering with the updated one.");
-    if(spotifyWebService != null) {
-      getBus().unregister(spotifyWebService);
+    spotifyWebApi =  KiaraClient.getSpotifyApi(this);
+
+    if(spotifyWebService == null) {
+      Log.d(log, "Registering Spotify Web Service to Bus.");
+      spotifyWebService = new SpotifyWebService(spotifyWebApi, getBus());
+      getBus().register(spotifyWebService);
+    } else {
+      spotifyWebService.setSpotifyApi(spotifyWebApi);
     }
-    spotifyWebApi =  KiaraClient.getSpotifyApi(accessToken);
-    spotifyWebService = new SpotifyWebService(spotifyWebApi, getBus());
-    getBus().register(spotifyWebService);
+
     return spotifyWebApi;
   }
 
@@ -109,16 +117,25 @@ public class KiaraApplication extends Application {
 
   @Subscribe
   public void onAuthCodeGrantComplete(AuthCodeGrantResponse credentials) {
-    updateSpotifyService(credentials.getAccessToken());
+//    updateSpotifyService(credentials.getAccessToken());
   }
 
   @Subscribe
   public void onRefreshTokenComplete(RefreshAccessTokenResponse credentials) {
-    updateSpotifyService(credentials.getAccessToken());
+//    updateSpotifyService(credentials.getAccessToken());
   }
 
   public String userId() {
     return sharedPreferences().getString(Constants.USER_ID, null);
   }
 
+
+  public SpotifyWebService spotifyWebService() {
+    return spotifyWebService;
+  }
+
+  @Override
+  public String getAccessToken() {
+    return sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
+  }
 }

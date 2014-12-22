@@ -29,6 +29,10 @@ public class SpotifyWebService {
     this.bus = bus;
   }
 
+  public void setSpotifyApi(SpotifyApiInterface api) {
+    this.spotifyApi = api;
+  }
+
   @Subscribe
   public void onGetCurrentUser(CurrentUserRequest event) {
     spotifyApi.getCurrentUser(new Callback<SpotifyUser>() {
@@ -46,7 +50,7 @@ public class SpotifyWebService {
 
   @Subscribe
   public void search(final SearchRequest request) {
-
+    Log.d("SEARCH", request.getQuery());
     spotifyApi.search(request.getQuery(), request.getLimit(), request.getOffset(),
         new Callback<SearchResult>() {
           @Override

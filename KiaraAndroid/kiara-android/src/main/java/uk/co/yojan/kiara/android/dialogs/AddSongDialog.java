@@ -101,7 +101,7 @@ public class AddSongDialog extends DialogFragment {
     searchCrouton.show();
     progressBar.setVisibility(View.VISIBLE);
     resultList.setVisibility(View.INVISIBLE);
-
+    Log.d("AddSongDialog", activity.getKiaraApplication().spotifyWebService() == null ? "spotify web service null" : "not null");
     activity.getBus().post(new SearchRequest(query, id, 0, 3));
   }
 

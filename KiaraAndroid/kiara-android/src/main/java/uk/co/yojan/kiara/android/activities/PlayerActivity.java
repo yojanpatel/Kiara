@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import com.faradaj.blurbehind.BlurBehind;
+import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.fragments.PlayerFragment;
@@ -71,4 +72,9 @@ public class PlayerActivity extends KiaraActivity {
       }
       return super.onOptionsItemSelected(item);
     }
+
+  @Subscribe
+  public void showPrediction(Song s) {
+    toast(s.getArtistName() + " - " + s.getSongName());
+  }
 }

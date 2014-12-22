@@ -82,7 +82,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:21.0.3'
 
     // Spotify Android SDK
-    compile 'com.spotify.sdk:spotifysdk:1.0.0-beta4@aar'
+    compile 'com.spotify.sdk:spotifysdk:1.0.0-beta6@aar'
 
     compile('se.michaelthelin.spotify:spotify-web-api-android:1.4.2') {
         exclude group: 'org.hamcrest', module: 'hamcrest-core'
@@ -115,5 +115,7 @@ dependencies {
 
     compile 'com.nispok:snackbar:2.3.0'
 //    testCompile 'junit:junit:4.10'
+
+    compile 'com.faradaj:blur-behind:1.0.3'
 
 }
