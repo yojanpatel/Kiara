@@ -155,7 +155,7 @@ public class MusicService extends Service
       Spotify spotify = new Spotify();
       Config playerConfig = new Config(this, accessToken, Constants.CLIENT_ID);
 
-      player = KiaraPlayer.create(playerConfig, new Player.InitializationObserver() {
+      KiaraPlayer kplayer = KiaraPlayer.create(playerConfig, new Player.InitializationObserver() {
 
         @Override
         public void onInitialized() {
@@ -169,7 +169,20 @@ public class MusicService extends Service
         }
       });
 
-      spotify.setPlayer(player);
+      spotify.setPlayer(kplayer);
+      player = (KiaraPlayer) spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
+
+        @Override
+        public void onInitialized() {
+          Log.d(log, "OnInitialized");
+          player.addPlayerNotificationCallback(MusicService.this);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+          Log.d(log, "onError");
+        }
+      });
     }
   }
 

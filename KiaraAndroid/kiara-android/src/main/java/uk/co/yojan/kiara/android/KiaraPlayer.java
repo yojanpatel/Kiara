@@ -19,12 +19,18 @@ public class KiaraPlayer extends Player {
   }
 
   public static KiaraPlayer create(final Config config, final InitializationObserver observer/*, NativePlayer nativePlayer*/) {
-    final KiaraPlayer kp = new KiaraPlayer(observer, new NativeSdkPlayer() {
+
+    NativeSdkPlayer sdkPlayer = new NativeSdkPlayer() {
       @Override
       public void registerAudioDeliveredCallback(AudioDeliveredCallback callback) {
         super.registerAudioDeliveredCallback(callback);
+        Log.d("KiaraPlayer", "1. registerAudioDelvieredCallback");
       }
-    });
+    };
+
+    final KiaraPlayer kp = new KiaraPlayer(observer, sdkPlayer);
+    sdkPlayer.registerAudioDeliveredCallback(kp);
+
     kp.setPlayer(Player.create(new NativeSdkPlayer() {
       @Override
       public void registerAudioDeliveredCallback(AudioDeliveredCallback callback) {
