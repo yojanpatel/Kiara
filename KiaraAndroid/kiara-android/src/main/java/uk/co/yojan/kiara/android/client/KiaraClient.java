@@ -77,6 +77,7 @@ public class KiaraClient {
    * Get all playlists with the containing songs as well.
    */
   public void allPlaylistsWithSongs(String userId, Response.Listener<PlaylistWithSongs[]> success, Response.ErrorListener error) {
+    Log.d("AllPlaylistsWithSongs", "All playlists with songs requested!");
     GsonRequest<PlaylistWithSongs[]> playlistReq = new GsonRequest<PlaylistWithSongs[]>(
         Request.Method.GET,
         base + "users/" + userId + "/playlists?detail=true",

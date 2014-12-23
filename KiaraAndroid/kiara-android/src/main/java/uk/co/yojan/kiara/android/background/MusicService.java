@@ -23,10 +23,7 @@ import com.squareup.picasso.Target;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
-import uk.co.yojan.kiara.android.Constants;
-import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
-import uk.co.yojan.kiara.android.KiaraApplication;
-import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.*;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.events.QueueSongRequest;
@@ -47,7 +44,7 @@ public class MusicService extends Service
 
   private KiaraApplication application;
 
-  private Player player;
+  private KiaraPlayer player;
   public enum RepeatState {FALSE, ONE, TRUE}
   private RepeatState repeating;
   private boolean playing;
@@ -157,19 +154,22 @@ public class MusicService extends Service
 
       Spotify spotify = new Spotify();
       Config playerConfig = new Config(this, accessToken, Constants.CLIENT_ID);
-      player = spotify.getPlayer(playerConfig, this,
-          new Player.InitializationObserver() {
 
-            @Override
-            public void onInitialized() {
-              player.addPlayerNotificationCallback(MusicService.this);
-            }
+      player = KiaraPlayer.create(playerConfig, new Player.InitializationObserver() {
 
-            @Override
-            public void onError(Throwable throwable) {
-              Log.e(log, throwable.getMessage());
-            }
-          });
+        @Override
+        public void onInitialized() {
+          Log.d(log, "OnInitialized");
+          player.addPlayerNotificationCallback(MusicService.this);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+          Log.d(log, "onError");
+        }
+      });
+
+      spotify.setPlayer(player);
     }
   }
 
