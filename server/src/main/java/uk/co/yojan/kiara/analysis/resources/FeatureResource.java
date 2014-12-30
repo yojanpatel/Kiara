@@ -8,6 +8,7 @@ import uk.co.yojan.kiara.analysis.cluster.HierarchicalClustering;
 import uk.co.yojan.kiara.analysis.cluster.SongCluster;
 import uk.co.yojan.kiara.analysis.cluster.linkage.MeanDistance;
 import uk.co.yojan.kiara.analysis.tasks.FeatureExtractionTask;
+import uk.co.yojan.kiara.analysis.tasks.LoadFeatures;
 import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.echonest.EchoNestApi;
 import uk.co.yojan.kiara.server.models.*;
@@ -98,21 +99,10 @@ public class FeatureResource {
     List<Key<Song>> keys = ofy().load().type(Song.class).keys().list();
     Map<Key<Song>, Song> songAnalysisCollection = ofy().load().keys(keys);
 
-    List<Key<SongFeature>> keys2 = ofy().load().type(SongFeature.class).keys().list();
-    Map<Key<SongFeature>, SongFeature> songFeatureCollection = ofy().load().keys(keys2);
-
-    HashSet<String> ids = new HashSet<>();
-    for(SongFeature sf : songFeatureCollection.values()) {
-      ids.add(sf.getId());
-    }
-
-
     int counter = 0;
     for(Song sd : songAnalysisCollection.values()) {
-      if(!ids.contains(sd.getSpotifyId())) {
-        TaskManager.fetchAnalysis(sd.getSpotifyId(), sd.getArtist(), sd.getSongName());
+        TaskManager.featureQueue().add(TaskOptions.Builder.withPayload(new LoadFeatures(sd.getSpotifyId(), sd.getArtist(), sd.getSongName())));
         counter++;
-      }
     }
     return Response.ok().entity(counter).build();
   }

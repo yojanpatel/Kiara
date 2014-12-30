@@ -29,6 +29,8 @@ public class NodeCluster extends Cluster {
   private ArrayList<String> children;
   private HashSet<String> leaves; // contains ids of children that are leaves
 
+  private double[] centroidValues;
+
   // shadow - all songs this cluster encompasses in a dendrogram.
   List<String> songIds;
 
@@ -182,5 +184,28 @@ public class NodeCluster extends Cluster {
       stateRow.set(i, 1.0);
       Q.add(stateRow);
     }
+  }
+
+  public int replaceChild(Cluster existing, Cluster replacement) {
+    int index = children.indexOf(existing.getId());
+    children.set(index, replacement.getId());
+    ofy().save().entity(this).now();
+    return index;
+  }
+
+  public int childIndex(Cluster c) {
+    return children.indexOf(c.getId());
+  }
+
+  public double[] getCentroidValues() {
+    return centroidValues;
+  }
+
+  public void setCentroidValues(double[] centroidValues) {
+    this.centroidValues = centroidValues;
+  }
+
+  public int getSize() {
+    return children.size();
   }
 }

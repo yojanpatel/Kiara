@@ -7,6 +7,7 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /***************************************************************************************
@@ -80,10 +81,22 @@ public class KMeans {
     this.k = k;
     this.features = features;
     this.instances = constructDataSet(features);
-
     kMeans.setNumClusters(k);
     kMeans.setPreserveInstancesOrder(true);
+
   }
+
+  public KMeans(int k, List<SongFeature> features, ArrayList<Double> featureWeights) throws Exception {
+    kMeans = new SimpleKMeans();
+
+    this.k = k;
+    this.features = features;
+    this.instances = constructDataSet(features, featureWeights);
+    kMeans.setNumClusters(k);
+    kMeans.setPreserveInstancesOrder(true);
+
+  }
+
 
   public int[] run() throws Exception {
     kMeans.buildClusterer(instances);
@@ -91,6 +104,9 @@ public class KMeans {
     return assignments;
   }
 
+  public Instances getCentroids() {
+    return kMeans.getClusterCentroids();
+  }
 
 
   public Instances constructDataSet(List<SongFeature> data) throws IllegalAccessException {
@@ -111,5 +127,35 @@ public class KMeans {
     }
 
     return instances;
+  }
+
+  public Instances constructDataSet(List<SongFeature> data, List<Double> featureWeights) throws IllegalAccessException {
+    FastVector attInfo = getAttributeNames();
+
+    Instances instances = new Instances("Features", attInfo, data.size());
+
+    for (SongFeature sf : data) {
+      double[] featureVals = sf.getFeatureValues();
+      assert featureVals.length == featureWeights.size();
+      for(int i = 0; i < featureWeights.size(); i++) {
+        featureVals[i] = featureVals[i] * featureWeights.get(i);
+      }
+      instances.add(new Instance(1.0, featureVals));
+    }
+
+    return instances;
+  }
+
+  public static FastVector getAttributeNames() {
+    FastVector attInfo = new FastVector();
+
+    /* Get all the feature names, from the annotated variables in the encapsulating
+     * SongFeature class.
+     */
+    List<String> featureNames = SongFeature.getFeatureNames();
+    for (String name : featureNames) {
+      attInfo.addElement(new Attribute(name));
+    }
+    return attInfo;
   }
 }

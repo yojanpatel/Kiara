@@ -2,9 +2,11 @@ package uk.co.yojan.kiara.analysis.tasks;
 
 import com.google.appengine.api.taskqueue.DeferredTask;
 import com.googlecode.objectify.Key;
-import uk.co.yojan.kiara.analysis.features.SegmentHelper;
-import uk.co.yojan.kiara.analysis.features.Statistics;
+import uk.co.yojan.kiara.analysis.features.*;
+import uk.co.yojan.kiara.server.echonest.data.Bar;
+import uk.co.yojan.kiara.server.echonest.data.Section;
 import uk.co.yojan.kiara.server.echonest.data.Segment;
+import uk.co.yojan.kiara.server.echonest.data.Tatum;
 import uk.co.yojan.kiara.server.models.SongAnalysis;
 import uk.co.yojan.kiara.server.models.SongData;
 import uk.co.yojan.kiara.server.models.SongFeature;
@@ -36,6 +38,7 @@ public class FeatureExtractionTask implements DeferredTask {
     sf.setId(spotifyId);
 
     ArrayList<Segment> segments = new ArrayList<>(songData.getSegments());
+
     SegmentHelper helper = new SegmentHelper(segments);
 
     ArrayList<ArrayList<Double>> timbres = helper.getTimbres();
@@ -51,6 +54,33 @@ public class FeatureExtractionTask implements DeferredTask {
     sf.setTempo(songData.getTempo());
     sf.setNormalisedTempo(normaliseTempo(songData.getTempo()));
     sf.setTempoConfidence(songData.getTempoConfidence());
+
+    // Compute stats regarding tatum length
+    ArrayList<Tatum> tatums = new ArrayList<>(songData.getTatums());
+    TatumHelper tatumHelper = new TatumHelper(tatums);
+    Statistics tatumDurationStats = new Statistics(tatumHelper.getDuration());
+    sf.setTatumLengthMean(tatumDurationStats.mean());
+    sf.setTatumLengthVar(tatumDurationStats.variance());
+
+    // Compute stats regarding bars
+    ArrayList<Bar> bars = new ArrayList<>(songData.getBars());
+    Statistics barDurationStats = new Statistics(new BarHelper(bars).getDuration());
+    sf.setBarLengthMean(barDurationStats.mean());
+    sf.setBarLengthVar(barDurationStats.variance());
+
+    ArrayList<Section> sections = new ArrayList<>(songData.getSections());
+    SectionHelper sectionHelper = new SectionHelper(sections);
+    Statistics sectionDurationStats = new Statistics(sectionHelper.getDuration());
+    sf.setSectionLengthMean(sectionDurationStats.mean());
+
+    Statistics sectionTempoStats = new Statistics(sectionHelper.getTempo());
+    sf.setMaxSectionTempo(sectionTempoStats.max());
+    sf.setMinSectionTempo(sectionTempoStats.min());
+
+    sf.setInitialLoudness(sectionHelper.initialLoudness());
+    sf.setInitialTempo(sectionHelper.initialTempo());
+    sf.setFinalLoudness(sectionHelper.finalLoudness());
+    sf.setFinalTempo(sectionHelper.finalTempo());
 
     ofy().delete().entities(songAnalysis, songData);
     ofy().save().entity(sf);

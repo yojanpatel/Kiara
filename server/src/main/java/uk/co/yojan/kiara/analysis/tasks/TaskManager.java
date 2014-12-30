@@ -3,7 +3,6 @@ package uk.co.yojan.kiara.analysis.tasks;
 import com.google.appengine.api.modules.ModulesServiceFactory;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
-import com.google.appengine.api.taskqueue.RetryOptions;
 import com.google.appengine.api.taskqueue.TaskOptions;
 
 import java.util.logging.Logger;
@@ -16,6 +15,7 @@ public class TaskManager {
   private static Logger log = Logger.getLogger(uk.co.yojan.kiara.analysis.tasks.TaskManager.class.getName());
 
   private static Queue taskQueue = null;
+  private static Queue updateQueue = null;
   private static Queue featureQueue = null;
   private static Queue clusterQueue = null;
 
@@ -26,6 +26,13 @@ public class TaskManager {
       taskQueue = QueueFactory.getDefaultQueue();
     }
     return taskQueue;
+  }
+
+  public static Queue updateQueue() {
+    if(updateQueue == null) {
+      updateQueue = QueueFactory.getQueue("updater");
+    }
+    return updateQueue;
   }
 
   public static Queue featureQueue() {

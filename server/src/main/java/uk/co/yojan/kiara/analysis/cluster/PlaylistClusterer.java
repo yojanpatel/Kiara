@@ -67,6 +67,14 @@ public class PlaylistClusterer {
       nc.setParent(cluster);
       nc.setLevel(cluster.getLevel() + 1);
       nc.setId(clusterId(cluster, i, k));
+      Logger.getLogger(kMeans.getCentroids().instance(0).toString());
+
+
+      // if there are as many clusters, as the current child index, update the centroid position
+      if(i < kMeans.getCentroids().numInstances()) {
+        nc.setCentroidValues(kMeans.getCentroids().instance(i).toDoubleArray());
+      }
+
       clusters.add(nc);
     }
 
@@ -124,7 +132,7 @@ public class PlaylistClusterer {
             .taskName("Cluster-" + clusterId+ "-" + System.currentTimeMillis()));
   }
 
-  private static Collection<Key<SongFeature>> featureKeys(List<String> songIds) {
+  public static Collection<Key<SongFeature>> featureKeys(Collection<String> songIds) {
     Collection<Key<SongFeature>> featureKeys = new ArrayList<>();
     for(String id : songIds) {
       featureKeys.add(Key.create(SongFeature.class, id));
@@ -144,7 +152,7 @@ public class PlaylistClusterer {
    * @param k  the number of clusters for K-Means for level-wide index approximation
    * @return  a String in the above format representing the id of the ClusterNode
    */
-  private static String clusterId(NodeCluster parent, int index, int k) {
+  public static String clusterId(NodeCluster parent, int index, int k) {
     String[] s = parent.getId().split("-");
     return s[0] + "-" + (Integer.parseInt(s[1]) + 1) + "-" + (index + Integer.parseInt(s[2]) * k);
   }

@@ -8,7 +8,12 @@ import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
+import uk.co.yojan.kiara.server.models.SongFeature;
 import uk.co.yojan.kiara.server.models.User;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
@@ -40,5 +45,15 @@ public class OfyUtils {
 
   public static Result<NodeCluster> loadNodeCluster(String id) {
     return ofy().load().key(Key.create(NodeCluster.class, id));
+  }
+
+  public static Collection<SongFeature> loadFeatures(List<String> ids) {
+    List<Key<SongFeature>> keys = new ArrayList<>();
+    for(String id : ids) keys.add(Key.create(SongFeature.class, id));
+    return ofy().load().keys(keys).values();
+  }
+
+  public static LoadResult<SongFeature> loadFeature(String id) {
+    return ofy().load().key(Key.create(SongFeature.class, id));
   }
 }
