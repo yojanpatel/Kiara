@@ -25,6 +25,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 import uk.co.yojan.kiara.android.*;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
+import uk.co.yojan.kiara.android.events.Favourite;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.events.QueueSongRequest;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
@@ -40,7 +41,7 @@ import java.util.LinkedList;
 public class MusicService extends Service
     implements PlayerNotificationCallback, PlayerStateCallback, AudioManager.OnAudioFocusChangeListener {
 
-  private static final String log = MusicService.class.getName();
+  private static final String log = MusicService.class.getCanonicalName();
 
   private KiaraApplication application;
 
@@ -54,6 +55,8 @@ public class MusicService extends Service
   private long playlistId;
   private Song currentSong;
   private int duration;
+  private int position;
+  private int lastSkip;
   private Bitmap currentSongAlbumCover;
 
   public LinkedList<Song> playQueue;
@@ -191,7 +194,7 @@ public class MusicService extends Service
 
     // TRACK_START: called every time a new track starts playing
     if (eventType == EventType.TRACK_START) {
-      Log.d(log, "Track started " + playerState.trackUri);
+      Log.d("KiaraPlayerEvent", "Track started " + playerState.trackUri);
       application.learningApi().trackStarted(
           application.userId(),
           playlistId,
@@ -205,7 +208,7 @@ public class MusicService extends Service
 
     // END_OF_CONTEXT: end of a song that finished playing
     } else if (eventType == EventType.END_OF_CONTEXT) {
-      Log.d(log, "Track ended " + playerState.trackUri);
+      Log.d("KiaraPlayerEvent", "Track ended " + playerState.trackUri);
       application.learningApi().trackFinished(
           application.userId(),
           playlistId,
@@ -214,7 +217,7 @@ public class MusicService extends Service
       nextSong();
 
       if(favourited) {
-        Log.d(log, "Track actually favourited");
+        Log.d("KiaraPlayerEvent", "Track actually favourited");
         application.learningApi().trackFavourited(
             application.userId(),
             playlistId,
@@ -224,34 +227,36 @@ public class MusicService extends Service
 
     // TRACK_END: the song was skipped (nextSong() was called)
     } else if (eventType == EventType.TRACK_END) {
-      Log.d(log, "Track ended due to skip " + playerState.trackUri);
-      application.learningApi().trackSkipped(
-          application.userId(),
-          playlistId,
-          stripSpotifyUri(playerState.trackUri),
-          playerState.positionInMs,
-          emptyCallback);
-
-      if(favourited) {
-        Log.d(log, "Track actually favourited");
-        application.learningApi().trackFavourited(
+      double proportion = (double)lastSkip / (double)duration;
+      if(proportion < 0.98) {
+        Log.d("KiaraPlayerEvent", "Track ended due to skip " + playerState.trackUri + " " + proportion);
+        application.learningApi().trackSkipped(
             application.userId(),
             playlistId,
             stripSpotifyUri(playerState.trackUri),
-            updateOnCallback);
+            lastSkip,
+            emptyCallback);
+
+        if(favourited) {
+          Log.d("KiaraPlayerEvent", "Track actually favourited");
+          application.learningApi().trackFavourited(
+              application.userId(),
+              playlistId,
+              stripSpotifyUri(playerState.trackUri),
+              updateOnCallback);
+         }
       }
 
-
     } else if (eventType == EventType.LOST_PERMISSION) {
-        Log.d(log, "Lost permission, pausing.");
+        Log.d("KiaraPlayerEvent", "Lost permission, pausing.");
 
     } else if (eventType == EventType.SKIP_NEXT) {
-      Log.d(log, "Skipping to next song.");
+      Log.d("KiaraPlayerEvent", "Skipping to next song. " + lastSkip);
       application.learningApi().trackSkipped(
           application.userId(),
           playlistId,
           stripSpotifyUri(playerState.trackUri),
-          playerState.positionInMs,
+          lastSkip,
           updateOnCallback);
     }
 
@@ -266,6 +271,7 @@ public class MusicService extends Service
   @Override
   public void onPlayerState(PlayerState playerState) {
     duration = playerState.durationInMs;
+    position = playerState.positionInMs;
     application.getBus().post(playerState);
   }
 
@@ -343,6 +349,7 @@ public class MusicService extends Service
 
   public void nextSong() {
     if(playQueue.size() > 0) {
+      lastSkip = position;
       Log.d(log, "playing the nextSong " + playQueue.getFirst().getSongName());
       playSong(playQueue.getFirst());
       playQueue.removeFirst();
@@ -411,6 +418,7 @@ public class MusicService extends Service
     favourited = !favourited;
     Log.d(log, currentSong.getSongName() + " favourited ? " + favourited);
     updateNotif(playing, favourited);
+    application.getBus().post(new Favourite(favourited));
     return favourited;
   }
 
@@ -544,6 +552,10 @@ public class MusicService extends Service
 
   private static String stripSpotifyUri(String spotifyUri) {
     return spotifyUri.substring("spotify:track:".length());
+  }
+
+  public long getPlaylistId() {
+    return playlistId;
   }
 
   public void setPlaylistId(long playlistId) {
