@@ -39,6 +39,10 @@ public class OfyUtils {
     return ofy().load().key(Key.create(LeafCluster.class, playlistId + "-" + songId));
   }
 
+  public static LoadResult<LeafCluster> loadLeafCluster(String leafId) {
+    return ofy().load().key(Key.create(LeafCluster.class, leafId));
+  }
+
   public static Result<NodeCluster> loadRootCluster(Long playlist) {
     return ofy().load().key(Key.create(NodeCluster.class, playlist+"-0-0"));
   }

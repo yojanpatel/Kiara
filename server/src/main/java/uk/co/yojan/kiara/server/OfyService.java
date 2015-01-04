@@ -7,6 +7,7 @@ import com.googlecode.objectify.ObjectifyService;
 import uk.co.yojan.kiara.analysis.cluster.Cluster;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
+import uk.co.yojan.kiara.analysis.research.Experiment;
 import uk.co.yojan.kiara.server.models.*;
 
 import java.util.logging.Logger;
@@ -32,6 +33,7 @@ public class OfyService {
     register(LeafCluster.class);
 
     register(UserToken.class);
+    register(Experiment.class);
   }
 
   public static Objectify ofy() {

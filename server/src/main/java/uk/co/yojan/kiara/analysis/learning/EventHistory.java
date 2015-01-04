@@ -1,0 +1,76 @@
+package uk.co.yojan.kiara.analysis.learning;
+
+import java.util.LinkedList;
+
+/**
+ * A set of methods to handle a Queue<String> that holds a sliding window
+ * of events recorded to allow re-learning if the structure changes.
+ */
+public class EventHistory {
+
+  public static int EVENT_HISTORY_SIZE = 1000;
+
+  /*
+   * Event String representation:
+   *   source_id-target_id-action[-extra]
+   */
+
+  public static void addEnd(LinkedList<String> eventHistory, String previousSongId, String endedSongId) {
+    // if new session, no previous song.
+    if(previousSongId == null) return;
+
+    if(eventHistory.size() >= EVENT_HISTORY_SIZE) {
+      eventHistory.removeFirst();
+    }
+
+    eventHistory.addLast(previousSongId + "-" + endedSongId + "-" + PlayerEvent.END);
+  }
+
+  public static void addSkipped(LinkedList<String> eventHistory, String previousSongId, String skippedSongId, double proportion) {
+    // if new session, no previous song.
+    if(previousSongId == null) return;
+
+    if(eventHistory.size() >= EVENT_HISTORY_SIZE) {
+      eventHistory.removeFirst();
+    }
+    // rough round to 2dp
+    eventHistory.addLast(previousSongId + "-" + skippedSongId + "-" + PlayerEvent.SKIP + "-" + round2dp(proportion));
+  }
+
+  public static void addQueued(LinkedList<String> eventHistory, String previousSongId, String queuedSongId) {
+    // if new session, no previous song.
+    if(previousSongId == null) return;
+
+    if(eventHistory.size() >= EVENT_HISTORY_SIZE) {
+      eventHistory.removeFirst();
+    }
+
+    eventHistory.add(previousSongId + "-" + queuedSongId + "-" + PlayerEvent.QUEUE);
+  }
+
+  public static void addFavourite(LinkedList<String> eventHistory, String previousSongId, String favSongId) {
+    // if new session, no previous song.
+    if(previousSongId == null) return;
+
+    if(eventHistory.size() >= EVENT_HISTORY_SIZE) {
+      eventHistory.removeFirst();
+    }
+    eventHistory.add(previousSongId + "-" + favSongId + "-" + PlayerEvent.FAVOURITE);
+  }
+
+  private static double round2dp(double d) {
+    return Math.round(d * 100)/100.0;
+  }
+
+  public static void main(String[] args) {
+    LinkedList<String> history = new LinkedList<>();
+    addSkipped(history, "X", "A", 0.5);
+    addEnd(history, "A", "B");
+    addFavourite(history, "B", "C");
+    addEnd(history, "B", "C");
+
+    for(String s : history) {
+      System.out.println(s);
+    }
+  }
+}

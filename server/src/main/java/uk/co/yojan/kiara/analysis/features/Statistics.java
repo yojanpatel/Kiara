@@ -42,7 +42,6 @@ public class Statistics {
     }
     sorted = new ArrayList<>(samples);
     Collections.sort(sorted);
-    log.info("Stats initialised " + n + " " + sum + " " + sorted.size());
   }
 
   /*
@@ -95,6 +94,9 @@ public class Statistics {
 
       if (samples.size() == 0)
         return Double.NaN;
+      else if(samples.size() == 1) {
+        return samples.get(0).isNaN() ? Double.NaN : 0.0;
+      }
 
       double mean = mean();
       double squaredSum = 0;
@@ -116,6 +118,9 @@ public class Statistics {
   public Double skewness() {
     double numeratorSum = 0;
     double denomSum = 0;
+    double mean = mean();
+
+    if(samples.size() < 2) return 0.0;
 
     // Evaluate the sums involved in the equation.
     for(Double s : samples) {
@@ -124,9 +129,9 @@ public class Statistics {
       numeratorSum += diffFromMeanSqr * (s - mean);
     }
 
-    double numerator = numeratorSum / n;
-    double denominator = Math.pow(Math.sqrt(denomSum / n), 3);
-
+    double numerator = numeratorSum / (n + 1);
+    double denominator = Math.pow(denomSum / n, 1.5);
+    System.out.println(mean + " " + numeratorSum  + " " + denominator);
     return numerator / denominator;
   }
 
