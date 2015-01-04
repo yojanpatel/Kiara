@@ -1,7 +1,10 @@
 package uk.co.yojan.kiara.server.resources;
 
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
+import uk.co.yojan.kiara.analysis.tasks.AddSongTask;
+import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.User;
@@ -94,6 +97,11 @@ public class PlaylistSongResource {
     us.now();
     if(save != null)
       save.now();
+
+    // update the playlist cluster representation
+    TaskManager.featureQueue().add(TaskOptions.Builder
+        .withPayload(new AddSongTask(spotifyId, playlistId))
+        .taskName("AddSong-" + spotifyId + "-" + playlistId + "-" +System.currentTimeMillis()));
 
     return Response.ok().entity(created).build();
   }

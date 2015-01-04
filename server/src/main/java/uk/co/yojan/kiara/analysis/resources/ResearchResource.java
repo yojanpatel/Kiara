@@ -8,8 +8,10 @@ import uk.co.yojan.kiara.analysis.research.Experiment;
 import uk.co.yojan.kiara.analysis.tasks.ExperimentTask;
 import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.models.Song;
+import uk.co.yojan.kiara.server.models.SongFeature;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.util.*;
@@ -109,5 +111,39 @@ public class ResearchResource {
       }
     }
     return Response.ok().entity(output).build();
+  }
+
+
+  @GET
+  @Path("/counts")
+  @Produces(MediaType.TEXT_PLAIN)
+  public Response count(@DefaultValue("0") @QueryParam("s") int stat) {
+    List<Key<SongFeature>> keys = ofy().load().type(SongFeature.class).keys().list();
+    Collection<SongFeature> songs = ofy().load().keys(keys).values();
+    String[] statTitles = {"mean", "variance", "median", "min", "max", "range", "skewness", "kurtosis"};
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Counts for " + songs.size() + " songs.\n");
+    sb.append(statTitles[stat] + "\n");
+
+    for(int i = 0; i < 12; i++) {
+      sb.append("Timbre Vector " + i);
+      Double max = Double.NEGATIVE_INFINITY;
+      Double min = Double.POSITIVE_INFINITY;
+      Double sum = 0.0;
+
+      for(SongFeature sf : songs) {
+        ArrayList<Double> timbre = sf.getTimbreMoment(i);
+        Double val = timbre.get(stat);
+
+        // update max, min, average
+        max = Math.max(max, val);
+        min = Math.min(min, val);
+        sum += val;
+      }
+
+      sb.append(" Min: " + min + ", Max: " + max + ", Mean: " + sum / songs.size() + "\n");
+    }
+    return Response.ok().entity(sb.toString()).build();
   }
 }

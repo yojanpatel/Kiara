@@ -34,9 +34,18 @@ public class Playlist {
   private long v;
 
 
-  public LinkedList<String> history;
+  // A sliding window of the songs played recently.
+  private LinkedList<String> history;
 
-  public void nowPlaying(String songId) {
+  // last successful song and timestamp
+  private String lastFinished;
+  private long timestamp;
+
+  // A sliding window of the user's events caused affected the learning algorithms.
+  // also allows training of Q based on different reward functions/strategies
+  private LinkedList<String> events;
+
+  public Result nowPlaying(String songId) {
     if(history == null) history = new LinkedList<>();
     log.info(history.size() + " size");
     int WINDOW_SIZE = 50;
@@ -45,13 +54,28 @@ public class Playlist {
       history.poll();
     }
     history.add(songId);
-    ofy().save().entity(this).now();
+    return ofy().save().entity(this);
   }
 
+  public Result justFinished(String songId) {
+    lastFinished = songId;
+    timestamp = System.currentTimeMillis();
+    return ofy().save().entity(this);
+  }
+
+  // Should return the id of the last successfully completed song.
   public String previousSong() {
     if(history.size() > 0)
       return history.getLast();
     else return null;
+  }
+
+  public String lastFinished() {
+    // 1 hour threshold, if last song was played over an hour ago
+    if(timestamp < System.currentTimeMillis() - (60 * 1000)) {
+      return null;
+    }
+    return lastFinished;
   }
 
 
@@ -153,5 +177,21 @@ public class Playlist {
     return this;
   }
 
+  public LinkedList<String> history() {
+    if(history == null) history = new LinkedList<>();
+    return history;
+  }
 
+  public void setHistory(LinkedList<String> history) {
+    this.history = history;
+  }
+
+  public LinkedList<String> events() {
+    if(events == null) events = new LinkedList<>();
+    return events;
+  }
+
+  public void setEvents(LinkedList<String> events) {
+    this.events = events;
+  }
 }

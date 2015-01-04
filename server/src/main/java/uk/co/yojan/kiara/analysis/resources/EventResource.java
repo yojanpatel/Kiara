@@ -6,13 +6,29 @@ import uk.co.yojan.kiara.analysis.learning.*;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.LinkedList;
 import java.util.logging.Logger;
+
+import static uk.co.yojan.kiara.server.OfyService.ofy;
+
+
+/**
+ * IMPORTANT TODO:
+ *   ordering of event requests to server
+ *   example: skip A, start B send from android
+ *            start B, skip A finished order at server due to different service times
+ *
+ *            find a way to not use history of the playlist (.previousSong())
+ *
+ */
+
+/**
+ * IMPORTANT: all events that cause learning to occur, i.e. call QLearner.update()
+ * must also add the event to the playlist, asynchronously.
+ */
 
 @Path("/events/{userId}/{playlistId}")
 @Produces(MediaType.APPLICATION_JSON)
@@ -22,7 +38,7 @@ public class EventResource {
   // TODO dynamically change based on some setting parameter
   // Change the object to choose the reward function.
   public static RewardFunction reward = new BinaryRewardFunction();
-  public static Recommender recommender = new ClusterRecommender();
+  public static Recommender recommender = new LearnedRecommender();
 
   @POST
   @Path("/start/{songId}")
@@ -33,11 +49,11 @@ public class EventResource {
 
     // update the listening history sliding window and other session state.
     Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    playlist.nowPlaying(songId);
+    playlist.nowPlaying(songId); // async
 
     Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
     String t = "";
-    for(String s : playlist.history) t += s + " ";
+    for(String s : playlist.history()) t += s + " ";
     log.warning(t);
 
     return Response.ok(next).build();
@@ -50,11 +66,22 @@ public class EventResource {
                                 @PathParam("songId") String songId) {
 
     double r = reward.rewardTrackFinished();
-
     Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.previousSong()).now();
-    LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
-    QLearner.update(previous, current, r);
+    Logger.getLogger("").warning("Last played: " + playlist.lastFinished());
+
+    if(playlist.lastFinished() != null) {
+      // record event in the events history for playlist
+      EventHistory.addEnd(playlist.events(), playlist.lastFinished(), songId);
+
+      if (playlist.lastFinished() != null) {
+        LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.lastFinished()).now();
+        LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
+        QLearner.update(previous, current, r);
+      }
+    }
+
+    // update the last successful song played in the playlist
+    playlist.justFinished(songId).now();
 
     Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
     return Response.ok().entity(next).build();
@@ -66,15 +93,25 @@ public class EventResource {
                        @PathParam("playlistId") Long playlistId,
                        @PathParam("songId") String songId,
                        @PathParam("skipTime") int skipTime) {
-    double r = reward.rewardSkip();
+    double r = reward.rewardSkip(skipTime);
 
     Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.previousSong()).now();
-    LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
+    Logger.getLogger("").warning("Last played: " + playlist.lastFinished());
 
-    QLearner.update(previous, current, r);
+
+    if(playlist.lastFinished() != null) {
+      // record event in the events history for playlist
+      EventHistory.addSkipped(playlist.events(), playlist.lastFinished(), songId, skipTime);
+      ofy().save().entity(playlist).now(); // async
+
+      LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.lastFinished()).now();
+      LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
+      Logger.getLogger("s").warning(playlist.lastFinished() + "-->" + songId);
+      QLearner.update(previous, current, r);
+    }
 
     Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
+
     return Response.ok().entity(next).build();
   }
 
@@ -88,10 +125,19 @@ public class EventResource {
 
     double r = reward.rewardQueue();
 
-    LeafCluster current = OfyUtils.loadLeafCluster(playlistId, currentSongId).now();
-    LeafCluster queued = OfyUtils.loadLeafCluster(playlistId, queuedSongId).now();
+    Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
+    Logger.getLogger("").warning("Last played: " + playlist.lastFinished());
 
-    QLearner.update(current, queued, r);
+    if(playlist.lastFinished() != null) {
+      // record event in the events history for playlist
+      EventHistory.addQueued(playlist.events(), playlist.lastFinished(), queuedSongId);
+      ofy().save().entity(playlist).now(); // async
+
+      LeafCluster current = OfyUtils.loadLeafCluster(playlistId, currentSongId).now();
+      LeafCluster queued = OfyUtils.loadLeafCluster(playlistId, queuedSongId).now();
+
+      QLearner.update(current, queued, r);
+    }
 
     Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
     return Response.ok().entity(next).build();  }
@@ -104,12 +150,34 @@ public class EventResource {
     double r = reward.rewardFavourite();
 
     Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.previousSong()).now();
-    LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
+    Logger.getLogger("").warning("Last played: " + playlist.lastFinished());
 
-    QLearner.update(previous, current, r);
+    if(playlist.lastFinished() != null) {
+      // record event in the events history for playlist
+      EventHistory.addFavourite(playlist.events(), playlist.lastFinished(), songId);
+      ofy().save().entity(playlist).now(); // async
+
+      LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.lastFinished()).now();
+      LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
+
+      QLearner.update(previous, current, r);
+    }
 
     Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
     return Response.ok().entity(next).build();
+  }
+
+  @GET
+  @Produces(MediaType.TEXT_PLAIN)
+  public Response viewEventHistory(@PathParam("userId") String userId,
+                                   @PathParam("playlistId") Long playlistId) {
+
+    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
+    StringBuilder sb = new StringBuilder();
+    LinkedList<String> events = p.events();
+    for(String event : events) {
+      sb.append(event).append("\n");
+    }
+    return Response.ok().entity(sb.toString()).build();
   }
 }

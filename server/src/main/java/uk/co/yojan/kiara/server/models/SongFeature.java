@@ -41,6 +41,30 @@ public class SongFeature {
   @Feature private Double energy;
   @Feature private Double valence;
 
+  // A bar (or measure) is a segment of time defined as a given number of beats.
+  // Bar offsets also indicate downbeats, the first beat of the measure.
+  @Feature private Double barLengthMean;
+  @Feature private Double barLengthVar;
+
+  // Tatums represent the lowest regular pulse train that a listener intuitively
+  // infers from the timing of perceived musical events (segments).
+  @Feature private Double tatumLengthMean;
+  @Feature private Double tatumLengthVar;
+
+  // Sections are defined by large variations in rhythm or timbre.
+  @Feature private Double sectionLengthMean;
+  @Feature private Double maxSectionTempo;
+  @Feature private Double minSectionTempo;
+
+
+  // features to be used to order songs when a cluster has been located.
+  private Double initialTempo;
+  private Double initialLoudness;
+  private Double finalTempo;
+  private Double finalLoudness;
+
+
+
   public SongFeature() {
     pitchMoments = new ArrayList<>();
     timbreMoments = new ArrayList<>();
@@ -228,19 +252,20 @@ public class SongFeature {
       }
     }
 
-    System.out.println("total features " + numFeatures);
     /** Construct the feature value double. */
     double[] featureVals = new double[numFeatures];
     int featureIndex = 0;
     for(Field field : SongFeature.class.getDeclaredFields()) {
-      System.out.println("Current feature: " + field.getName());
       Feature featureAnnotation = field.getAnnotation(Feature.class);
       if(featureAnnotation != null) {
         if(featureAnnotation.dims() == 1) {
           /* Scalar */
           if(featureAnnotation.size()[0] == 1) {
             Double val = (Double)field.get(this);
-            featureVals[featureIndex] = featureAnnotation.weight() * val;
+            if(val == null)
+              featureVals[featureIndex] = 0;
+            else
+              featureVals[featureIndex] = featureAnnotation.weight() * val;
             featureIndex++;
           }
           /* 1D Vector */
@@ -252,7 +277,6 @@ public class SongFeature {
           }
         }/* 2D Matrix */
         else if(featureAnnotation.dims() == 2) {
-          System.out.println(featureAnnotation.size()[0] + "x" + featureAnnotation.size()[1]);
           for(int i = 0; i < featureAnnotation.size()[0]; i++) {
             for(int j = 0; j < featureAnnotation.size()[1]; j++) {
               ArrayList<ArrayList<Double>> list = ((ArrayList<ArrayList<Double>>)field.get(this));
@@ -266,6 +290,98 @@ public class SongFeature {
     return featureVals;
   }
 
+  public Double getBarLengthMean() {
+    return barLengthMean;
+  }
+
+  public void setBarLengthMean(Double barLengthMean) {
+    this.barLengthMean = barLengthMean;
+  }
+
+  public Double getBarLengthVar() {
+    return barLengthVar;
+  }
+
+  public void setBarLengthVar(Double barLengthVar) {
+    this.barLengthVar = barLengthVar;
+  }
+
+  public Double getTatumLengthMean() {
+    return tatumLengthMean;
+  }
+
+  public void setTatumLengthMean(Double tatumLengthMean) {
+    this.tatumLengthMean = tatumLengthMean;
+  }
+
+  public Double getTatumLengthVar() {
+    return tatumLengthVar;
+  }
+
+  public void setTatumLengthVar(Double tatumLengthVar) {
+    this.tatumLengthVar = tatumLengthVar;
+  }
+
+
+
+
+  public Double getSectionLengthMean() {
+    return sectionLengthMean;
+  }
+
+  public void setSectionLengthMean(Double sectionLengthMean) {
+    this.sectionLengthMean = sectionLengthMean;
+  }
+
+  public Double getMaxSectionTempo() {
+    return maxSectionTempo;
+  }
+
+  public void setMaxSectionTempo(Double maxSectionTempo) {
+    this.maxSectionTempo = maxSectionTempo;
+  }
+
+
+  public Double getMinSectionTempo() {
+    return minSectionTempo;
+  }
+
+  public void setMinSectionTempo(Double minSectionTempo) {
+    this.minSectionTempo = minSectionTempo;
+  }
+
+  public Double getInitialTempo() {
+    return initialTempo;
+  }
+
+  public void setInitialTempo(Double initialTempo) {
+    this.initialTempo = initialTempo;
+  }
+
+  public Double getInitialLoudness() {
+    return initialLoudness;
+  }
+
+  public void setInitialLoudness(Double initialLoudness) {
+    this.initialLoudness = initialLoudness;
+  }
+
+  public Double getFinalTempo() {
+    return finalTempo;
+  }
+
+  public void setFinalTempo(Double finalTempo) {
+    this.finalTempo = finalTempo;
+  }
+
+  public Double getFinalLoudness() {
+    return finalLoudness;
+  }
+
+  public void setFinalLoudness(Double finalLoudness) {
+    this.finalLoudness = finalLoudness;
+  }
+
   /**
    * Normalises the tempo range [0, 500] according to EchoNest to [0, 1]
    * based on a logarithmic scale.
@@ -276,5 +392,9 @@ public class SongFeature {
    */
   private Double normaliseTempo(Double tempo) {
     return (1 - Math.cos(Math.PI * tempo / 500)) / 2;
+  }
+
+  public static void main(String[] args) {
+    System.out.println(getFeatureNames());
   }
 }

@@ -176,7 +176,7 @@ public class FeatureResource {
   public Response test(@PathParam("playlistId") Long playlistId) {
     ofy().clear();
     Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
-    Queue<String> h = p.history;
+    Queue<String> h = p.history();
     String t = h.size() + "  ";
     for(String s : h) {
       t += s;

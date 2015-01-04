@@ -8,6 +8,7 @@ import com.googlecode.objectify.annotation.Subclass;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
@@ -150,10 +151,23 @@ public class NodeCluster extends Cluster {
   public void addChild(LeafCluster c) {
     leaves.add(c.getId());
     children.add(c.getId());
+
+    // update Q
+    ArrayList<Double> stateRow = new ArrayList<>();
+    for(int j = 0; j < children.size(); j++)
+      stateRow.add(0.0);
+    stateRow.set(children.size() - 1, 1.0);
+    Q.add(stateRow);
   }
 
   public void addChild(NodeCluster c ) {
     children.add(c.getId());
+    // update Q
+    ArrayList<Double> stateRow = new ArrayList<>();
+    for(int j = 0; j < children.size(); j++)
+      stateRow.add(0.0);
+    stateRow.set(children.size() - 1, 1.0);
+    Q.add(stateRow);
   }
 
   // return the cluster index in the children list that contains songId in the shadow.
@@ -176,6 +190,7 @@ public class NodeCluster extends Cluster {
   }
 
   private void initialiseIdentity(List<List<Double>> Q) {
+    Logger.getLogger("").warning("Initialising Identity Matrix for Q");
     for(int i = 0; i < children.size(); i++) {
       ArrayList<Double> stateRow = new ArrayList<>();
       for(int j = 0; j < children.size(); j++) {
@@ -189,6 +204,13 @@ public class NodeCluster extends Cluster {
   public int replaceChild(Cluster existing, Cluster replacement) {
     int index = children.indexOf(existing.getId());
     children.set(index, replacement.getId());
+
+    // update Q
+    ArrayList<Double> stateRow = new ArrayList<>();
+    for(int j = 0; j < children.size(); j++) stateRow.add(0.0);
+    stateRow.set(index, 1.0);
+    Q.set(index, stateRow);
+
     ofy().save().entity(this).now();
     return index;
   }
@@ -207,5 +229,13 @@ public class NodeCluster extends Cluster {
 
   public int getSize() {
     return children.size();
+  }
+
+  public boolean containsLeaf(String id) {
+    return leaves.contains(id);
+  }
+
+  public List<String> getChildIds() {
+    return children;
   }
 }

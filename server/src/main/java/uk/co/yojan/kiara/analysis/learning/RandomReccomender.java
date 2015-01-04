@@ -20,7 +20,7 @@ public class RandomReccomender implements Recommender {
 
     List<String> songs = new ArrayList<>(p.getAllSongIds());
 
-    LinkedList<String> history = p.history;
+    LinkedList<String> history = p.history();
 
     String reccomendedSongId = songs.get((int) (Math.random() * songs.size()));
     while(history.contains(reccomendedSongId)) {

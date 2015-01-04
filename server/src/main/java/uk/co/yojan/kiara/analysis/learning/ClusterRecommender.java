@@ -1,6 +1,5 @@
 package uk.co.yojan.kiara.analysis.learning;
 
-import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
@@ -26,10 +25,9 @@ public class ClusterRecommender implements Recommender {
    */
   @Override
   public String recommend(String userId, Long playlistId) {
-//    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
-    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
 
-    LinkedList<String> history = p.history;
+    LinkedList<String> history = p.history();
     String recentSongId = p.previousSong();
     ArrayList<String> perimeter = new ArrayList<>();
 
@@ -42,7 +40,6 @@ public class ClusterRecommender implements Recommender {
         List<String> shadow = parent.getSongIds();
         for (String id : shadow) {
           if (perimeter.size() >= PERIMETER_SIZE) break;
-
 
           if (!history.contains(id) && !perimeter.contains(id)) {
             perimeter.add(id);

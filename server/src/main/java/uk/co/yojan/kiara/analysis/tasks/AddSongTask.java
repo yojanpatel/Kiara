@@ -86,6 +86,11 @@ public class AddSongTask implements DeferredTask {
         }
       }
 
+      // if number of children is less than allowed (i.e. K), check if this song should form its own cluster
+      // this is done by reclustering the shadow of this node
+      int addToClusterId = cluster(rootCluster, song);
+
+
       if(closestCluster instanceof LeafCluster) {
 
         // agglomerate the leaf cluster and the song to be added
@@ -103,6 +108,8 @@ public class AddSongTask implements DeferredTask {
       }
     }
   }
+
+
 
   // parent -> leaf
   //
@@ -146,6 +153,16 @@ public class AddSongTask implements DeferredTask {
     ofy().save().entity(agglomerated);
     ofy().save().entity(newLeaf);
     ofy().save().entity(leaf);
+  }
+
+  //
+  private int cluster(NodeCluster root, SongFeature song) {
+//    List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(cluster.getSongIds())).values());
+
+    // Perform K-Means using Weka on the feature set returning a mapping
+//    KMeans kMeans = new KMeans(k, features);
+//    int[] assignments = kMeans.run();
+    return 0;
   }
 
 

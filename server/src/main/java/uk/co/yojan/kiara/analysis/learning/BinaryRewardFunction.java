@@ -8,7 +8,7 @@ package uk.co.yojan.kiara.analysis.learning;
 public class BinaryRewardFunction implements RewardFunction {
 
   @Override
-  public double rewardSkip() {
+  public double rewardSkip(int percent) {
     return -1;
   }
 

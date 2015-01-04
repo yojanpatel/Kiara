@@ -9,7 +9,7 @@ package uk.co.yojan.kiara.analysis.learning;
  */
 public interface RewardFunction {
 
-  public double rewardSkip();
+  public double rewardSkip(int percent);
 
   public double rewardQueue();
 

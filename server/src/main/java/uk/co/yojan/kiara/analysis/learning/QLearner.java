@@ -12,12 +12,17 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
  */
 public class QLearner {
 
-  // Learning rate
-  private static double alpha() {
-    return 0.5;
+  private static double BASE_ALPHA = 0.5;
+
+  // Learning rate, decreases with leaf distance with the node
+  private static double alpha(int from, int to, int node) {
+    int closestLevel = Math.min(from, to);
+    return Math.pow(BASE_ALPHA, node - closestLevel);
   }
 
-  // Discount factor
+  // Discount factor [0,1]
+  // 0 - myopic, short-sighted
+  // 1 - long-term high reward
   private static double gamma() {
     return 0.5;
   }
@@ -30,9 +35,11 @@ public class QLearner {
    * @param actionIndex  the index into the state's row to locate the cluster transitioned to.
    *                     i.e. the current cluster, s_t+1
    * @param reward  the reward emitted due to the transition.
+   * @param fromLevel the level at which the 'from' LeafCluster is located for alpha calculations.
+   * @param toLevel the level at which the 'to' LeafCluster is located for alpha calculations.
    * @return  the updated Q(s, a) value
    */
-  public static double learn(NodeCluster cluster, int stateIndex, int actionIndex, double reward) {
+  public static double learn(NodeCluster cluster, int stateIndex, int actionIndex, double reward, int fromLevel, int toLevel) {
     List<Double> stateRow = cluster.getQ().get(stateIndex);
     List<Double> actionRow = cluster.getQ().get(actionIndex);
 
@@ -42,7 +49,9 @@ public class QLearner {
       maxQ = Math.max(maxQ, d);
     }
 
-    double updatedQ = (1 - alpha()) * stateRow.get(actionIndex) + alpha() * (reward + gamma() * maxQ);
+    double clusterAlpha = alpha(fromLevel, toLevel, cluster.getLevel());
+
+    double updatedQ = (1 - clusterAlpha) * stateRow.get(actionIndex) + clusterAlpha * (reward + gamma() * maxQ);
 
     stateRow.set(actionIndex, updatedQ);
 
@@ -80,7 +89,9 @@ public class QLearner {
         ancestor,
         ancestor.clusterIndex(previousSong.getSongId()),
         ancestor.clusterIndex(currentSong.getSongId()),
-        reward);
+        reward,
+        previousSong.getLevel(),
+        currentSong.getLevel());
 
 
     // traverse up the tree til the root, and update the diagonal values.
@@ -94,7 +105,9 @@ public class QLearner {
           ancestor,
           ancestor.clusterIndex(previousSong.getSongId()),
           ancestor.clusterIndex(currentSong.getSongId()),
-          reward);
+          reward,
+          previousSong.getLevel(),
+          currentSong.getLevel());
     }
   }
 
