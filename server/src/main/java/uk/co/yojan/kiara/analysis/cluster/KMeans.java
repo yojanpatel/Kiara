@@ -1,5 +1,7 @@
 package uk.co.yojan.kiara.analysis.cluster;
 
+import uk.co.yojan.kiara.analysis.features.scaling.FeatureScaler;
+import uk.co.yojan.kiara.analysis.features.scaling.ZNormaliser;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
@@ -61,6 +63,8 @@ public class KMeans {
 
   SimpleKMeans kMeans;
 
+  FeatureScaler featureScaler = new ZNormaliser();
+
   private List<SongFeature> features;
   private int k;
 
@@ -80,7 +84,15 @@ public class KMeans {
 
     this.k = k;
     this.features = features;
-    this.instances = constructDataSet(features);
+
+    // Scale features
+    if(featureScaler != null) {
+      this.instances = featureScaler.scale(constructDataSet(features));
+    } else {
+      this.instances = constructDataSet(features);
+
+    }
+
     kMeans.setNumClusters(k);
     kMeans.setPreserveInstancesOrder(true);
 
@@ -91,7 +103,13 @@ public class KMeans {
 
     this.k = k;
     this.features = features;
-    this.instances = constructDataSet(features, featureWeights);
+    // Scale features
+    if(featureScaler != null) {
+      this.instances = featureScaler.scale(constructDataSet(features));
+    } else {
+      this.instances = constructDataSet(features);
+
+    }
     kMeans.setNumClusters(k);
     kMeans.setPreserveInstancesOrder(true);
 
@@ -107,6 +125,8 @@ public class KMeans {
   public Instances getCentroids() {
     return kMeans.getClusterCentroids();
   }
+
+
 
 
   public Instances constructDataSet(List<SongFeature> data) throws IllegalAccessException {
