@@ -111,11 +111,11 @@ public class LearnedRecommender implements Recommender {
     }
     // assert: current is a NodeCluster
     // assert: either clusterIndex == -1 (different path from source song) or recommended song has been played recently
-    return heuristic(current, recentSongId, history);
+    return selectSong(current, recentSongId, history);
   }
 
 
-  private String heuristic(NodeCluster nodeCluster, String recentSongId, List<String> history) {
+  private String selectSong(NodeCluster nodeCluster, String recentSongId, List<String> history) {
     SongFeature recent = OfyUtils.loadFeature(recentSongId).now();
     NodeCluster current = nodeCluster;
     Collection<SongFeature> candidates;
@@ -125,6 +125,8 @@ public class LearnedRecommender implements Recommender {
 
     // for now, closest based on tempo.
     double tempoDifference = Double.MAX_VALUE;
+    double minDistance = Double.MAX_VALUE;
+
     String currentRecommendation = null;
 
     while(currentRecommendation == null) {
@@ -132,9 +134,11 @@ public class LearnedRecommender implements Recommender {
 
       for (SongFeature song : candidates) {
         if (!history.contains(song.getId())) {
-          double diff = Math.abs(song.getTempo() - recent.getTempo());
-          if (diff < tempoDifference) {
-            tempoDifference = diff;
+//          double diff = Math.abs(song.getTempo() - recent.getTempo());
+          double diff = distance(recent, song);
+//          if (diff < tempoDifference) {
+          if (diff < minDistance) {
+            minDistance = diff;
             currentRecommendation = song.getId();
           }
         }
@@ -152,5 +156,27 @@ public class LearnedRecommender implements Recommender {
     ArrayList<Key<SongFeature>> keys = new ArrayList<>();
     for(String id : ids) keys.add(Key.create(SongFeature.class, id));
     return keys;
+  }
+
+  /**
+   * Distance between end of song a and start of song b based on the the timbre vectors, tempo and loudness.
+   * @return
+   */
+  private Double distance(SongFeature a, SongFeature b) {
+    double d = 0.0;
+    d += Math.pow(a.getFinalTempo() - b.getInitialTempo(), 2);
+    d += Math.pow(a.getFinalLoudness() - b.getInitialLoudness(), 2);
+
+
+    for(int i = 0; i < 12; i++) {
+      // Mean of each timbre vector coefficient
+      d += Math.pow(a.getFinalTimbreMoments().get(i).get(0) - b.getFinalTimbreMoments().get(i).get(0), 2);
+      // Median
+      d += Math.pow(a.getFinalTimbreMoments().get(i).get(3) - b.getFinalTimbreMoments().get(i).get(3), 2);
+      // Skewness
+      d += Math.pow(a.getFinalTimbreMoments().get(i).get(6) - b.getFinalTimbreMoments().get(i).get(6), 2);
+    }
+
+    return d;
   }
 }
