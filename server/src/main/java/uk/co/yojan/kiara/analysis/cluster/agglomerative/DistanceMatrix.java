@@ -1,8 +1,5 @@
 package uk.co.yojan.kiara.analysis.cluster.agglomerative;
 
-import uk.co.yojan.kiara.analysis.cluster.SongCluster;
-import uk.co.yojan.kiara.analysis.cluster.agglomerative.ClusterEdge;
-
 import java.util.*;
 
 /**

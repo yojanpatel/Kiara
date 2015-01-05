@@ -1,10 +1,6 @@
 package uk.co.yojan.kiara.analysis.cluster.agglomerative;
 
 
-import uk.co.yojan.kiara.analysis.cluster.agglomerative.ClusterEdge;
-import uk.co.yojan.kiara.analysis.cluster.agglomerative.DistanceMatrix;
-import uk.co.yojan.kiara.analysis.cluster.agglomerative.HierarchicalClustering;
-import uk.co.yojan.kiara.analysis.cluster.agglomerative.SongCluster;
 import uk.co.yojan.kiara.analysis.cluster.linkage.MeanDistance;
 
 import java.util.*;
