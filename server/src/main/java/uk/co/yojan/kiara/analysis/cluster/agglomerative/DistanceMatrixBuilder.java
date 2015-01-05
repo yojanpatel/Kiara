@@ -1,6 +1,8 @@
-package uk.co.yojan.kiara.analysis.cluster;
+package uk.co.yojan.kiara.analysis.cluster.agglomerative;
 
 import com.googlecode.objectify.Key;
+import uk.co.yojan.kiara.analysis.cluster.SongCluster;
+import uk.co.yojan.kiara.analysis.cluster.agglomerative.DistanceMatrix;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.SongFeature;
 

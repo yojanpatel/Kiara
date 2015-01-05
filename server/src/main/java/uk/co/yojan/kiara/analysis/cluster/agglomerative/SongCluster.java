@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.analysis.cluster;
+package uk.co.yojan.kiara.analysis.cluster.agglomerative;
 
 import java.util.ArrayList;
 

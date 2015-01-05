@@ -1,5 +1,8 @@
-package uk.co.yojan.kiara.analysis.cluster;
+package uk.co.yojan.kiara.analysis.cluster.agglomerative;
 
+import uk.co.yojan.kiara.analysis.cluster.agglomerative.ClusterEdge;
+import uk.co.yojan.kiara.analysis.cluster.agglomerative.DistanceMatrix;
+import uk.co.yojan.kiara.analysis.cluster.agglomerative.SongCluster;
 import uk.co.yojan.kiara.analysis.cluster.linkage.ClusterLinkage;
 
 import java.util.ArrayList;
