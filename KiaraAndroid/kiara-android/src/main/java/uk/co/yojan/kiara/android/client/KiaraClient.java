@@ -3,6 +3,7 @@ package uk.co.yojan.kiara.android.client;
 import android.content.Context;
 import android.util.Log;
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
@@ -90,6 +91,7 @@ public class KiaraClient {
         return defaultHeaders();
       }
     };
+    playlistReq.setRetryPolicy(new DefaultRetryPolicy(10000, 3, 0));
     volley.addToRequestQueue(playlistReq);
   }
 

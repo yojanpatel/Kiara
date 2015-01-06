@@ -30,6 +30,7 @@ import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.events.QueueSongRequest;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
+import uk.co.yojan.kiara.client.data.ActionEvent;
 import uk.co.yojan.kiara.client.data.Song;
 
 import java.util.LinkedList;
@@ -56,8 +57,16 @@ public class MusicService extends Service
   private Song currentSong;
   private int duration;
   private int position;
+
   private int lastSkip;
+
+  // build up currentState to send to the server when a new track is played.
+  // this includes updating its favourite state, skip state, time etc.
+  ActionEvent currentState;
+
   private Bitmap currentSongAlbumCover;
+  private Bitmap nextAlbumCover;
+
 
   public LinkedList<Song> playQueue;
 
@@ -195,10 +204,18 @@ public class MusicService extends Service
     // TRACK_START: called every time a new track starts playing
     if (eventType == EventType.TRACK_START) {
       Log.d("KiaraPlayerEvent", "Track started " + playerState.trackUri);
-      application.learningApi().trackStarted(
-          application.userId(),
+
+      // N W O
+      if(currentState == null) {
+        Log.d("Kiara", "No session state found for playback. Starting now.");
+        currentState = new ActionEvent();
+      }
+      Log.d("Kiara", currentState.isSkipped() + " " + currentState.getPercentage());
+
+      currentState.setStartedSongId(stripSpotifyUri(playerState.trackUri));
+      application.learningApi().transition(application.userId(),
           playlistId,
-          stripSpotifyUri(playerState.trackUri),
+          currentState,
           updateOnCallback);
 
       if (repeating == RepeatState.ONE) {
@@ -209,55 +226,34 @@ public class MusicService extends Service
     // END_OF_CONTEXT: end of a song that finished playing
     } else if (eventType == EventType.END_OF_CONTEXT) {
       Log.d("KiaraPlayerEvent", "Track ended " + playerState.trackUri);
-      application.learningApi().trackFinished(
-          application.userId(),
-          playlistId,
-          stripSpotifyUri(playerState.trackUri),
-          updateOnCallback);
-      nextSong();
 
+      currentState = new ActionEvent();
+      currentState.setPreviousSongId(stripSpotifyUri(playerState.trackUri));
       if(favourited) {
-        Log.d("KiaraPlayerEvent", "Track actually favourited");
-        application.learningApi().trackFavourited(
-            application.userId(),
-            playlistId,
-            stripSpotifyUri(playerState.trackUri),
-            updateOnCallback);
+        currentState.setFavourited(true);
+        favourited = false;
       }
+      nextSong();
 
     // TRACK_END: the song was skipped (nextSong() was called)
     } else if (eventType == EventType.TRACK_END) {
-      double proportion = (double)lastSkip / (double)duration;
-      if(proportion < 0.98) {
-        Log.d("KiaraPlayerEvent", "Track ended due to skip " + playerState.trackUri + " " + proportion);
-        application.learningApi().trackSkipped(
-            application.userId(),
-            playlistId,
-            stripSpotifyUri(playerState.trackUri),
-            lastSkip,
-            emptyCallback);
+      Log.d("KiKiK", lastSkip + " SKIP TIME");
+      if(lastSkip < 98) {
+        Log.d("KiaraPlayerEvent", "Track ended due to skip " + playerState.trackUri + " " + lastSkip);
 
+        currentState = new ActionEvent();
+        currentState.setPreviousSongId(stripSpotifyUri(playerState.trackUri));
         if(favourited) {
-          Log.d("KiaraPlayerEvent", "Track actually favourited");
-          application.learningApi().trackFavourited(
-              application.userId(),
-              playlistId,
-              stripSpotifyUri(playerState.trackUri),
-              updateOnCallback);
-         }
+          currentState.setFavourited(true);
+          favourited = false;
+        }
+        currentState.setSkipped(true);
+        currentState.setPercentage(lastSkip);
       }
 
     } else if (eventType == EventType.LOST_PERMISSION) {
         Log.d("KiaraPlayerEvent", "Lost permission, pausing.");
 
-    } else if (eventType == EventType.SKIP_NEXT) {
-      Log.d("KiaraPlayerEvent", "Skipping to next song. " + lastSkip);
-      application.learningApi().trackSkipped(
-          application.userId(),
-          playlistId,
-          stripSpotifyUri(playerState.trackUri),
-          lastSkip,
-          updateOnCallback);
     }
 
     application.getBus().post(new PlaybackEvent(eventType, playerState));
@@ -295,7 +291,6 @@ public class MusicService extends Service
 
     // update state regarding the playback
     playing = true;
-    favourited = false;
     currentSong = song;
 
     // play song on the spotify player
@@ -349,20 +344,22 @@ public class MusicService extends Service
 
   public void nextSong() {
     if(playQueue.size() > 0) {
-      lastSkip = position;
+      lastSkip = 100 * position / duration;
       Log.d(log, "playing the nextSong " + playQueue.getFirst().getSongName());
+
+      currentSongAlbumCover = nextAlbumCover;
+      nextAlbumCover = null;
+
       playSong(playQueue.getFirst());
       playQueue.removeFirst();
     } else {
       playing = false;
       pause();
     }
-    favourited = false;
   }
 
   public void previousSong() {
     player.skipToPrevious();
-    favourited = false;
   }
 
   public void queueSong(Song song) {
@@ -459,6 +456,7 @@ public class MusicService extends Service
     };
     Picasso.with(this).load(currentSong.getImageURL()).into(target);
   }
+
 
   // TODO(yojan) tweak : change drawables, text etc.
   private NotificationCompat.Builder buildNotif(boolean playing, boolean favourited) {
@@ -578,7 +576,6 @@ public class MusicService extends Service
       playQueue.clear();
       playQueue.add(s);
       application.getBus().post(s);
-      Log.d(log, playQueue.size() + " pqueue size");
     }
 
     @Override
@@ -590,12 +587,10 @@ public class MusicService extends Service
   retrofit.Callback<Song> emptyCallback = new Callback<Song>() {
     @Override
     public void success(Song song, Response response) {
-//      Log.d(log, song.getSongName());
     }
 
     @Override
     public void failure(RetrofitError error) {
-
     }
   };
 }

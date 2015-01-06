@@ -41,6 +41,7 @@ public class PlayerControlFragment extends KiaraFragment {
   private boolean bound;
   private MusicService musicService;
   private Song currentSong;
+  private long playlistId;
 
 
   @InjectView(R.id.album_image) ImageView albumImage;

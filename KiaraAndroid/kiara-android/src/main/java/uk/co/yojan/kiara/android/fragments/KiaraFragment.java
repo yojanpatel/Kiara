@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.android.fragments;
 
 import android.app.Fragment;
+import android.util.Log;
 import com.squareup.otto.Bus;
 import uk.co.yojan.kiara.android.KiaraApplication;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
@@ -16,8 +17,10 @@ public class KiaraFragment extends Fragment {
   @Override
   public void onStart() {
     super.onStart();
-    if(!registeredToBus)
+    if(!registeredToBus) {
+      Log.d("KiaraFragment", "Registering to bus.");
       getBus().register(this);
+    }
     registeredToBus = true;
     getKiaraApplication().eventBuffer().stopAndProcess();
   }
@@ -26,8 +29,10 @@ public class KiaraFragment extends Fragment {
   public void onStop() {
     super.onStop();
     getKiaraApplication().eventBuffer().startSaving();
-    if(registeredToBus)
+    if(registeredToBus) {
+      Log.d("KiaraFragment", "Registering to bus.");
       getBus().unregister(this);
+    }
     registeredToBus = false;
   }
 

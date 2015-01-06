@@ -42,7 +42,7 @@ public class KiaraPlayer extends Player {
 
   @Override
   public int onAudioDelivered(short[] frames, int numFrames, int sampleRate, int channels) {
-    Log.d("KiaraPlayer", frames.length + " frames delivered at " + sampleRate + " sample rate.");
+//    Log.d("KiaraPlayer", frames.length + " frames delivered at " + sampleRate + " sample rate.");
     return player.onAudioDelivered(frames, numFrames, sampleRate, channels);
   }
 

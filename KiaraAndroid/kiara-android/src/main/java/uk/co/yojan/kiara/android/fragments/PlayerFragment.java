@@ -29,6 +29,7 @@ import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.background.MusicService;
+import uk.co.yojan.kiara.android.events.Favourite;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
@@ -242,6 +243,15 @@ public class PlayerFragment extends KiaraFragment {
   }
 
   @Subscribe
+  public void onFavourite(Favourite favourite) {
+    if(favourite.isFavourited()) {
+      favouriteFab.setIcon(R.drawable.ic_favorite_white_24dp);
+    } else {
+      favouriteFab.setIcon(R.drawable.ic_favorite_outline_white_24dp);
+    }
+  }
+
+  @Subscribe
   public void onPlaybackEvent(PlaybackEvent event) {
     Log.d(log, "PlaybackEvent " + event.getEvent().toString());
     PlayerNotificationCallback.EventType eventType = event.getEvent();
@@ -250,7 +260,7 @@ public class PlayerFragment extends KiaraFragment {
     if(eventType == PlayerNotificationCallback.EventType.PLAY ||
        eventType == PlayerNotificationCallback.EventType.TRACK_START) {
       playpause.setImageDrawable(pause);
-
+      favouriteFab.setIcon(R.drawable.ic_favorite_outline_white_24dp);
       updateUi(musicService.getCurrentSong());
 
     } else if(eventType == PlayerNotificationCallback.EventType.PAUSE ||
@@ -289,7 +299,13 @@ public class PlayerFragment extends KiaraFragment {
       musicService = binder.getService();
       bound = true;
 
-      musicService.setPlaylistId(playlistId);
+
+      // if session already in progress and arriving from control fragment
+      if(playlistId == -1) {
+        playlistId = musicService.getPlaylistId();
+      } else {
+        musicService.setPlaylistId(playlistId);
+      }
       Log.d("PLAYLISTID", playlistId + " ");
       musicService.playSongWeak(currentSong);
       playpause.setImageDrawable(

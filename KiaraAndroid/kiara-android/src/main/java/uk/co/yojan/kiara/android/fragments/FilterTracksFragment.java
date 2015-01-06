@@ -32,7 +32,6 @@ import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.listeners.SwipeDismissRecyclerViewTouchListener;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.android.views.FloatingActionButton;
-import uk.co.yojan.kiara.android.views.FullImageView;
 import uk.co.yojan.kiara.client.data.Song;
 import uk.co.yojan.kiara.client.data.spotify.Playlist;
 import uk.co.yojan.kiara.client.data.spotify.Track;
@@ -203,7 +202,10 @@ public class FilterTracksFragment extends KiaraFragment {
 
     View headerView = activity.getLayoutInflater().inflate(R.layout.header_image, null);
     parallaxAdapter.setParallaxHeader(headerView, tracksList);
-    picasso.load(playlist.getImageUrl()).into((FullImageView)headerView.findViewById(R.id.header_image));
+    Log.d("FilterTracks", playlist.getImageUrl());
+    if(playlist.getImageUrl() != null) {
+//      picasso.load(playlist.getImageUrl()).into((FullImageView) headerView.findViewById(R.id.header_image));
+    }
     ((TextView)headerView.findViewById(R.id.playlist_name)).setText(spotifyPlaylistName.toUpperCase());
     setUpFab();
   }
