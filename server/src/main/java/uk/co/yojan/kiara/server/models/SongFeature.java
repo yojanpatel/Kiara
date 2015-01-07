@@ -56,12 +56,23 @@ public class SongFeature {
   @Feature private Double maxSectionTempo;
   @Feature private Double minSectionTempo;
 
+  private Double liveness;
+  private Double speechiness;
+  private Integer mode;
+  private Double acousticness;
+  private Double danceability;
+  private Double instrumentalness;
 
   // features to be used to order songs when a cluster has been located.
   private Double initialTempo;
   private Double initialLoudness;
+  @Serialize(zip=true)
+  private ArrayList<ArrayList<Double>> initialTimbreMoments;
+
   private Double finalTempo;
   private Double finalLoudness;
+  @Serialize(zip=true)
+  private ArrayList<ArrayList<Double>> finalTimbreMoments;
 
 
 
@@ -380,6 +391,70 @@ public class SongFeature {
 
   public void setFinalLoudness(Double finalLoudness) {
     this.finalLoudness = finalLoudness;
+  }
+
+  public ArrayList<ArrayList<Double>> getFinalTimbreMoments() {
+    return finalTimbreMoments;
+  }
+
+  public void setFinalTimbreMoments(ArrayList<ArrayList<Double>> finalTimbreMoments) {
+    this.finalTimbreMoments = finalTimbreMoments;
+  }
+
+  public ArrayList<ArrayList<Double>> getInitialTimbreMoments() {
+    return initialTimbreMoments;
+  }
+
+  public void setInitialTimbreMoments(ArrayList<ArrayList<Double>> initialTimbreMoments) {
+    this.initialTimbreMoments = initialTimbreMoments;
+  }
+
+  public Double getLiveness() {
+    return liveness;
+  }
+
+  public void setLiveness(Double liveness) {
+    this.liveness = liveness;
+  }
+
+  public Double getSpeechiness() {
+    return speechiness;
+  }
+
+  public void setSpeechiness(Double speechiness) {
+    this.speechiness = speechiness;
+  }
+
+  public Integer getMode() {
+    return mode;
+  }
+
+  public void setMode(Integer mode) {
+    this.mode = mode;
+  }
+
+  public Double getAcousticness() {
+    return acousticness;
+  }
+
+  public void setAcousticness(Double acousticness) {
+    this.acousticness = acousticness;
+  }
+
+  public Double getDanceability() {
+    return danceability;
+  }
+
+  public void setDanceability(Double danceability) {
+    this.danceability = danceability;
+  }
+
+  public Double getInstrumentalness() {
+    return instrumentalness;
+  }
+
+  public void setInstrumentalness(Double instrumentalness) {
+    this.instrumentalness = instrumentalness;
   }
 
   /**
