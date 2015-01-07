@@ -20,6 +20,9 @@ public class QLearnerTest extends TestCase {
   private final LocalServiceTestHelper helper =
       new LocalServiceTestHelper(new LocalDatastoreServiceTestConfig());
 
+  LeafCluster l1, l2, l3, l4;
+  NodeCluster A, B, C;
+
   /**
    *
    * The Hierarchical cluster structure to be tested:
@@ -44,6 +47,15 @@ public class QLearnerTest extends TestCase {
   @Before
   public void setUp() {
     helper.setUp();
+
+    A = createTestHierarchy();
+    B = OfyUtils.loadNodeCluster("B").now();
+    C = OfyUtils.loadNodeCluster("C").now();
+
+    l1 = ofy().load().key(Key.create(LeafCluster.class, "l1")).now();
+    l2 = ofy().load().key(Key.create(LeafCluster.class, "l2")).now();
+    l3 = ofy().load().key(Key.create(LeafCluster.class, "l3")).now();
+    l4 = ofy().load().key(Key.create(LeafCluster.class, "l4")).now();
   }
 
   @After
@@ -99,16 +111,7 @@ public class QLearnerTest extends TestCase {
     }
 
   public void testLearn() throws Exception {
-
-    LeafCluster l1 = ofy().load().key(Key.create(LeafCluster.class, "l1")).now();
-    LeafCluster l2 = ofy().load().key(Key.create(LeafCluster.class, "l2")).now();
-    LeafCluster l3 = ofy().load().key(Key.create(LeafCluster.class, "l3")).now();
-    LeafCluster l4 = ofy().load().key(Key.create(LeafCluster.class, "l4")).now();
-
-
     // creates the hierarchy as displayed above
-    NodeCluster root = createTestHierarchy();
-
     // test for a unit reward
 
     /** (l3, l4, 1.0) -- leaves at same level. affects all NodeClusters. **/
@@ -120,10 +123,6 @@ public class QLearnerTest extends TestCase {
     double[] expectedQa = {1.0625, 0.0, 0.0, 1.0};
     double[] expectedQb = {1.125, 0.0, 0.0, 1.0};
     double[] expectedQc = {1.0, 0.75, 0.0, 1.0};
-
-    NodeCluster A = OfyUtils.loadNodeCluster("A").now();
-    NodeCluster B = OfyUtils.loadNodeCluster("B").now();
-    NodeCluster C = OfyUtils.loadNodeCluster("C").now();
 
     assertMatrixEquals(A.getQ(), expectedQa);
     assertMatrixEquals(B.getQ(), expectedQb);
@@ -138,13 +137,9 @@ public class QLearnerTest extends TestCase {
     double[] expectedQa2 = {1.1796875, 0.0, 0.0, 1.0};
     double[] expectedQb2 = {1.125, 0.75, 0.0, 1.0};
 
-    NodeCluster A2 = OfyUtils.loadNodeCluster("A").now();
-    NodeCluster B2 = OfyUtils.loadNodeCluster("B").now();
-    NodeCluster C2 = OfyUtils.loadNodeCluster("C").now();
-
-    assertMatrixEquals(A2.getQ(), expectedQa2);
-    assertMatrixEquals(B2.getQ(), expectedQb2);
-    assertMatrixEquals(C2.getQ(), expectedQc); // same as previously used
+    assertMatrixEquals(A.getQ(), expectedQa2);
+    assertMatrixEquals(B.getQ(), expectedQb2);
+    assertMatrixEquals(C.getQ(), expectedQc); // same as previously used
 
     /** (l1, l4, 1.0) -- leaves that only affect the root node, A. **/
     // Qc remains the same
@@ -154,14 +149,16 @@ public class QLearnerTest extends TestCase {
 
     double[] expectedQa3 = {1.1796875, 0.0, 0.794921875, 1.0};
 
-    NodeCluster A3 = OfyUtils.loadNodeCluster("A").now();
+    assertMatrixEquals(A.getQ(), expectedQa3);
+    assertMatrixEquals(B.getQ(), expectedQb2);
+    assertMatrixEquals(C.getQ(), expectedQc);
+  }
+
+  public void testLearn2() throws Exception {
+    QLearner.update(l4, l2, 2.0);
     NodeCluster B3 = OfyUtils.loadNodeCluster("B").now();
-    NodeCluster C3 = OfyUtils.loadNodeCluster("C").now();
-
-    assertMatrixEquals(A3.getQ(), expectedQa3);
-    assertMatrixEquals(B3.getQ(), expectedQb2);
-    assertMatrixEquals(C3.getQ(), expectedQc);
-
+    double[] expected = {1.0, 1.25, 0.0, 1.0};
+    assertMatrixEquals(B3.getQ(), expected);
   }
 
   private void assertMatrixEquals(List<List<Double>> Q, double[] expected) {
@@ -207,7 +204,7 @@ public class QLearnerTest extends TestCase {
   }
 
 
-  private NodeCluster createTestHierarchy() {
+  private static NodeCluster createTestHierarchy() {
 
     NodeCluster A = new NodeCluster();
     A.setId("A");
@@ -243,7 +240,7 @@ public class QLearnerTest extends TestCase {
     A.addSongId("l1"); A.addSongId("l2"); A.addSongId("l3"); A.addSongId("l4");
 
     B.addChild(C); C.setParent(Key.create(NodeCluster.class, B.getId()));
-    B.addChild(l2); C.setParent(Key.create(NodeCluster.class, B.getId()));
+    B.addChild(l2); l2.setParent(Key.create(NodeCluster.class, B.getId()));
     B.addSongId("l2"); B.addSongId("l3"); B.addSongId("l4");
 
     C.addChild(l3); l3.setParent(Key.create(NodeCluster.class, C.getId()));
