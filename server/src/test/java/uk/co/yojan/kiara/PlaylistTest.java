@@ -67,14 +67,12 @@ public class PlaylistTest {
 
   @Test
   public void testGetAllSongs() {
-    testPlaylist.addSong(kiara);
-    testPlaylist2.addSong(said);
+    testPlaylist.addSong(kiara).now();
+    testPlaylist2.addSong(said).now();
 
-    ArrayList<Song> userSongs = new ArrayList<Song>(testUser.getAllSongs());
     ArrayList<Song> playlistSongs = new ArrayList<Song>(testPlaylist.getAllSongs());
     ArrayList<Song> playlist2Songs = new ArrayList<Song>(testPlaylist2.getAllSongs());
 
-    assertEquals(2, userSongs.size());
     assertEquals(1, playlistSongs.size());
     assertEquals(1, playlist2Songs.size());
 
@@ -84,16 +82,14 @@ public class PlaylistTest {
 
   @Test
   public void testRemoveSong() {
-    testPlaylist.addSong(kiara);
-    testPlaylist2.addSong(said);
+    testPlaylist.addSong(kiara).now();
+    testPlaylist2.addSong(said).now();
 
     testPlaylist.removeSong(kiara.getId()); // Song should still exist in the datastore.
 
-    ArrayList<Song> userSongs = new ArrayList<Song>(testUser.getAllSongs());
     ArrayList<Song> playlistSongs = new ArrayList<Song>(testPlaylist.getAllSongs());
     ArrayList<Song> playlist2Songs = new ArrayList<Song>(testPlaylist2.getAllSongs());
 
-    assertEquals(2, userSongs.size());
     assertEquals(0, playlistSongs.size());
     assertEquals(1, playlist2Songs.size());
 
