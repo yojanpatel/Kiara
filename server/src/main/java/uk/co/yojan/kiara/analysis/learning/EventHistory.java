@@ -58,6 +58,14 @@ public class EventHistory {
     eventHistory.add(previousSongId + "-" + favSongId + "-" + PlayerEvent.FAVOURITE);
   }
 
+  public static int getEventHistorySize() {
+    return EVENT_HISTORY_SIZE;
+  }
+
+  public static void setEventHistorySize(int eventHistorySize) {
+    EVENT_HISTORY_SIZE = eventHistorySize;
+  }
+
   private static double round2dp(double d) {
     return Math.round(d * 100)/100.0;
   }

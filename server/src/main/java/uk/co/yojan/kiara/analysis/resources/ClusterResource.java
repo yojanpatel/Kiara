@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.analysis.resources;
 
 import com.googlecode.objectify.Key;
+import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.*;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
@@ -136,5 +137,26 @@ public class ClusterResource {
       log.warning(stackTrace);
       return Response.ok().entity(stackTrace).build();
     }
+  }
+
+  @GET
+  @Path("/node/{nodeId}")
+  public Response displayNode(@PathParam("nodeId") String nodeId) {
+    NodeCluster node = OfyUtils.loadNodeCluster(nodeId).now();
+
+    StringBuilder sb = new StringBuilder();
+    List<List<Double>> Q = node.getQ();
+    for(List<Double> stateRow : Q) {
+      for(Double q : stateRow) {
+        sb.append(q + " || ");
+      }
+      sb.append("<br>");
+    }
+    sb.append("<br><br>");
+
+    sb.append("Level " + node.getLevel());
+    sb.append(node.getSongIds());
+
+    return Response.ok().entity(sb.toString()).build();
   }
 }

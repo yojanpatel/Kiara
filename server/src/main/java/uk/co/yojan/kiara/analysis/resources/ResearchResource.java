@@ -142,7 +142,17 @@ public class ResearchResource {
         sum += val;
       }
 
-      sb.append(" Min: " + min + ", Max: " + max + ", Mean: " + sum / songs.size() + "\n");
+      double mean = sum/songs.size();
+      double sumSq = 0;
+      for(SongFeature sf : songs) {
+        ArrayList<Double> timbre = sf.getTimbreMoment(i);
+        Double val = timbre.get(stat);
+        sumSq += Math.pow(val - mean, 2);
+      }
+
+      double std = Math.sqrt(sumSq/songs.size());
+
+      sb.append(" Min: " + min + ", Max: " + max + ", Mean: " + mean + ", StdDev: " + std + "\n");
     }
     return Response.ok().entity(sb.toString()).build();
   }

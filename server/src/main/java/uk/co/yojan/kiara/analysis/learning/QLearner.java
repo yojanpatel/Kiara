@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.analysis.learning;
 
+import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
 
@@ -7,17 +8,21 @@ import java.util.List;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
-/**
- * Created by yojan on 12/14/14.
- */
+
 public class QLearner {
 
   private static double BASE_ALPHA = 0.5;
 
   // Learning rate, decreases with leaf distance with the node
+  // alpha = BASE_ALPHA ^ (node distance)
   private static double alpha(int from, int to, int node) {
     int closestLevel = Math.min(from, to);
-    return Math.pow(BASE_ALPHA, node - closestLevel);
+    double a =  Math.pow(BASE_ALPHA, closestLevel - node);
+
+    assert a <= 1.0;
+    assert a >= 0.0;
+
+    return a;
   }
 
   // Discount factor [0,1]
@@ -39,25 +44,30 @@ public class QLearner {
    * @param toLevel the level at which the 'to' LeafCluster is located for alpha calculations.
    * @return  the updated Q(s, a) value
    */
-  public static double learn(NodeCluster cluster, int stateIndex, int actionIndex, double reward, int fromLevel, int toLevel) {
-    List<Double> stateRow = cluster.getQ().get(stateIndex);
-    List<Double> actionRow = cluster.getQ().get(actionIndex);
+  public static Result learn(NodeCluster cluster, int stateIndex, int actionIndex, double reward, int fromLevel, int toLevel) {
 
-    // Q learning
+    double clusterAlpha = alpha(fromLevel, toLevel, cluster.getLevel());
+
+    updateQMatrix(cluster.getQ(), stateIndex, actionIndex, reward, clusterAlpha, gamma());
+
+    return ofy().save().entity(cluster);
+  }
+
+  /**
+   * updates Q[stateIndex][actionIndex] with reward and clusterAlpha based on Q-Learning update relation.
+   */
+  public static void updateQMatrix(List<List<Double>> Q, int stateIndex, int actionIndex, double reward, double clusterAlpha, double gamma) {
+    List<Double> stateRow = Q.get(stateIndex);
+    List<Double> actionRow = Q.get(actionIndex);
+
     double maxQ = Double.MIN_VALUE;
     for(Double d : actionRow) {
       maxQ = Math.max(maxQ, d);
     }
 
-    double clusterAlpha = alpha(fromLevel, toLevel, cluster.getLevel());
-
-    double updatedQ = (1 - clusterAlpha) * stateRow.get(actionIndex) + clusterAlpha * (reward + gamma() * maxQ);
+    double updatedQ = (1 - clusterAlpha) * stateRow.get(actionIndex) + clusterAlpha * (reward + gamma * maxQ);
 
     stateRow.set(actionIndex, updatedQ);
-
-    ofy().save().entity(cluster).now();
-
-    return updatedQ;
   }
 
 

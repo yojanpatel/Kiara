@@ -12,7 +12,6 @@ import uk.co.yojan.kiara.server.models.User;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
@@ -108,7 +107,7 @@ public class PlaylistSongResource {
 
   @POST
   @Path("/batch")
-  public Response batchAddSongs(List<String> spotifyIds,
+  public Response batchAddSongs(String[] spotifyIds,
                                 @PathParam("user_id") String userId,
                                 @PathParam("playlist_id") Long playlistId) {
     // Format the spotify ids so they consist only of the string id for the tracks.
@@ -170,9 +169,9 @@ public class PlaylistSongResource {
   }
 
 
-  private void formatSpotifyTrackIds(List<String> ids) {
-    for(int i = 0; i < ids.size(); i++) {
-      ids.set(i, ids.get(i).replace("\"", "").replace("spotify:track:", ""));
+  private void formatSpotifyTrackIds(String[] ids) {
+    for(int i = 0; i < ids.length; i++) {
+      ids[i] =  ids[i].replace("\"", "").replace("spotify:track:", "");
     }
   }
 }

@@ -76,9 +76,7 @@ public class LearnedRecommender implements Recommender {
         // nextClusterIndex = argmax_i{Q(state)(i)}
         for (int i = 0; i < stateRow.size(); i++) {
           Double qValue = stateRow.get(i);
-          log.warning(qValue + "");
           if (maxQ < qValue) {
-            log.warning(qValue + " updated maxQ");
             nextClusterIndex = i;
             maxQ = qValue;
           }

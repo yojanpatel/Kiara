@@ -2,10 +2,10 @@ package uk.co.yojan.kiara.analysis.resources;
 
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
-import uk.co.yojan.kiara.analysis.cluster.DistanceMatrix;
-import uk.co.yojan.kiara.analysis.cluster.DistanceMatrixBuilder;
-import uk.co.yojan.kiara.analysis.cluster.HierarchicalClustering;
-import uk.co.yojan.kiara.analysis.cluster.SongCluster;
+import uk.co.yojan.kiara.analysis.cluster.agglomerative.DistanceMatrix;
+import uk.co.yojan.kiara.analysis.cluster.agglomerative.DistanceMatrixBuilder;
+import uk.co.yojan.kiara.analysis.cluster.agglomerative.HierarchicalClustering;
+import uk.co.yojan.kiara.analysis.cluster.agglomerative.SongCluster;
 import uk.co.yojan.kiara.analysis.cluster.linkage.MeanDistance;
 import uk.co.yojan.kiara.analysis.tasks.FeatureExtractionTask;
 import uk.co.yojan.kiara.analysis.tasks.LoadFeatures;
@@ -107,6 +107,19 @@ public class FeatureResource {
     return Response.ok().entity(counter).build();
   }
 
+  @GET
+  @Path("/convert")
+  public Response convert() {
+    List<Key<Song>> keys = ofy().load().type(Song.class).keys().list();
+    Map<Key<Song>, Song> songAnalysisCollection = ofy().load().keys(keys);
+
+    for(Song sd : songAnalysisCollection.values()) {
+      TaskManager.featureQueue().add(TaskOptions.Builder.withPayload(new FeatureExtractionTask(sd.getSpotifyId())));
+    }
+
+    return Response.ok().build();
+  }
+
   @Path("/song/{spotifyId}")
   @GET
   public Response viewStats(@PathParam("spotifyId") String spotifyId) {
@@ -160,7 +173,7 @@ public class FeatureResource {
         "    <th>Kurtosis</th>\n" +
         "    </tr>");
     ArrayList<ArrayList<Double>> timbres = songFeature.getTimbreMoments();
-    for(ArrayList<Double> timbreVector : pitches) {
+    for(ArrayList<Double> timbreVector : timbres) {
       sb.append("<tr>");
       for(Double d : timbreVector) {
         sb.append("<td>" + d + "</td>");

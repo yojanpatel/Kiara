@@ -21,8 +21,8 @@ public class MrTimbre extends HypotheticalUser {
   }
 
   @Override
-  String userId() {
-    return "mister-timbre--hypothetical";
+  public String userId() {
+    return "mister-timbre-hypothetical";
   }
 
   @Override

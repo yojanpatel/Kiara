@@ -82,7 +82,24 @@ public class FeatureExtractionTask implements DeferredTask {
     sf.setFinalLoudness(sectionHelper.finalLoudness());
     sf.setFinalTempo(sectionHelper.finalTempo());
 
-    ofy().delete().entities(songAnalysis, songData);
+    SegmentHelper initialHelper;
+    SegmentHelper finalHelper;
+    if (sections.size() > 1) {
+      initialHelper = new SegmentHelper(getInitial(segments, sections.get(1).getStart()));
+      sf.setInitialTimbreMoments(vectorStatMoments(initialHelper.getTimbres()));
+      finalHelper = new SegmentHelper(getFinal(segments, sections.get(sections.size() - 1).getStart()));
+      sf.setFinalTimbreMoments(vectorStatMoments(finalHelper.getTimbres()));
+    } else {
+      sf.setInitialTimbreMoments(sf.getTimbreMoments());
+    }
+
+    sf.setAcousticness(songAnalysis.getAcousticness());
+    sf.setDanceability(songAnalysis.getDanceability());
+    sf.setLiveness(songAnalysis.getLiveness());
+    sf.setSpeechiness(songAnalysis.getSpeechiness());
+    sf.setInstrumentalness(songAnalysis.getInstrumentalness());
+
+//    ofy().delete().entities(songAnalysis, songData);
     ofy().save().entity(sf);
   }
 
@@ -112,4 +129,25 @@ public class FeatureExtractionTask implements DeferredTask {
   private Double normaliseTempo(Double tempo) {
     return (1 - Math.cos(Math.PI * tempo / 500)) / 2;
   }
+
+  private ArrayList<Segment> getInitial(ArrayList<Segment> segments, double end) {
+    for(int i = 0; i < segments.size(); i++) {
+      Segment segment = segments.get(i);
+      if(segment.getStart() + segment.getDuration() > end) {
+        return new ArrayList<>(segments.subList(0, i));
+      }
+    }
+    return null;
+  }
+
+  private ArrayList<Segment> getFinal(ArrayList<Segment> segments, double start) {
+    for(int i = segments.size() - 1; i >= 0; i--) {
+      Segment segment = segments.get(i);
+      if(segment.getStart() + segment.getDuration() < start) {
+        return new ArrayList<>(segments.subList(i, segments.size()));
+      }
+    }
+    return null;
+  }
+
 }

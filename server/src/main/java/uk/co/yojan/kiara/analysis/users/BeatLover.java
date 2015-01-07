@@ -53,7 +53,7 @@ public class BeatLover extends HypotheticalUser {
   }
 
   @Override
-  String userId() {
+  public String userId() {
     return "beatlover-hypothetical";
   }
 

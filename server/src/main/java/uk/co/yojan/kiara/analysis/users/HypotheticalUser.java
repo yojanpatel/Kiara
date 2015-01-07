@@ -100,7 +100,8 @@ public abstract class HypotheticalUser {
     }
 
     // update the last successful song played in the playlist
-    playlist.justFinished(id).now();
+    playlist.justFinished(id);//.now();
+    ofy().save().entities(playlist).now();
   }
 
   protected void skip(String id, int percent) {

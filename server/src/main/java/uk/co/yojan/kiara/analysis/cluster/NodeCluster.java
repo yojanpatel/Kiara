@@ -152,6 +152,11 @@ public class NodeCluster extends Cluster {
     leaves.add(c.getId());
     children.add(c.getId());
 
+    // Add a 0.0 entry for all other existing children to this new child
+    for(List<Double> stateRow : Q) {
+      stateRow.add(0.0);
+    }
+
     // update Q
     ArrayList<Double> stateRow = new ArrayList<>();
     for(int j = 0; j < children.size(); j++)
@@ -162,6 +167,12 @@ public class NodeCluster extends Cluster {
 
   public void addChild(NodeCluster c ) {
     children.add(c.getId());
+
+    // Add a 0.0 entry for all other existing children to this new child
+    for(List<Double> stateRow : Q) {
+      stateRow.add(0.0);
+    }
+
     // update Q
     ArrayList<Double> stateRow = new ArrayList<>();
     for(int j = 0; j < children.size(); j++)

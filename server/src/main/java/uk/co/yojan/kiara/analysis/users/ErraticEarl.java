@@ -39,7 +39,7 @@ public class ErraticEarl extends HypotheticalUser {
   }
 
   @Override
-  String userId() {
+  public String userId() {
     return "erratic-earl-hypothetical";
   }
 

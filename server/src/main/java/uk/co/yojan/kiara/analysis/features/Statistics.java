@@ -131,7 +131,6 @@ public class Statistics {
 
     double numerator = numeratorSum / (n + 1);
     double denominator = Math.pow(denomSum / n, 1.5);
-    System.out.println(mean + " " + numeratorSum  + " " + denominator);
     return numerator / denominator;
   }
 

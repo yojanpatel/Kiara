@@ -92,7 +92,7 @@ public class FeatureSelection {
     }
 
     ofy().save().entities(songData, songAnalysis).now();
-    TaskManager.getQueue().add(
+    TaskManager.featureQueue().add(
         TaskOptions.Builder
             .withPayload(new FeatureExtractionTask(spotifyId))
             .taskName("FeatureExtraction-" + spotifyId + "-" + System.currentTimeMillis()));

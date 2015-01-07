@@ -53,9 +53,10 @@ public class EventResource {
     long t2 = System.currentTimeMillis();
     playlist.nowPlaying(songId); // async
     long t3 = System.currentTimeMillis();
+    Result save = ofy().save().entity(playlist);
     Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
     long t4 = System.currentTimeMillis();
-
+    save.now();
     Logger.getLogger("").warning((t2 - t1) + " " + (t3 - t2) + " " + (t4 - t3));
 
     return Response.ok(next).build();
@@ -84,11 +85,12 @@ public class EventResource {
     }
 
     // update the last successful song played in the playlist
-    playlist.justFinished(songId).now();
+    playlist.justFinished(songId);
     long t3 = System.currentTimeMillis();
+    Result save = ofy().save().entity(playlist);
     Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
     long t4 = System.currentTimeMillis();
-
+    save.now(); // sync
     Logger.getLogger("").warning((t2 - t1) + " " + (t3 - t2) + " " + (t4 - t3));
     return Response.ok().entity(next).build();
   }
@@ -198,60 +200,62 @@ public class EventResource {
    * @return
    */
   @POST
-  public Response event(@PathParam("userId") String userId,
-                        @PathParam("playlistId") Long playlistId,
-                        ActionEvent event) {
+  public Response transitionEvent(@PathParam("userId") String userId,
+                                  @PathParam("playlistId") Long playlistId,
+                                  ActionEvent event) {
     // essentially does all of skip/finish, fav and start.
     Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-
-    double endReward = 0;
-    double favReward = 0;
-
-
-
-    // see above
-    String previous = playlist.lastFinished();
-    String current = event.getEndedSongId();
-    String next = event.getStartedSongId();
-
-    // current is null, when a new session is started. just update the playing history
-    if(current == null) {
-      playlist.nowPlaying(next).now();
-      Song recommended = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
-      return Response.ok(recommended).build();
-    }
-
-    if(previous != null) {
-      // record event in the events history for playlist
-      if(event.isFavourited()) {
-        favReward = reward.rewardFavourite();
-        EventHistory.addFavourite(playlist.events(), previous, current);
-      }
-
-      if(event.isSkipped()) {
-        endReward = reward.rewardSkip(event.getPercentage());
-        EventHistory.addSkipped(playlist.events(), previous, current, event.getPercentage());
-      } else {
-        endReward = reward.rewardTrackFinished();
-        EventHistory.addEnd(playlist.events(), previous, current);
-      }
-
-      Result<LeafCluster> result = OfyUtils.loadLeafCluster(playlistId, previous);
-      LeafCluster currentLeaf = OfyUtils.loadLeafCluster(playlistId, current).now();
-      LeafCluster previousLeaf = result.now();
-
-      // the total reward is augmented by favouriting.
-      QLearner.update(previousLeaf, currentLeaf, endReward + favReward);
-    }
-
-    // update the last successful song played in the playlist
-    playlist.justFinished(current);
-    // update the listening history sliding window and other session state.
-    playlist.nowPlaying(next).now();
-
+    learnFromEvent(playlist, event).now();
     Song recommended = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
     return Response.ok(recommended).build();
   }
+
+
+  public static Result learnFromEvent(Playlist playlist, ActionEvent event) {
+    long playlistId = playlist.getId();
+
+    // lastFinished ==  null: nothing to learn about song transition preferences, may need to update lastFinished.
+    String lastFinished = playlist.lastFinished();
+    // justFinished == null: similarly, nothing to learn and don't need to update lastFinished.
+    String justFinished = event.getPreviousSongId();
+    // started == null: should not happen.
+    String started = event.getStartedSongId();
+    assert started != null;
+
+    // Learn iff lastFinished --> justFinished transition exists.
+    boolean transitionUpdatePossible = justFinished != null && lastFinished != null;
+    if(transitionUpdatePossible) {
+      double r = 0.0;
+
+      // Boost reward if favourited.
+      if(event.isFavourited()) {
+        r += reward.rewardFavourite();
+        EventHistory.addFavourite(playlist.events(), lastFinished, justFinished);
+      }
+
+      // Determine if skipped or finished naturally.
+      if(event.isSkipped()) {
+        r += reward.rewardSkip(event.getPercentage());
+        EventHistory.addSkipped(playlist.events(), lastFinished, justFinished, event.getPercentage());
+      } else {
+        r+= reward.rewardTrackFinished();
+        EventHistory.addEnd(playlist.events(), lastFinished, justFinished);
+      }
+      Result<LeafCluster> result = OfyUtils.loadLeafCluster(playlistId, lastFinished);
+      LeafCluster currentLeaf = OfyUtils.loadLeafCluster(playlistId, justFinished).now();
+      LeafCluster previousLeaf = result.now();
+
+      // the total reward is augmented by favouriting.
+      QLearner.update(previousLeaf, currentLeaf, r);
+    }
+
+    if(!event.isSkipped() && justFinished != null) {
+      playlist.justFinished(justFinished);
+    }
+    playlist.nowPlaying(started);
+    return ofy().save().entity(playlist);
+  }
+
 
   @GET
   @Produces(MediaType.TEXT_PLAIN)
@@ -265,5 +269,15 @@ public class EventResource {
       sb.append(event).append("\n");
     }
     return Response.ok().entity(sb.toString()).build();
+  }
+
+
+  /** Setter methods to inject different Reward, Recommender Functions for Unit Testing. **/
+  public static void setReward(RewardFunction reward) {
+    EventResource.reward = reward;
+  }
+
+  public static void setRecommender(Recommender recommender) {
+    EventResource.recommender = recommender;
   }
 }

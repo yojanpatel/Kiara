@@ -50,9 +50,10 @@ public class Experiment {
 
   public void runNewExperiment(ArrayList<Double> featureWeights) throws Exception {
     if(resultsMap.containsKey(featureWeights)) {
-      Logger.getLogger("S").info("Already have results for this feature weight comb. skipping");
-      return;
+//      Logger.getLogger("S").info("Already have results for this feature weight comb. skipping");
+//      return;
     }
+
     List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(playlistMap.keySet())).values());
     KMeans kMeans = new KMeans(K, features, featureWeights);
     int[] assignments = kMeans.run();
@@ -65,13 +66,12 @@ public class Experiment {
   }
 
   public void addPlaylist(List<SongFeature> songs) {
+    Logger.getLogger("").warning(songs.size() + " songs added.");
     curr++;
     curr = (curr % K);
     for(SongFeature sf : songs) {
       if(sf != null)
         playlistMap.put(sf.getId(), curr);
-      else
-        Logger.getLogger("s").warning(sf.getId() + " was null!");
     }
   }
 
