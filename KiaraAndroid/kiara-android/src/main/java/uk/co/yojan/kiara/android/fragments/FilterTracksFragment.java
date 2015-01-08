@@ -85,18 +85,6 @@ public class FilterTracksFragment extends KiaraFragment {
     return view;
   }
 
-  @Override
-  public void onResume() {
-    super.onResume();
-    activity.getBus().register(this);
-  }
-
-  @Override
-  public void onPause() {
-    super.onPause();
-    activity.getBus().unregister(this);
-  }
-
   private void initRecyclerView() {
     mLayoutManager = new LinearLayoutManager(activity);
     tracksList.setLayoutManager(mLayoutManager);
@@ -235,6 +223,7 @@ public class FilterTracksFragment extends KiaraFragment {
         i.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
         i.putExtra(Constants.ARG_PLAYLIST_NAME, spotifyPlaylistName);
         getBus().post(new GetSongsForPlaylist(playlistId));
+        i.addFlags(Intent.CLEAR)
         startActivity(i);
       }
     });
