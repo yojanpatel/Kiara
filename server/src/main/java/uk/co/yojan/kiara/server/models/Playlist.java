@@ -45,22 +45,18 @@ public class Playlist {
   // also allows training of Q based on different reward functions/strategies
   private LinkedList<String> events;
 
-  public Result nowPlaying(String songId) {
+  public void nowPlaying(String songId) {
     if(history == null) history = new LinkedList<>();
-    log.info(history.size() + " size");
     int WINDOW_SIZE = 50;
     if(history.size() >= WINDOW_SIZE) {
-      log.info(history.size() + " window full, removing.");
       history.poll();
     }
     history.add(songId);
-    return ofy().save().entity(this);
   }
 
-  public Result justFinished(String songId) {
+  public void justFinished(String songId) {
     lastFinished = songId;
     timestamp = System.currentTimeMillis();
-    return ofy().save().entity(this);
   }
 
   // Should return the id of the last successfully completed song.
@@ -73,6 +69,7 @@ public class Playlist {
   public String lastFinished() {
     // 1 hour threshold, if last song was played over an hour ago
     if(timestamp < System.currentTimeMillis() - (60 * 1000)) {
+      Logger.getLogger("").warning("Previous song was played more than an hour ago, starting fresh. " + timestamp  + " " + (System.currentTimeMillis() - (60 * 1000)));
       return null;
     }
     return lastFinished;
@@ -160,6 +157,20 @@ public class Playlist {
 
   public Result addSong(Song song) {
     return addSong(song.getSpotifyId());
+  }
+
+  public Result addSongs(String... ids) {
+    for(String id : ids) {
+      songIdKeyMap.put(id, Key.create(Song.class, id));
+    }
+    incrementCounter();
+    return ofy().save().entity(this);
+  }
+
+  public Result addSongs(Song... songs) {
+    ArrayList<Song> ss = new ArrayList<Song>();
+    for(Song s : songs) ss.add(s);
+    return addSongs(ss);
   }
 
   public Result addSongs(List<Song> songs) {
