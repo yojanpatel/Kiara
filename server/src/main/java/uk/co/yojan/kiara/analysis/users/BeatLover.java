@@ -24,13 +24,14 @@ public class BeatLover extends HypotheticalUser {
   private static int TEMPO_THRESHOLD = 4;
 
   @Override
-  void behave(SongFeature current, SongFeature previous) {
+  boolean behave(SongFeature current, SongFeature previous) {
     double tempoDiff = Math.abs(current.getTempo() - previous.getTempo());
     if(tempoDiff < TEMPO_THRESHOLD) {
       if(tempoDiff < TEMPO_THRESHOLD / 2) {
         favourite(current.getId());
       }
       finish(current.getId());
+      return false;
     } else {
       int percent;
       if(tempoDiff < 2 * TEMPO_THRESHOLD)
@@ -40,6 +41,7 @@ public class BeatLover extends HypotheticalUser {
       else
         percent = 15;
       skip(current.getId(), percent);
+      return true;
     }
   }
 

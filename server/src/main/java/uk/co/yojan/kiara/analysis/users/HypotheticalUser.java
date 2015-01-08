@@ -22,7 +22,7 @@ public abstract class HypotheticalUser {
 
   Playlist playlist;
 
-  private static int LISTENING_SESSION_SIZE = 200;
+  private static int LISTENING_SESSION_SIZE = 500;
 
   abstract String userId();
   abstract User construct();
@@ -30,7 +30,7 @@ public abstract class HypotheticalUser {
   abstract Recommender recommender();
 
   // The important method that must be implemented based on the hypothetical personality, the user is following.
-  abstract void behave(SongFeature current, SongFeature previous);
+  abstract boolean behave(SongFeature current, SongFeature previous);
 
   public User user() {
     User u = OfyUtils.loadUser(userId()).now();
@@ -42,7 +42,7 @@ public abstract class HypotheticalUser {
   }
 
   // Start playing the playlist using spotifyId as the seed song.
-  public void play(String spotifyId) {
+  public int play(String spotifyId) {
     User u = user();
     List<Playlist> playlists = new ArrayList<>(u.getAllPlaylists());
     playlist = playlists.get(0);
@@ -61,6 +61,8 @@ public abstract class HypotheticalUser {
     start(recommended.getId());
     current = recommended;
 
+    int skip = 0;
+
     // Repeat for LISTENING_SESSION_SIZE episodes
     for(int i = 0; i < LISTENING_SESSION_SIZE; i++) {
 
@@ -71,17 +73,21 @@ public abstract class HypotheticalUser {
       // Behave based on the hypothetical users personality.
       // Must perform either skip() or finish()
       // e.g. BeatLover skips if current and previous' tempo are not similar enough.
-      behave(current, previous);
+      if(behave(current, previous)) {
+        skip++;
+      }
 
       // prepare for next episode
       previous = current;
       start(recommended.getId());
       current = recommended;
     }
+    return skip;
   }
 
   protected void start(String id) {
     playlist.nowPlaying(id); // async
+    ofy().save().entity(playlist);
   }
 
   protected void finish(String id) {

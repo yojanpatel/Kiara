@@ -23,7 +23,7 @@ public class LearnedRecommender implements Recommender {
   private static final double EPSILON = 0.3;
 
   private static double epsilon(int level) {
-    if(level < 2) return 0;
+    if(level < 2) return EPSILON / 2;
     return EPSILON;
   }
 
@@ -57,19 +57,31 @@ public class LearnedRecommender implements Recommender {
       if (epsilonProb < epsilon(current.getLevel())) {
         log.warning("Probabilistic Choice based on Distribution of Q");
         double sum = 0;
-        for (Double qValue : stateRow) sum += qValue;
+        double min = Double.POSITIVE_INFINITY;
+        int num_min = 0;
+        for (Double qValue : stateRow)  {
+          sum += qValue;
+          min = Math.min(min, qValue);
+          if(qValue < 0) num_min++;
+        }
+        if(sum < 0) sum += num_min * (-1 * min);
+
         Double clusterProb = new Random().nextDouble() * sum;
         double cumulative = 0;
         for (int i = 0; i < stateRow.size(); i++) {
-          Double qValue = stateRow.get(i);
+          Double qValue = stateRow.get(i) - min;
           cumulative += qValue;
           if (cumulative > clusterProb) {
             nextClusterIndex = i;
             break;
           }
         }
+        if(nextClusterIndex < 0) {
+          nextClusterIndex = new Random().nextInt(stateRow.size());
+          Logger.getLogger("").warning(clusterProb + " " + Q);
+        }
       } else {
-        log.warning("Using policy recommendation at this level " + stateRow.size());
+//        log.warning("Using policy recommendation at this level " + stateRow.size());
         // choose the maximising Q value
         double maxQ = Double.NEGATIVE_INFINITY;
 
@@ -81,16 +93,16 @@ public class LearnedRecommender implements Recommender {
             maxQ = qValue;
           }
         }
+        if(nextClusterIndex < 0) Logger.getLogger("").warning(maxQ + " " + Q);
       }
-
+      assert nextClusterIndex >= 0;
       String nextClusterId = current.getChildIds().get(nextClusterIndex);
-      log.warning("nextClusterId " + nextClusterId);
       // if the next cluster is a LeafCluster, recommend if not already played
       if (current.containsLeaf(nextClusterId)) {
         LeafCluster nextLeaf = OfyUtils.loadLeafCluster(nextClusterId).now();
         log.warning(nextLeaf.getSongId());
         // String id = nextClusterId.split("-")[1];
-        if (!history.contains(nextLeaf.getSongId())) {
+        if (true) {//!history.contains(nextLeaf.getSongId())) {
           log.warning("A leaf was recommended, was not found in history: " + nextLeaf.getSongId());
           return nextLeaf.getSongId();
         } else {
@@ -119,7 +131,9 @@ public class LearnedRecommender implements Recommender {
     Collection<SongFeature> candidates;
 
     // TODO: base this off distance(end_recent, begin_candidate[i])
-    log.warning("Heuristic choice");
+    if(recent == null) {
+      Logger.getLogger("").warning(recentSongId);
+    }
 
     // for now, closest based on tempo.
     double tempoDifference = Double.MAX_VALUE;
@@ -134,7 +148,6 @@ public class LearnedRecommender implements Recommender {
         if (!history.contains(song.getId())) {
 //          double diff = Math.abs(song.getTempo() - recent.getTempo());
           double diff = distance(recent, song);
-//          if (diff < tempoDifference) {
           if (diff < minDistance) {
             minDistance = diff;
             currentRecommendation = song.getId();
@@ -162,6 +175,13 @@ public class LearnedRecommender implements Recommender {
    */
   private Double distance(SongFeature a, SongFeature b) {
     double d = 0.0;
+    if(a.getFinalTempo() == null) {
+      Logger.getLogger(a.getId()).warning(a.getId());
+    }
+    if(b.getTempo() == null) {
+      Logger.getLogger(b.getId()).warning(b.getId());
+    }
+
     d += Math.pow(a.getFinalTempo() - b.getInitialTempo(), 2);
     d += Math.pow(a.getFinalLoudness() - b.getInitialLoudness(), 2);
 

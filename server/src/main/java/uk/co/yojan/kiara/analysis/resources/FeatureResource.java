@@ -98,11 +98,14 @@ public class FeatureResource {
   public Response gather() {
     List<Key<Song>> keys = ofy().load().type(Song.class).keys().list();
     Map<Key<Song>, Song> songAnalysisCollection = ofy().load().keys(keys);
+    List<Key<SongFeature>> keyssf = ofy().load().type(SongFeature.class).keys().list();
 
     int counter = 0;
     for(Song sd : songAnalysisCollection.values()) {
+      if (!keyssf.contains(Key.create(SongFeature.class, sd.getId()))) {
         TaskManager.featureQueue().add(TaskOptions.Builder.withPayload(new LoadFeatures(sd.getSpotifyId(), sd.getArtist(), sd.getSongName())));
         counter++;
+      }
     }
     return Response.ok().entity(counter).build();
   }
@@ -111,13 +114,16 @@ public class FeatureResource {
   @Path("/convert")
   public Response convert() {
     List<Key<Song>> keys = ofy().load().type(Song.class).keys().list();
-    Map<Key<Song>, Song> songAnalysisCollection = ofy().load().keys(keys);
-
-    for(Song sd : songAnalysisCollection.values()) {
-      TaskManager.featureQueue().add(TaskOptions.Builder.withPayload(new FeatureExtractionTask(sd.getSpotifyId())));
+    List<Key<SongFeature>> keyssf = ofy().load().type(SongFeature.class).keys().list();
+    int c = 0;
+    for(Key<Song> k : keys) {
+      if(!keyssf.contains(Key.create(SongFeature.class, k.getName()))) {
+        TaskManager.featureQueue().add(TaskOptions.Builder.withPayload(new FeatureExtractionTask(k.getName())));
+        c++;
+      }
     }
 
-    return Response.ok().build();
+    return Response.ok().entity(c).build();
   }
 
   @Path("/song/{spotifyId}")

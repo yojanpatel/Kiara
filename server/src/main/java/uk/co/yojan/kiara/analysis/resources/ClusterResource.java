@@ -58,7 +58,6 @@ public class ClusterResource {
       if(hd instanceof NodeCluster) {
         html.append(clusterTitle(hd));
         Collection<Cluster> children = ((NodeCluster) hd).getChildren();
-        log.info(children.size() + " children found for node " + hd.getId());
         for(Cluster c : children) {
           stack.push(c);
         }

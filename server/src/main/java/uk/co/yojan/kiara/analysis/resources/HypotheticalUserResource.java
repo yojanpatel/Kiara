@@ -1,8 +1,10 @@
 package uk.co.yojan.kiara.analysis.resources;
 
 import com.googlecode.objectify.Key;
+import uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer;
 import uk.co.yojan.kiara.analysis.users.BeatLover;
 import uk.co.yojan.kiara.analysis.users.ErraticEarl;
+import uk.co.yojan.kiara.analysis.users.HypotheticalUser;
 import uk.co.yojan.kiara.analysis.users.MrTimbre;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
@@ -46,15 +48,32 @@ public class HypotheticalUserResource {
   public Response addSongs(String[] spotifyIds, @PathParam("userId") String userId) {
     User u = loadHypotheticalUser(userId);
     if(u == null) return Response.noContent().entity("userId must be t, e or b").build();
-//    String[] spotifyIds = ids.split(",");
     List<Key<Song>> keys = new ArrayList<>();
     for(String s : spotifyIds) {
       keys.add(Key.create(Song.class, s.replace("\"","")));
     }
     List<Song> songs = new ArrayList<>(ofy().load().keys(keys).values());
-//    Logger.getLogger("").warning(songs.size()+" " + spotifyIds[0]);
     loadPlaylist(u).addSongs(songs).now();
     return Response.ok().build();
+  }
+
+  @GET
+  @Path("/cluster")
+  public Response cluster(@DefaultValue("3") @QueryParam("k") int k) {
+    Playlist t = loadPlaylist(loadHypotheticalUser("t"));
+    Playlist e = loadPlaylist(loadHypotheticalUser("e"));
+    Playlist b = loadPlaylist(loadHypotheticalUser("b"));
+
+    if(t != null)
+      PlaylistClusterer.cluster(t.getId(), k);
+
+    if(e != null)
+      PlaylistClusterer.cluster(e.getId(), k);
+
+    if(b != null)
+      PlaylistClusterer.cluster(b.getId(), k);
+
+    return Response.ok().entity("Clustering all hypothetical users...").build();
   }
 
   @GET
@@ -70,6 +89,30 @@ public class HypotheticalUserResource {
 
     User[] us = {t, e, b};
     return Response.ok().entity(us).build();
+  }
+
+  @GET
+  @Path("/{userId}/{songId}")
+  public Response startEpisode(@PathParam("userId") String userId,
+                               @PathParam("songId") String seedSongId) {
+    int skips;
+    HypotheticalUser u;
+    if(userId.toLowerCase().equals("t")) {
+      u = new MrTimbre();
+    } else if(userId.toLowerCase().equals("e")) {
+      u = new ErraticEarl();
+    } else if(userId.toLowerCase().equals("b")) {
+      u = new BeatLover();
+    } else {
+      return null;
+    }
+
+    if(u != null) {
+      skips = u.play(seedSongId);
+      return Response.ok().entity(skips).build();
+    } else {
+      return Response.noContent().entity("Must be t, e or b").build();
+    }
   }
 
   private User loadHypotheticalUser(String userId) {
@@ -91,6 +134,7 @@ public class HypotheticalUserResource {
       Playlist p = new Playlist();
       p.setName(u.getFirstName() + " " + u.getLastName() + " Playlist");
       ofy().save().entity(p).now();
+      u.addPlaylist(p);
       return p;
     } else {
       return (Playlist) playlists.toArray()[0];

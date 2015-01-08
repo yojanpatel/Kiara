@@ -16,8 +16,8 @@ public class MrTimbre extends HypotheticalUser {
   private static Recommender recommender = new LearnedRecommender();
 
   @Override
-  void behave(SongFeature current, SongFeature previous) {
-
+  boolean behave(SongFeature current, SongFeature previous) {
+    return false;
   }
 
   @Override

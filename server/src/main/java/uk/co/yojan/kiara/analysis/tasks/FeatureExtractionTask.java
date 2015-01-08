@@ -36,7 +36,15 @@ public class FeatureExtractionTask implements DeferredTask {
 
     SongFeature sf = new SongFeature();
     sf.setId(spotifyId);
-
+    if(songData == null) {
+      Logger.getLogger("").warning(spotifyId + " - associated songdata not found.");
+      return;
+    } else {
+      if(songData.getSegments() == null) {
+        Logger.getLogger("").warning(spotifyId + " - associated segments not found.");
+        return;
+      }
+    }
     ArrayList<Segment> segments = new ArrayList<>(songData.getSegments());
 
     SegmentHelper helper = new SegmentHelper(segments);

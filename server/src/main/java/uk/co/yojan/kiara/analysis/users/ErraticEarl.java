@@ -20,7 +20,7 @@ public class ErraticEarl extends HypotheticalUser {
   private static Recommender recommender = new LearnedRecommender();
 
   @Override
-  void behave(SongFeature current, SongFeature previous) {
+  boolean behave(SongFeature current, SongFeature previous) {
     double p = new Random().nextDouble();
 
     // P(favourite) = 0.5
@@ -33,8 +33,10 @@ public class ErraticEarl extends HypotheticalUser {
     p = new Random().nextDouble();
     if(p < 0.5) {
       skip(current.getId(), new Random().nextInt(100));
+      return true;
     } else {
       finish(current.getId());
+      return false;
     }
   }
 
