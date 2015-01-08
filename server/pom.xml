@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <packaging>war</packaging>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <groupId>uk.co.yojan.kiara</groupId>
     <artifactId>kiara-server</artifactId>
 
@@ -61,7 +61,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>2.4.0</version>
+        <version>2.5.0</version>
       </dependency>
 
         <!-- Jetty -->
@@ -78,13 +78,6 @@
           <scope>provided</scope>
         </dependency>
 
-        <!-- MapReduce -->
-        <dependency>
-          <groupId>com.google.appengine.tools</groupId>
-          <artifactId>appengine-mapreduce</artifactId>
-          <version>0.8.1</version>
-        </dependency>
-
       <!-- Weka Machine Learning Workbench -->
       <dependency>
         <groupId>nz.ac.waikato.cms.weka</groupId>
@@ -92,13 +85,13 @@
         <version>3.6.6</version>
       </dependency>
 
-
       <!-- Spotify Web API Wrapper -->
         <dependency>
-          <groupId>spotify-web-api-java</groupId>
+          <groupId>se.michaelthelin.spotify</groupId>
           <artifactId>spotify-web-api-java</artifactId>
-          <version>1.4.2-SNAPSHOT</version>
-          <scope>compile</scope>
+          <!--<version>1.4.2-SNAPSHOT</version>-->
+          <version>1.4.5</version>
+          <!--<scope>compile</scope>-->
         </dependency>
 
         <dependency>
