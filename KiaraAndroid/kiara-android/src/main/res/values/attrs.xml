@@ -38,6 +38,18 @@
     </attr>
   </declare-styleable>
 
+  <declare-styleable name="CircleButton">
+    <attr name="cb_color" format="color" />
+    <attr name="cb_pressedRingWidth" format="dimension" />
+    <attr name="cb_startRingWidth" format="dimension" />
+  </declare-styleable>
+
+  <declare-styleable name="IconButton">
+    <attr name="ib_color" format="color" />
+    <attr name="ib_pressedRingWidth" format="dimension" />
+    <attr name="ib_startRingWidth" format="dimension" />
+  </declare-styleable>
+
   <declare-styleable name="RippleView">
     <attr name="rippleColor" format="color" localization="suggested" />
     <attr name="rippleDimension" format="dimension" localization="suggested" />
