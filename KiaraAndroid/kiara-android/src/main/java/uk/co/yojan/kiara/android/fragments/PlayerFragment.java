@@ -33,6 +33,8 @@ import uk.co.yojan.kiara.android.events.Favourite;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
+import uk.co.yojan.kiara.android.views.CircleButton;
+import uk.co.yojan.kiara.android.views.IconButton;
 import uk.co.yojan.kiara.client.data.Song;
 
 /**
@@ -53,11 +55,12 @@ public class PlayerFragment extends KiaraFragment {
   @InjectView(R.id.album_name) TextView albumName;
   @InjectView(R.id.seekBar) SeekBar seekBar;
 
-  @InjectView(R.id.playpause) ImageButton playpause;
+  @InjectView(R.id.playpause) CircleButton playpause;
   @InjectView(R.id.favouritefab) FloatingActionButton favouriteFab;
   @InjectView(R.id.elapsed) TextView elapsed;
   @InjectView(R.id.prev_track) ImageButton previousTrackButton;
-  @InjectView(R.id.next_track) ImageButton nextTrackButton;
+  @InjectView(R.id.next_track)
+  IconButton nextTrackButton;
   @InjectView(R.id.replay_track) ImageButton repeatButton;
 
   private long playlistId;
@@ -108,8 +111,8 @@ public class PlayerFragment extends KiaraFragment {
     this.mContext = rootView.getContext();
 
     Resources res = getResources();
-    pause = res.getDrawable(R.drawable.ic_pause_circle_fill_white_48dp);
-    play = res.getDrawable(R.drawable.ic_play_circle_fill_white_48dp);
+    pause = res.getDrawable(R.drawable.ic_pause_white_36dp);
+    play = res.getDrawable(R.drawable.ic_play_arrow_white_36dp);
     favOutline = res.getDrawable(R.drawable.ic_favorite_outline_white_24dp);
     favFilled = res.getDrawable(R.drawable.ic_favorite_white_24dp);
 
