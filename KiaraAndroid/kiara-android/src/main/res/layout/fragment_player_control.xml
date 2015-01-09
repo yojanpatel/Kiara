@@ -19,6 +19,16 @@
       android:layout_margin="8dp"
       android:src="@drawable/ic_placeholder_150"/>
 
+  <ImageButton
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:background="@color/transparent"
+      android:id="@+id/playpause"
+      android:layout_alignParentRight="true"
+      android:layout_centerVertical="true"
+      android:padding="8dp"
+      android:src="@drawable/ic_play_circle_outline_white_36dp"/>
+
   <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
@@ -46,13 +56,5 @@
       android:text="The Weeknd - Trilogy"
       />
 
-  <ImageButton
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:background="@color/transparent"
-      android:id="@+id/playpause"
-      android:layout_alignParentRight="true"
-      android:layout_centerVertical="true"
-      android:padding="8dp"
-      android:src="@drawable/ic_play_circle_outline_white_36dp"/>
+
 </RelativeLayout>

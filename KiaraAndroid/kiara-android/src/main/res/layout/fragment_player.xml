@@ -92,24 +92,39 @@
     <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/playpause"
         android:src="@drawable/ic_play_circle_fill_white_48dp"
         android:padding="8dp"
         android:background="@color/transparent"
+        android:visibility="gone"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="16dp"
         android:layout_centerHorizontal="true"/>
 
-    <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <uk.co.yojan.kiara.android.views.CircleButton
+        android:id="@+id/playpause"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@drawable/ic_play_arrow_white_36dp"
+        fab:cb_color="@color/pinkA200"
+        fab:cb_pressedRingWidth="8dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+        android:layout_centerHorizontal="true"
+        />
+
+    <uk.co.yojan.kiara.android.views.IconButton
         android:id="@+id/next_track"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:src="@drawable/ic_skip_next_white_36dp"
-        android:background="@color/transparent"
+        fab:ib_color="@color/white"
+        fab:ib_pressedRingWidth="16dp"
+        fab:ib_startRingWidth="8dp"
         android:padding="8dp"
         android:layout_toRightOf="@id/playpause"
         android:layout_alignTop="@id/playpause"
-        android:layout_marginTop="6dp"/>
+        android:layout_marginTop="6dp"
+        />
 
     <ImageButton
      android:layout_width="wrap_content"
