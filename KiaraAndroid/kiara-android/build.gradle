@@ -72,6 +72,9 @@ repositories {
     flatDir {
         dirs 'libs'
     }
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
 }
 
 dependencies {
@@ -80,6 +83,9 @@ dependencies {
     // Support library for API 13 and above.
     compile 'com.android.support:support-v4:21.0.3'
     compile 'com.android.support:appcompat-v7:21.0.3'
+    compile 'com.android.support:palette-v7:21.0.+'
+
+    compile 'com.balysv:material-ripple:0.9.5-SNAPSHOT@aar'
 
     // Spotify Android SDK
     compile 'com.spotify.sdk:spotifysdk:1.0.0-beta6@aar'
@@ -117,5 +123,6 @@ dependencies {
 //    testCompile 'junit:junit:4.10'
 
     compile 'com.faradaj:blur-behind:1.0.3'
+    compile 'com.github.markushi:circlebutton:1.1'
 
 }

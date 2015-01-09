@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:id="@+id/ll">
+    <com.balysv.materialripple.MaterialRippleLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:rippleOverlay="true"
+        app:rippleColor="@color/white"
+        app:rippleAlpha="0.2"
+        app:rippleHover="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/rl">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/playlist_row_img"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/ic_placeholder_150"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/playlist_row_name"
+                android:textSize="24sp"
+                android:layout_toRightOf="@id/playlist_row_img"
+                android:layout_alignParentTop="true"
+                android:text="NorCal"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="16dp"
+                />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Details"
+                android:textColor="@color/grey50"
+                android:textSize="16sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:layout_alignLeft="@+id/playlist_row_name"
+                android:layout_alignStart="@+id/playlist_row_name"
+                android:layout_below="@+id/playlist_row_name"
+                android:id="@+id/playlist_row_details"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="X songs."
+                android:textColor="@color/grey100"
+                android:textSize="12sp"
+                android:layout_alignLeft="@+id/playlist_row_name"
+                android:layout_alignStart="@+id/playlist_row_name"
+                android:layout_below="@+id/playlist_row_details"
+                android:id="@+id/playlist_row_size"/>
+        </RelativeLayout>
+    </com.balysv.materialripple.MaterialRippleLayout>
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="8dp"
+        android:id="@+id/shadow"
+        android:background="@drawable/opacity_gradient_half_empty"/>
+    </LinearLayout>
