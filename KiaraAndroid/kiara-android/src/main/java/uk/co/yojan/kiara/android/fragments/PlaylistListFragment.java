@@ -4,13 +4,12 @@ package uk.co.yojan.kiara.android.fragments;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.ProgressBar;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -69,6 +68,9 @@ public class PlaylistListFragment extends KiaraFragment {
   private String albumId;
   private String songId;
 
+  private int width;
+  private int height;
+
   /*
    * Construct a PlaylistListFragment to allow user to choose which playlist
    * to add the media to. A dialog is then brought up for playlists/albums so
@@ -83,6 +85,14 @@ public class PlaylistListFragment extends KiaraFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    // Get screen size for resizing
+    WindowManager wm = (WindowManager) getKiaraActivity().getSystemService(Context.WINDOW_SERVICE);
+    Display display = wm.getDefaultDisplay();
+    Point size = new Point();
+    display.getSize(size);
+    width = size.x;
+    height = size.y;
 
     Log.d("PVA", "onCreate");
     Bundle args = getArguments();
@@ -107,6 +117,7 @@ public class PlaylistListFragment extends KiaraFragment {
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
     View rootView = inflater.inflate(R.layout.fragment_playlist_view, container, false);
+
     ButterKnife.inject(this, rootView);
     this.mContext = rootView.getContext();
     if(getArguments() != null)
@@ -116,7 +127,7 @@ public class PlaylistListFragment extends KiaraFragment {
     mLayoutManager = new LinearLayoutManager(getActivity());
     mRecyclerView.setLayoutManager(mLayoutManager);
 
-    mAdapter = new PlaylistListViewAdapter(mContext);
+    mAdapter = new PlaylistListViewAdapter(mContext, width, height);
     mRecyclerView.setAdapter(mAdapter);
     Log.d("PVA", "onCreateView " + c);
     mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {

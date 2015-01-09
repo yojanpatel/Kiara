@@ -223,7 +223,6 @@ public class FilterTracksFragment extends KiaraFragment {
         i.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
         i.putExtra(Constants.ARG_PLAYLIST_NAME, spotifyPlaylistName);
         getBus().post(new GetSongsForPlaylist(playlistId));
-        i.addFlags(Intent.CLEAR)
         startActivity(i);
       }
     });

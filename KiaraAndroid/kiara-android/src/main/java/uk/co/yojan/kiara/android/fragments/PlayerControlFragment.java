@@ -13,7 +13,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import butterknife.ButterKnife;
@@ -27,6 +26,7 @@ import uk.co.yojan.kiara.android.activities.PlayerActivity;
 import uk.co.yojan.kiara.android.background.MusicService;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
+import uk.co.yojan.kiara.android.views.IconButton;
 import uk.co.yojan.kiara.client.data.Song;
 
 
@@ -47,7 +47,7 @@ public class PlayerControlFragment extends KiaraFragment {
   @InjectView(R.id.album_image) ImageView albumImage;
   @InjectView(R.id.song_name) TextView songName;
   @InjectView(R.id.detail) TextView detail;
-  @InjectView(R.id.playpause)ImageButton playpause;
+  @InjectView(R.id.playpause) IconButton playpause;
 
   /**
    * Use this factory method to create a new instance of

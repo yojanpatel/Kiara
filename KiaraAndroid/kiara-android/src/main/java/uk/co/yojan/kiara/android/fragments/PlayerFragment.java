@@ -14,7 +14,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -58,10 +57,9 @@ public class PlayerFragment extends KiaraFragment {
   @InjectView(R.id.playpause) CircleButton playpause;
   @InjectView(R.id.favouritefab) FloatingActionButton favouriteFab;
   @InjectView(R.id.elapsed) TextView elapsed;
-  @InjectView(R.id.prev_track) ImageButton previousTrackButton;
-  @InjectView(R.id.next_track)
-  IconButton nextTrackButton;
-  @InjectView(R.id.replay_track) ImageButton repeatButton;
+  @InjectView(R.id.prev_track) IconButton previousTrackButton;
+  @InjectView(R.id.next_track) IconButton nextTrackButton;
+  @InjectView(R.id.replay_track) IconButton repeatButton;
 
   private long playlistId;
   private Song currentSong;
@@ -88,8 +86,7 @@ public class PlayerFragment extends KiaraFragment {
   }
 
 
-  public PlayerFragment() {
-  }
+  public PlayerFragment() {}
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
