@@ -158,17 +158,18 @@
         android:padding="8dp"
         fab:ib_color="@color/white"
         fab:ib_pressedRingWidth="8dp"
-        fab:ib_startRingWidth="16dp"
+        fab:ib_startRingWidth="8dp"
         android:src="@drawable/ic_repeat_white_24dp"
         android:layout_marginTop="6dp"
         android:background="@color/transparent"
         android:layout_toLeftOf="@id/prev_track"
         android:layout_alignTop="@id/prev_track"/>
 
-    <ImageButton android:layout_width="wrap_content"
-                 android:layout_height="wrap_content"
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:padding="8dp"
-                 android:visibility="gone"
+        android:visibility="gone"
         android:src="@drawable/ic_repeat_white_24dp"
         android:layout_marginTop="6dp"
         android:background="@color/transparent"
