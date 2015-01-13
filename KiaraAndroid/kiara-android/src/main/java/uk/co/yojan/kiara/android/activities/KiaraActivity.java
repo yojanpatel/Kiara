@@ -1,8 +1,11 @@
 package uk.co.yojan.kiara.android.activities;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
@@ -25,6 +28,7 @@ import uk.co.yojan.kiara.android.KiaraApplication;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.background.MusicService;
 import uk.co.yojan.kiara.android.events.*;
+import uk.co.yojan.kiara.android.utils.ConnectionDetector;
 import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
 import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
@@ -35,6 +39,8 @@ import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
  */
 public class KiaraActivity extends ActionBarActivity {
   private static final String LOG = KiaraActivity.class.getName();
+
+  private ConnectionDetector detector;
 
   private boolean bound;
   private MusicService musicService;
@@ -57,6 +63,12 @@ public class KiaraActivity extends ActionBarActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    detector = new ConnectionDetector(getApplicationContext());
+    if(!detector.isConnectingToInternet()) {
+      showAlertDialog();
+    }
+
     if (loggedIn()) {
       if (accessExpired()) {
         // If refreshToken exists, we can use that to get another access token.
@@ -288,4 +300,23 @@ public class KiaraActivity extends ActionBarActivity {
     Log.d(LOG, "init callbacks " + (authCallback == null));
     this.authCallback = authCallback;
   }
+
+  private void showAlertDialog() {
+    AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+    alertDialog.setTitle("No Internet Connection");
+    alertDialog.setMessage("Please connect to the internet to use Kiara");
+    alertDialog.setIcon(android.R.drawable.stat_sys_warning);
+
+    // Setting OK Button
+    alertDialog.setButton("Connect", new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        startActivity(new Intent(WifiManager.ACTION_PICK_WIFI_NETWORK));
+      }
+    });
+
+    // Showing Alert Message
+    alertDialog.show();
+  }
+
+  
 }
