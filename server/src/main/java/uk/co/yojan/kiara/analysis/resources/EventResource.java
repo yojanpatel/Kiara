@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
 
+
 /**
  * IMPORTANT TODO:
  *   ordering of event requests to server
@@ -35,6 +36,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 @Produces(MediaType.APPLICATION_JSON)
 public class EventResource {
   private static final Logger log = Logger.getLogger(EventResource.class.getName());
+  private static QLearner QLearner = new QLearner();
 
   // TODO dynamically change based on some setting parameter
   // Change the object to choose the reward function.
@@ -249,7 +251,7 @@ public class EventResource {
       QLearner.update(previousLeaf, currentLeaf, r);
     }
 
-    if(!event.isSkipped() && justFinished != null) {
+    if((!event.isSkipped() || event.getPercentage() > 80) && justFinished != null) {
       playlist.justFinished(justFinished);
     }
     playlist.nowPlaying(started);

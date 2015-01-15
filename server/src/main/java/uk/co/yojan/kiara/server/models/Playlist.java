@@ -205,4 +205,8 @@ public class Playlist {
   public void setEvents(LinkedList<String> events) {
     this.events = events;
   }
+
+  public void clearHistory() {
+    history = new LinkedList<>();
+  }
 }
