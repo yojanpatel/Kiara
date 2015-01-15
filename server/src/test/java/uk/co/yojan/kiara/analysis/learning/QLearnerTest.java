@@ -20,6 +20,7 @@ public class QLearnerTest extends TestCase {
   private final LocalServiceTestHelper helper =
       new LocalServiceTestHelper(new LocalDatastoreServiceTestConfig());
 
+  QLearner QLearner;
   LeafCluster l1, l2, l3, l4;
   NodeCluster A, B, C;
 
@@ -47,6 +48,17 @@ public class QLearnerTest extends TestCase {
   @Before
   public void setUp() {
     helper.setUp();
+    QLearner = new QLearner() {
+      @Override
+      public double alpha(int from, int to, int node) {
+        return super.alpha(from, to, node);
+      }
+
+      @Override
+      public double gamma() {
+        return super.gamma();
+      }
+    };
 
     A = createTestHierarchy();
     B = OfyUtils.loadNodeCluster("B").now();
