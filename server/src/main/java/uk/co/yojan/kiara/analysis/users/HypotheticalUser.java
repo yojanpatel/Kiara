@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.analysis.users;
 
+import com.google.appengine.repackaged.com.google.common.base.Pair;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.learning.EventHistory;
@@ -15,9 +16,6 @@ import java.util.List;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
-/**
- * Created by yojan on 1/4/15.
- */
 public abstract class HypotheticalUser {
 
   Playlist playlist;
@@ -29,8 +27,13 @@ public abstract class HypotheticalUser {
   abstract RewardFunction rewardFunction();
   abstract Recommender recommender();
 
+  public abstract void setRewardFunction(RewardFunction f);
+  public abstract void setRecommender(Recommender r);
+
   // The important method that must be implemented based on the hypothetical personality, the user is following.
-  abstract boolean behave(SongFeature current, SongFeature previous);
+  abstract double behave(SongFeature current, SongFeature previous);
+
+  private QLearner QLearner = new QLearner();
 
   public User user() {
     User u = OfyUtils.loadUser(userId()).now();
@@ -42,11 +45,17 @@ public abstract class HypotheticalUser {
   }
 
   // Start playing the playlist using spotifyId as the seed song.
-  public int play(String spotifyId) {
+  public Pair<Double, ArrayList<Integer>> play(String spotifyId) {
     User u = user();
     List<Playlist> playlists = new ArrayList<>(u.getAllPlaylists());
     playlist = playlists.get(0);
+    return play(playlist, spotifyId);
+  }
 
+  // Start playing the playlist using spotifyId as the seed song with playlist given.
+  public Pair<Double, ArrayList<Integer>> play(Playlist playlist, String spotifyId) {
+    assert playlist.getAllSongIds().contains(spotifyId);
+    this.playlist = playlist;
     SongFeature previous;
 
     start(spotifyId);
@@ -61,7 +70,8 @@ public abstract class HypotheticalUser {
     start(recommended.getId());
     current = recommended;
 
-    int skip = 0;
+    ArrayList<Integer> skips = new ArrayList<>();
+    double reward = 0.0;
 
     // Repeat for LISTENING_SESSION_SIZE episodes
     for(int i = 0; i < LISTENING_SESSION_SIZE; i++) {
@@ -73,17 +83,24 @@ public abstract class HypotheticalUser {
       // Behave based on the hypothetical users personality.
       // Must perform either skip() or finish()
       // e.g. BeatLover skips if current and previous' tempo are not similar enough.
-      if(behave(current, previous)) {
-        skip++;
+
+      double r = behave(current, previous);
+      if(r < 0) {
+        skips.add(i);
       }
 
-      // prepare for next episode
+      reward += r;
+
+      // prepare for next iter
       previous = current;
       start(recommended.getId());
       current = recommended;
     }
-    return skip;
+    reward /= LISTENING_SESSION_SIZE;
+    return new Pair<>(reward, skips);
   }
+
+
 
   protected void start(String id) {
     playlist.nowPlaying(id); // async
@@ -120,6 +137,9 @@ public abstract class HypotheticalUser {
       LeafCluster current = OfyUtils.loadLeafCluster(playlist.getId(), id).now();
       QLearner.update(previous, current, r);
     }
+
+    if(percent > 80) playlist.justFinished(id);
+    ofy().save().entities(playlist).now();
   }
 
 
@@ -136,5 +156,9 @@ public abstract class HypotheticalUser {
 
       QLearner.update(previous, current, r);
     }
+  }
+
+  public void setQLearner(QLearner QLearner) {
+    this.QLearner = QLearner;
   }
 }

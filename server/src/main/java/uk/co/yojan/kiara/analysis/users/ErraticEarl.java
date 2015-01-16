@@ -20,24 +20,27 @@ public class ErraticEarl extends HypotheticalUser {
   private static Recommender recommender = new LearnedRecommender();
 
   @Override
-  boolean behave(SongFeature current, SongFeature previous) {
+  double behave(SongFeature current, SongFeature previous) {
     double p = new Random().nextDouble();
-
+    double reward = 0.0;
     // P(favourite) = 0.5
     if(p < 0.5) {
       favourite(current.getId());
+      reward += rewardFunction.rewardFavourite();
     }
 
     // P(skip) = 0.5 and P(finish) = 0.5
     // skip percents uniformly distributed
     p = new Random().nextDouble();
     if(p < 0.5) {
-      skip(current.getId(), new Random().nextInt(100));
-      return true;
+      int percent = new Random().nextInt(100);
+      skip(current.getId(), percent);
+      reward += rewardFunction.rewardSkip(percent);
     } else {
       finish(current.getId());
-      return false;
+      reward += rewardFunction.rewardTrackFinished();
     }
+    return reward;
   }
 
   @Override
@@ -62,5 +65,15 @@ public class ErraticEarl extends HypotheticalUser {
   @Override
   Recommender recommender() {
     return recommender;
+  }
+
+  @Override
+  public void setRewardFunction(RewardFunction f) {
+    rewardFunction = f;
+  }
+
+  @Override
+  public void setRecommender(Recommender r) {
+    recommender = r;
   }
 }

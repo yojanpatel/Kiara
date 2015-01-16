@@ -5,6 +5,7 @@ import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
@@ -15,7 +16,7 @@ public class QLearner {
 
   // Learning rate, decreases with leaf distance with the node
   // alpha = BASE_ALPHA ^ (node distance)
-  private static double alpha(int from, int to, int node) {
+  public double alpha(int from, int to, int node) {
     int closestLevel = Math.min(from, to);
     double a =  Math.pow(BASE_ALPHA, closestLevel - node);
 
@@ -28,7 +29,7 @@ public class QLearner {
   // Discount factor [0,1]
   // 0 - myopic, short-sighted
   // 1 - long-term high reward
-  private static double gamma() {
+  public double gamma() {
     return 0.5;
   }
 
@@ -44,7 +45,7 @@ public class QLearner {
    * @param toLevel the level at which the 'to' LeafCluster is located for alpha calculations.
    * @return  the updated Q(s, a) value
    */
-  public static Result learn(NodeCluster cluster, int stateIndex, int actionIndex, double reward, int fromLevel, int toLevel) {
+  public Result learn(NodeCluster cluster, int stateIndex, int actionIndex, double reward, int fromLevel, int toLevel) {
 
     double clusterAlpha = alpha(fromLevel, toLevel, cluster.getLevel());
 
@@ -84,7 +85,7 @@ public class QLearner {
    * @param currentSong the song on what the action was carried out
    * @param reward  the reward emitted from the reward function
    */
-  public static void update(LeafCluster previousSong, LeafCluster currentSong, double reward) {
+  public void update(LeafCluster previousSong, LeafCluster currentSong, double reward) {
 
     // LCA is the first NodeCluster going towards the root (i.e. following parent links)
     // such that the shadow contains both the previous song id, and the current song id.
@@ -94,6 +95,8 @@ public class QLearner {
     }
 
     // assert: ancestor is the lowest common ancestor of cluster nodes previousSong and currentSong
+    if(ancestor.clusterIndex(previousSong.getSongId()) == -1)
+      Logger.getLogger("").warning("LOOK: " + previousSong.getSongId());
 
     learn(
         ancestor,
@@ -110,6 +113,8 @@ public class QLearner {
       ancestor = ofy().load().key(ancestor.getParent()).now();
 
       // assert: clusterIndex(previousSong) == clusterIndex(currentSong)
+      if(ancestor.clusterIndex(previousSong.getSongId()) == -1)
+        Logger.getLogger("").warning("LOOK: " + previousSong.getSongId());
 
       learn(
           ancestor,

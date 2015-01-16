@@ -16,8 +16,8 @@ public class MrTimbre extends HypotheticalUser {
   private static Recommender recommender = new LearnedRecommender();
 
   @Override
-  boolean behave(SongFeature current, SongFeature previous) {
-    return false;
+  double behave(SongFeature current, SongFeature previous) {
+    return 1.0;
   }
 
   @Override
@@ -42,5 +42,15 @@ public class MrTimbre extends HypotheticalUser {
   @Override
   Recommender recommender() {
     return recommender;
+  }
+
+  @Override
+  public void setRewardFunction(RewardFunction f) {
+    rewardFunction = f;
+  }
+
+  @Override
+  public void setRecommender(Recommender r) {
+    recommender = r;
   }
 }

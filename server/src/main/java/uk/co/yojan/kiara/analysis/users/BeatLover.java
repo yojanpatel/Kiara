@@ -7,6 +7,8 @@ import uk.co.yojan.kiara.analysis.learning.VariedSkipReward;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import uk.co.yojan.kiara.server.models.User;
 
+import java.util.logging.Logger;
+
 /**
  * Hypothetical User for evaluation.
  *
@@ -21,18 +23,22 @@ public class BeatLover extends HypotheticalUser {
   private static RewardFunction rewardFunction = new VariedSkipReward();
   private static Recommender recommender = new LearnedRecommender();
 
-  private static int TEMPO_THRESHOLD = 4;
+  private static int TEMPO_THRESHOLD = 8;
 
   @Override
-  boolean behave(SongFeature current, SongFeature previous) {
+  double behave(SongFeature current, SongFeature previous) {
+    double reward = 0.0;
+
     double tempoDiff = Math.abs(current.getTempo() - previous.getTempo());
     if(tempoDiff < TEMPO_THRESHOLD) {
       if(tempoDiff < TEMPO_THRESHOLD / 2) {
         favourite(current.getId());
+        reward += rewardFunction.rewardFavourite();
       }
       finish(current.getId());
-      return false;
+      reward += rewardFunction.rewardTrackFinished();
     } else {
+      Logger.getLogger("").info("Skipping track as BeatLover (" + current.getTempo() + " - " + previous.getTempo() + ")");
       int percent;
       if(tempoDiff < 2 * TEMPO_THRESHOLD)
         percent = 60;
@@ -41,8 +47,10 @@ public class BeatLover extends HypotheticalUser {
       else
         percent = 15;
       skip(current.getId(), percent);
-      return true;
+      reward += rewardFunction.rewardSkip(percent);
     }
+
+    return reward;
   }
 
   @Override
@@ -67,5 +75,15 @@ public class BeatLover extends HypotheticalUser {
   @Override
   Recommender recommender() {
     return recommender;
+  }
+
+  @Override
+  public void setRewardFunction(RewardFunction f) {
+    rewardFunction = f;
+  }
+
+  @Override
+  public void setRecommender(Recommender r) {
+    recommender = r;
   }
 }
