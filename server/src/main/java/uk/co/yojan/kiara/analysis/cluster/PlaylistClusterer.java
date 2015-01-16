@@ -53,6 +53,24 @@ public class PlaylistClusterer {
   public static void cluster(NodeCluster cluster, int k) throws Exception {
     log.warning("Clustering " + cluster.getId() + " with  " + k + " clusters.");
 
+    Key<NodeCluster> clusterKey = Key.create(NodeCluster.class, cluster.getId());
+    String[] s = cluster.getId().split("-");
+    if(cluster.getSongIds().size() <= k) {
+      // Base case, construct the appropriate LeafClusters and assign as children
+      ArrayList<LeafCluster> leafChildren = new ArrayList<>();
+      for(String songId : cluster.getSongIds()) {
+        LeafCluster child = new LeafCluster(songId);
+        child.setParent(clusterKey);
+        child.setId(s[0] + "-" + child.getSongId());
+        child.setLevel(cluster.getLevel() + 1);
+        leafChildren.add(child);
+        cluster.addChild(child);
+      }
+      ofy().save().entities(cluster).now();
+      ofy().save().entities(leafChildren).now();
+      return;
+    }
+
     // Fetch the relevant SongFeature entities
     List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(cluster.getSongIds())).values());
 
