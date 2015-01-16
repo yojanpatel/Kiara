@@ -5,7 +5,7 @@ package uk.co.yojan.kiara.server;
  *
  * Not to be shared.
  */
-public class ApiConstants {
+public class Constants {
 
   /* Spotify Api Constants. */
   public static final String CLIENT_ID = "efcce40f24e849c0897fd8534515e04d";

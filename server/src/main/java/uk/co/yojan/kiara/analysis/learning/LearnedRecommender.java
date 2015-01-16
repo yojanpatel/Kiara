@@ -4,6 +4,7 @@ import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
+import uk.co.yojan.kiara.server.Constants;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.SongFeature;
 
@@ -22,7 +23,7 @@ public class LearnedRecommender implements Recommender {
 
   private static final double EPSILON = 0.3;
 
-  private static double epsilon(int level) {
+  public double epsilon(int level, int t) {
     if(level < 2) return EPSILON / 2;
     return EPSILON;
   }
@@ -34,10 +35,16 @@ public class LearnedRecommender implements Recommender {
    */
   @Override
   public String recommend(String userId, Long playlistId) {
-    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
-
+    // TODO: uncomment when done with experimenting
+//    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
+    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
     LinkedList<String> history = p.history();
-    String recentSongId = p.previousSong();
+    int t = p.events().size();
+
+    String recentSongId = p.lastFinished();
+    if(recentSongId == null) {
+      recentSongId = p.previousSong();
+    }
 
     // start at the root node
     NodeCluster current = OfyUtils.loadRootCluster(playlistId).now();
@@ -53,35 +60,35 @@ public class LearnedRecommender implements Recommender {
       int nextClusterIndex = -1;
 
       // with probability epsilon:
-      //   choose random cluster based on Q distribution
-      if (epsilonProb < epsilon(current.getLevel())) {
+      //   choose random cluster based on SoftMax
+      //   Prob(a) = exp(Q(s,a)) / Sum(exp(Q(s, i)) / T)
+      //   http://en.wikipedia.org/wiki/Softmax_function
+      if (epsilonProb < epsilon(current.getLevel(), t)) {
         log.warning("Probabilistic Choice based on Distribution of Q");
-        double sum = 0;
-        double min = Double.POSITIVE_INFINITY;
-        int num_min = 0;
-        for (Double qValue : stateRow)  {
-          sum += qValue;
-          min = Math.min(min, qValue);
-          if(qValue < 0) num_min++;
-        }
-        if(sum < 0) sum += num_min * (-1 * min);
 
-        Double clusterProb = new Random().nextDouble() * sum;
-        double cumulative = 0;
-        for (int i = 0; i < stateRow.size(); i++) {
-          Double qValue = stateRow.get(i) - min;
-          cumulative += qValue;
-          if (cumulative > clusterProb) {
+        List<Double> actionProbabilities = new ArrayList<>();
+
+        double denominator = 0.0;
+        for(Double qVal : stateRow) {
+          denominator += Math.exp(qVal / Constants.SOFTMAX_TEMPERATURE);
+        }
+
+        for(Double actionVal : stateRow) {
+          double prob = Math.exp(actionVal / Constants.SOFTMAX_TEMPERATURE) / denominator;
+          actionProbabilities.add(prob);
+        }
+
+        // sample from the SoftMax distribution
+        Double u = new Random().nextDouble();
+        double cumulative = 0.0;
+        for(int i = 0; i < actionProbabilities.size(); i++) {
+          cumulative += actionProbabilities.get(i);
+          if(u < cumulative) {
             nextClusterIndex = i;
             break;
           }
         }
-        if(nextClusterIndex < 0) {
-          nextClusterIndex = new Random().nextInt(stateRow.size());
-          Logger.getLogger("").warning(clusterProb + " " + Q);
-        }
       } else {
-//        log.warning("Using policy recommendation at this level " + stateRow.size());
         // choose the maximising Q value
         double maxQ = Double.NEGATIVE_INFINITY;
 
@@ -93,8 +100,9 @@ public class LearnedRecommender implements Recommender {
             maxQ = qValue;
           }
         }
-        if(nextClusterIndex < 0) Logger.getLogger("").warning(maxQ + " " + Q);
       }
+
+
       assert nextClusterIndex >= 0;
       String nextClusterId = current.getChildIds().get(nextClusterIndex);
       // if the next cluster is a LeafCluster, recommend if not already played
@@ -102,7 +110,7 @@ public class LearnedRecommender implements Recommender {
         LeafCluster nextLeaf = OfyUtils.loadLeafCluster(nextClusterId).now();
         log.warning(nextLeaf.getSongId());
         // String id = nextClusterId.split("-")[1];
-        if (true) {//!history.contains(nextLeaf.getSongId())) {
+        if (!history.contains(nextLeaf.getSongId())) {
           log.warning("A leaf was recommended, was not found in history: " + nextLeaf.getSongId());
           return nextLeaf.getSongId();
         } else {
@@ -127,12 +135,15 @@ public class LearnedRecommender implements Recommender {
 
   private String selectSong(NodeCluster nodeCluster, String recentSongId, List<String> history) {
     SongFeature recent = OfyUtils.loadFeature(recentSongId).now();
+    if(recent == null) {
+      Logger.getLogger("").warning(recentSongId);
+    }
     NodeCluster current = nodeCluster;
     Collection<SongFeature> candidates;
 
     // TODO: base this off distance(end_recent, begin_candidate[i])
     if(recent == null) {
-      Logger.getLogger("").warning(recentSongId);
+      Logger.getLogger("").warning("NULL : " + recentSongId);
     }
 
     // for now, closest based on tempo.
@@ -145,6 +156,8 @@ public class LearnedRecommender implements Recommender {
       candidates = ofy().load().keys(convertIdsToKeys(current.getSongIds())).values();
 
       for (SongFeature song : candidates) {
+        if(song == null) continue;
+
         if (!history.contains(song.getId())) {
 //          double diff = Math.abs(song.getTempo() - recent.getTempo());
           double diff = distance(recent, song);
@@ -156,6 +169,9 @@ public class LearnedRecommender implements Recommender {
       }
 
       if(currentRecommendation == null) {
+        if(current.getParent() == null) {
+          return history.get(new Random().nextInt(history.size()));
+        }
         current = ofy().load().key(current.getParent()).now();
       }
     }
@@ -175,6 +191,7 @@ public class LearnedRecommender implements Recommender {
    */
   private Double distance(SongFeature a, SongFeature b) {
     double d = 0.0;
+    if(a == null || b == null) return Double.POSITIVE_INFINITY;
     if(a.getFinalTempo() == null) {
       Logger.getLogger(a.getId()).warning(a.getId());
     }
