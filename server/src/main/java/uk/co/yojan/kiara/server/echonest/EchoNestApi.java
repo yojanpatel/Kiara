@@ -61,7 +61,6 @@ public class EchoNestApi {
         sb.append(line);
       }
       reader.close();
-      log.info(sb.toString());
       return sb.toString();
     } catch (MalformedURLException e) {
       log.warning(e.toString());
@@ -143,7 +142,6 @@ public class EchoNestApi {
     if(analysisJSON == null || analysisJSON.isEmpty()) {
       return null;
     } else {
-      log.info(analysisJSON);
       return gson.fromJson(analysisJSON, SongData.class);
     }
   }
