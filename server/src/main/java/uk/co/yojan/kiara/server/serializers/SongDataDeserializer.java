@@ -20,7 +20,6 @@ public class SongDataDeserializer implements JsonDeserializer<SongData> {
 
     JsonObject obj = jsonElement.getAsJsonObject();
     JsonObject trackObj = obj.get("track").getAsJsonObject();
-    log.info(trackObj.toString());
     s.setNumSamples(trackObj.get("num_samples").getAsInt());
     s.setDuration(trackObj.get("duration").getAsDouble());
     s.setOffsetSeconds(trackObj.get("offset_seconds").getAsInt());

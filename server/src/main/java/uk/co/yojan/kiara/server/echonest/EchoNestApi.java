@@ -2,7 +2,7 @@ package uk.co.yojan.kiara.server.echonest;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import uk.co.yojan.kiara.server.ApiConstants;
+import uk.co.yojan.kiara.server.Constants;
 import uk.co.yojan.kiara.server.models.SongData;
 import uk.co.yojan.kiara.server.models.SongAnalysis;
 import uk.co.yojan.kiara.server.serializers.SongDataDeserializer;
@@ -20,7 +20,7 @@ public class EchoNestApi {
   private static Logger log = Logger.getLogger("EchoNestApi");
 
   private static String baseURL = "http://developer.echonest.com/api/v4";
-  private static String query = "?api_key=" + ApiConstants.ECHO_NEST_API_KEY;
+  private static String query = "?api_key=" + Constants.ECHO_NEST_API_KEY;
 
   private static Gson gson = new GsonBuilder()
       .registerTypeAdapter(SongAnalysis.class, new SongMetaDataDeserializer())

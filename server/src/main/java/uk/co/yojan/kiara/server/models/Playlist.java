@@ -6,6 +6,7 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import uk.co.yojan.kiara.server.Constants;
 import uk.co.yojan.kiara.server.serializers.PlaylistDeserializer;
 import uk.co.yojan.kiara.server.serializers.PlaylistSerializer;
 
@@ -47,8 +48,7 @@ public class Playlist {
 
   public void nowPlaying(String songId) {
     if(history == null) history = new LinkedList<>();
-    int WINDOW_SIZE = 50;
-    if(history.size() >= WINDOW_SIZE) {
+    if(history.size() >= Constants.HISTORY_SIZE) {
       history.poll();
     }
     history.add(songId);
@@ -208,5 +208,6 @@ public class Playlist {
 
   public void clearHistory() {
     history = new LinkedList<>();
+    events = new LinkedList<>();
   }
 }

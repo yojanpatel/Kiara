@@ -1,7 +1,8 @@
 package uk.co.yojan.kiara.analysis.learning;
 
 /**
- * Created by yojan on 1/6/15.
+ * Encapsulates an event sent by the user signifying some actions have been taken
+ * and should be learnt from etc.
  */
 public class ActionEvent {
 

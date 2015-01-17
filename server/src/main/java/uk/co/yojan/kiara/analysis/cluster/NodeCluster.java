@@ -78,7 +78,7 @@ public class NodeCluster extends Cluster {
 
   public List<List<Double>> getQ() {
     if(Q == null || Q.isEmpty()) {
-      initialiseIdentity(Q);
+      initialiseIdentity();
     }
     return Q;
   }
@@ -200,8 +200,9 @@ public class NodeCluster extends Cluster {
     return -1;
   }
 
-  private void initialiseIdentity(List<List<Double>> Q) {
+  public void initialiseIdentity() {
     Logger.getLogger("").warning("Initialising Identity Matrix for Q");
+    Q = new ArrayList<>();
     for(int i = 0; i < children.size(); i++) {
       ArrayList<Double> stateRow = new ArrayList<>();
       for(int j = 0; j < children.size(); j++) {
