@@ -98,13 +98,13 @@ public class Experiment {
   /** Learning experiment
    * Change the RewardFunction and Recommender in the resource. **/
   public void runNewRewardExperiment(String label, HypotheticalUser user, RewardFunction f, Recommender r, QLearner q) {
-    String l = user.user().getId() + "-" + currentK + "-" + label;
+    String l = user.user().getId() + "-" + label;
 
     // No need to perform simulation for existing results. For repeated simulations
     // use RunX suffix to the label parameter.
-//    if(skips.containsKey(l)) {
-//      return;
-//    }
+    if(skips.containsKey(l)) {
+      return;
+    }
 
     init();
     if(f != null) user.setRewardFunction(f);
@@ -117,11 +117,14 @@ public class Experiment {
 
     List<String> ids = new ArrayList<>(playlist.getAllSongIds());
     String seedId = ids.get(new Random().nextInt(ids.size()));
-
-    Pair<Double, ArrayList<Integer>> experimentResult = user.play(playlist, seedId);
-
-    skips.put(l, experimentResult.getSecond());
-    rewards.put(l, experimentResult.getFirst());
+    try {
+      Pair<Double, ArrayList<Integer>> experimentResult = user.play(playlist, seedId);
+      skips.put(l, experimentResult.getSecond());
+      rewards.put(l, experimentResult.getFirst());
+    } catch(Exception e) {
+      e.printStackTrace();
+      return;
+    }
 
     Logger.getLogger("").warning("SKIPS " + skips.get(l) + " REWARD " + rewards.get(l));
 
