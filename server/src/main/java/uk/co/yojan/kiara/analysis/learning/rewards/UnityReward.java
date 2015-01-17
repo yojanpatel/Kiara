@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.analysis.learning;
+package uk.co.yojan.kiara.analysis.learning.rewards;
 
 /**
  * Reward Function limited to the range [-1, 1] with functional smoothing for skips.

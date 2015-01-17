@@ -1,8 +1,5 @@
-package uk.co.yojan.kiara.analysis.learning;
+package uk.co.yojan.kiara.analysis.learning.rewards;
 
-/**
- * Created by yojan on 1/3/15.
- */
 public class VariedSkipReward implements RewardFunction {
   @Override
   public double rewardSkip(int percent) {

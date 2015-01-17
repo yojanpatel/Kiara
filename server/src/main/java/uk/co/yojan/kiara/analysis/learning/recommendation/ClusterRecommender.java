@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.analysis.learning;
+package uk.co.yojan.kiara.analysis.learning.recommendation;
 
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;

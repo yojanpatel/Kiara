@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.analysis.learning;
+package uk.co.yojan.kiara.analysis.learning.recommendation;
 
 
 public interface Recommender {

@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.analysis.learning;
+package uk.co.yojan.kiara.analysis.learning.rewards;
 
 /**
  * Binary reward function classifies each action as either good or bad.

@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.analysis.learning;
+package uk.co.yojan.kiara.analysis.learning.rewards;
 
 /**
  * Encapsulates the reward function for the Q-learning algorithm.

@@ -1,4 +1,4 @@
-package uk.co.yojan.kiara.analysis.learning;
+package uk.co.yojan.kiara.analysis.learning.recommendation;
 
 import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.analysis.OfyUtils;
@@ -16,7 +16,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 /**
  * Uses the Q-Learning matrices to recommend the next song to be played
  */
-public class LearnedRecommender implements Recommender {
+public class TopDownRecommender implements Recommender {
 
   private static final Logger log = Logger.getLogger("LearnedRecommender");
 
@@ -187,7 +187,7 @@ public class LearnedRecommender implements Recommender {
 
   /**
    * Distance between end of song a and start of song b based on the the timbre vectors, tempo and loudness.
-   * @return
+   * @return a double representing the rough euclidean distance squared between two songs.
    */
   private Double distance(SongFeature a, SongFeature b) {
     double d = 0.0;
