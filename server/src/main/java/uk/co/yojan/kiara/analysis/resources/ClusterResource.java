@@ -16,9 +16,7 @@ import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
-/**
- * Created by yojan on 12/9/14.
- */
+
 @Path("/cluster")
 public class ClusterResource {
 
@@ -29,18 +27,15 @@ public class ClusterResource {
   public Response viewHierarchical(@PathParam("playlistId") Long playlistId) {
     NodeCluster root = ofy().load().key(Key.create(NodeCluster.class, playlistId + "-0-0")).now();
 
+    if(root == null) return Response.noContent().entity("No Root NodeCluster found.").build();
+
     // fetch songs to display
     ArrayList<Key<Song>> songKeys = new ArrayList<>();
     for(String songId : root.getSongIds()) {
       songKeys.add(Key.create(Song.class, songId));
     }
     Map<Key<Song>, Song> songs = ofy().load().keys(songKeys);
-
-    if(root == null) return Response.noContent().build();
-
     StringBuilder html = new StringBuilder();
-
-
     List<List<Double>> Q = root.getQ();
     for(List<Double> stateRow : Q) {
       for(Double q : stateRow) {
@@ -67,7 +62,6 @@ public class ClusterResource {
         html.append(leaf.getArtist() + " - " + leaf.getSongName() + "<br>");
       }
     }
-
     return Response.ok().entity(html.toString()).build();
   }
 
@@ -85,7 +79,7 @@ public class ClusterResource {
 
   @GET
   @Path("/hierarchical/{playlistId}")
-  public Response hierarch(@PathParam("playlistId") Long playlistId,
+  public Response hierarchical(@PathParam("playlistId") Long playlistId,
                            @DefaultValue("3") @QueryParam("k") int k) {
 
     return Response.ok().entity(PlaylistClusterer.cluster(playlistId, k).getId()).build();

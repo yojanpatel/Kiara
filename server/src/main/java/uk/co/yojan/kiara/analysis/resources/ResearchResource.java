@@ -5,8 +5,13 @@ import com.googlecode.objectify.Key;
 import com.wrapper.spotify.exceptions.WebApiException;
 import uk.co.yojan.kiara.analysis.research.ARFFCreator;
 import uk.co.yojan.kiara.analysis.research.Experiment;
+import uk.co.yojan.kiara.analysis.research.ExperimentRunner;
 import uk.co.yojan.kiara.analysis.tasks.ExperimentTask;
 import uk.co.yojan.kiara.analysis.tasks.TaskManager;
+import uk.co.yojan.kiara.analysis.users.BeatLover;
+import uk.co.yojan.kiara.analysis.users.ErraticEarl;
+import uk.co.yojan.kiara.analysis.users.HypotheticalUser;
+import uk.co.yojan.kiara.analysis.users.MrTimbre;
 import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.SongFeature;
 
@@ -54,6 +59,57 @@ public class ResearchResource {
       }
       output += "<br>" + scoreMap.get(weights) + "<br><br>";
     }
+    return Response.ok(output).build();
+  }
+
+
+  @GET
+  @Path("/{userId}/{expId}")
+  public Response startExperiment(@PathParam("userId") String userId,
+                                  @PathParam("expId") String expId) {
+    HypotheticalUser u;
+    if(userId.toLowerCase().equals("t")) {
+      u = new MrTimbre();
+    } else if(userId.toLowerCase().equals("e")) {
+      u = new ErraticEarl();
+    } else if(userId.toLowerCase().equals("b")) {
+      u = new BeatLover();
+    } else {
+      return null;
+    }
+    Experiment experiment = ofy().load().key(Key.create(Experiment.class, expId)).now();
+    ExperimentRunner.run(u, experiment);
+    return Response.ok().entity("Done with experiment.").build();
+  }
+
+  @GET
+  @Path("results/{expId}")
+  @Produces(MediaType.TEXT_HTML)
+  public Response viewResultsHyp(@PathParam("expId") String id) {
+    Experiment exp = ofy().load().key(Key.create(Experiment.class, id)).now();
+    HashMap<String, ArrayList<Integer>> results = exp.getSkips();
+    HashMap<String, Double> rewards = exp.getRewards();
+
+    String output = "";
+    ArrayList<String> rs = new ArrayList<>(results.keySet());
+    Collections.sort(rs);
+    for(String label : rs) {
+      output += "<h2>" + label + "</h2>";
+      ArrayList<Integer> skips = results.get(label);
+      output += "Skips: " + skips.size() + " Reward: " +  rewards.get(label) + "<br>";
+
+      // for 500
+      int a1 = 0, a2 = 0, a3 = 0, a4 = 0, a5 = 0;
+      for(Integer i : skips) {
+             if(0 <= i && i < 100) a1++;
+        else if(100 <= i && i < 200) a2++;
+        else if(200 <= i && i < 300) a3++;
+        else if(300 <= i && i < 400) a4++;
+        else if(400 <= i && i < 500) a5++;
+      }
+      output += a1 + " | " + a2 + " | " + a3 + " | " + a4 + " | " + a5 + "<br>";
+    }
+
     return Response.ok(output).build();
   }
 
@@ -155,5 +211,17 @@ public class ResearchResource {
       sb.append(" Min: " + min + ", Max: " + max + ", Mean: " + mean + ", StdDev: " + std + "\n");
     }
     return Response.ok().entity(sb.toString()).build();
+  }
+
+  @POST
+  @Path("/{id}")
+  @Consumes("application/json")
+  @Produces("applcation/json")
+  public Response createExperiment(@PathParam("id") String id, String[] ids){
+    Experiment e = new Experiment(id);
+    ofy().save().entities(e).now();
+    e.addPlaylist(ids);
+    String[] a = {"A", "B"};
+    return Response.ok().entity(a).build();
   }
 }

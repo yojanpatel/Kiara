@@ -4,6 +4,10 @@ import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.learning.*;
+import uk.co.yojan.kiara.analysis.learning.recommendation.Recommender;
+import uk.co.yojan.kiara.analysis.learning.recommendation.TopDownRecommender;
+import uk.co.yojan.kiara.analysis.learning.rewards.BinaryRewardFunction;
+import uk.co.yojan.kiara.analysis.learning.rewards.RewardFunction;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 
@@ -41,7 +45,7 @@ public class EventResource {
   // TODO dynamically change based on some setting parameter
   // Change the object to choose the reward function.
   public static RewardFunction reward = new BinaryRewardFunction();
-  public static Recommender recommender = new LearnedRecommender();
+  public static Recommender recommender = new TopDownRecommender();
 
   @POST
   @Path("/start/{songId}")

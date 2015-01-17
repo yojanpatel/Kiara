@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.analysis.resources;
 
+import com.google.appengine.repackaged.com.google.common.base.Pair;
 import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer;
 import uk.co.yojan.kiara.analysis.users.BeatLover;
@@ -95,7 +96,6 @@ public class HypotheticalUserResource {
   @Path("/{userId}/{songId}")
   public Response startEpisode(@PathParam("userId") String userId,
                                @PathParam("songId") String seedSongId) {
-    int skips;
     HypotheticalUser u;
     if(userId.toLowerCase().equals("t")) {
       u = new MrTimbre();
@@ -107,12 +107,10 @@ public class HypotheticalUserResource {
       return null;
     }
 
-    if(u != null) {
-      skips = u.play(seedSongId);
-      return Response.ok().entity(skips).build();
-    } else {
-      return Response.noContent().entity("Must be t, e or b").build();
-    }
+    Pair<Double, ArrayList<Integer>> results = u.play(seedSongId);
+    Double averageReward = results.getFirst();
+    ArrayList<Integer> skips = results.getSecond();
+    return Response.ok().entity("Ave Reward: " + averageReward + " Skips: " + skips.size()).build();
   }
 
   private User loadHypotheticalUser(String userId) {
