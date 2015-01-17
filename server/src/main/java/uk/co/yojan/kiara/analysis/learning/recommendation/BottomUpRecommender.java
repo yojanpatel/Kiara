@@ -20,7 +20,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 public class BottomUpRecommender implements Recommender {
 
   private static final Logger log = Logger.getLogger("BottomUpRecommender");
-  private static final boolean SOFT_MAX = true;
+  private static final boolean SOFT_MAX = false;
 
   private static final double EPSILON = 0.3;
 
@@ -89,7 +89,7 @@ public class BottomUpRecommender implements Recommender {
 
         // This can be done by updating the leafClusterIndex and parentNodeCluster.
         NodeCluster parentparentNodeCluster = ofy().load().key(parent).now();
-        leafClusterIndex = parentparentNodeCluster.clusterIndex(parentNodeCluster.getId());
+        leafClusterIndex = parentparentNodeCluster.nodeClusterIndex(parentNodeCluster.getId());
         parentNodeCluster = parentparentNodeCluster;
       }
     }
@@ -110,7 +110,8 @@ public class BottomUpRecommender implements Recommender {
       log.warning("Data not found for when using heuristic: " + recentSongId);
     }
 
-    double maxSimilarity = Double.MIN_VALUE;
+    double maxSimilarity = Double.NEGATIVE_INFINITY;
+    double minDistance = Double.POSITIVE_INFINITY;
     String currentRecommendation = null;
 
     Collection<SongFeature> candidates = ofy().load().keys(convertIdsToKeys(nodeCluster.getSongIds())).values();
@@ -119,8 +120,11 @@ public class BottomUpRecommender implements Recommender {
       if(song == null) continue;
       if (!history.contains(song.getId())) {
         double sim = similarity(recent, song);
-        if (sim > maxSimilarity) {
+        double d = TopDownRecommender.distance(recent, song);
+//        if (sim > maxSimilarity) {
+        if(d < minDistance) {
           maxSimilarity = sim;
+          minDistance = d;
           currentRecommendation = song.getId();
         }
       }

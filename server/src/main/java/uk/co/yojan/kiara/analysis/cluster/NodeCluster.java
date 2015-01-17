@@ -200,6 +200,10 @@ public class NodeCluster extends Cluster {
     return -1;
   }
 
+  public int nodeClusterIndex(String clusterId) {
+    return getChildIds().indexOf(clusterId);
+  }
+
   public void initialiseIdentity() {
     Logger.getLogger("").warning("Initialising Identity Matrix for Q");
     Q = new ArrayList<>();
