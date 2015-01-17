@@ -1,21 +1,31 @@
 package uk.co.yojan.kiara.analysis.research;
 
+import com.google.appengine.repackaged.com.google.common.base.Pair;
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Serialize;
 import uk.co.yojan.kiara.analysis.cluster.KMeans;
+import uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer;
+import uk.co.yojan.kiara.analysis.learning.QLearner;
+import uk.co.yojan.kiara.analysis.learning.recommendation.Recommender;
+import uk.co.yojan.kiara.analysis.learning.rewards.RewardFunction;
+import uk.co.yojan.kiara.analysis.users.HypotheticalUser;
+import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import weka.core.Instances;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer.featureKeys;
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
+/**
+ * Dual purpose Experiment entity class.
+ * used to try various feature weights for clustering evaluation and,
+ * try various learning parameters such as alpha, gamma, epsilon, strategies etc.
+ */
 @Entity
 public class Experiment {
 
@@ -23,37 +33,49 @@ public class Experiment {
 
   // number of clusters
   private int K;
-
   // playlist map: the spotify curated playlists
-  @Serialize(zip=true)
-  LinkedHashMap<String, Integer> playlistMap;
-
+  @Serialize(zip=true) LinkedHashMap<String, Integer> playlistMap;
   // score map: <feature weights, K> used to their score
-  @Serialize(zip=true)
-  HashMap<ArrayList<Double>, Double> scoreMap;
-
+  @Serialize(zip=true) HashMap<ArrayList<Double>, Double> scoreMap;
   // results map: store assignments
-  @Serialize(zip=true)
-  HashMap<ArrayList<Double>, int[]> resultsMap;
+  @Serialize(zip=true) HashMap<ArrayList<Double>, int[]> resultsMap;
+
+
+  /** Learning experiments **/
+  @Serialize(zip = true) HashMap<String, ArrayList<Integer>> skips;
+  @Serialize(zip = true) HashMap<String, Double> rewards;
+  private int currentK;
+  private Key<Playlist> playlistKey;
 
   int curr = 0;
 
-  public Experiment() {
-  }
+  public Experiment() {}
 
   public Experiment(String id) {
     this.id = id;
     playlistMap = new LinkedHashMap<>();
     scoreMap = new HashMap<>();
     resultsMap = new HashMap<>();
+    skips = new HashMap<>();
+    rewards = new HashMap<>();
+
+    Playlist p = new Playlist();
+    p.setName("Experiment-" + id);
+    ofy().save().entities(p).now();
+    playlistKey = Key.create(Playlist.class, p.getId());
   }
 
-  public void runNewExperiment(ArrayList<Double> featureWeights) throws Exception {
-    if(resultsMap.containsKey(featureWeights)) {
-//      Logger.getLogger("S").info("Already have results for this feature weight comb. skipping");
-//      return;
-    }
+  public Playlist playlist() {
+    return ofy().load().key(playlistKey).now();
+  }
 
+  public void init() {
+    if(skips == null) skips = new HashMap<>();
+    if(rewards == null) rewards = new HashMap<>();
+  }
+
+  /** Cluster experiment **/
+  public void runNewExperiment(ArrayList<Double> featureWeights) throws Exception {
     List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(playlistMap.keySet())).values());
     KMeans kMeans = new KMeans(K, features, featureWeights);
     int[] assignments = kMeans.run();
@@ -65,6 +87,47 @@ public class Experiment {
     scoreMap.put(featureWeights, evaluate(features, assignments));
   }
 
+  /** Cluster the associated playlist.
+   *  (should be called before each learning experiment) **/
+  public void cluster(int K) {
+    currentK = K;
+    PlaylistClusterer.cluster(playlistKey.getId(), K);
+    ofy().save().entities(this);
+  }
+
+  /** Learning experiment
+   * Change the RewardFunction and Recommender in the resource. **/
+  public void runNewRewardExperiment(String label, HypotheticalUser user, RewardFunction f, Recommender r, QLearner q) {
+    String l = user.user().getId() + "-" + currentK + "-" + label;
+
+    // No need to perform simulation for existing results. For repeated simulations
+    // use RunX suffix to the label parameter.
+//    if(skips.containsKey(l)) {
+//      return;
+//    }
+
+    init();
+    if(f != null) user.setRewardFunction(f);
+    if(r != null) user.setRecommender(r);
+    if(q != null) user.setQLearner(q);
+
+    Playlist playlist = playlist();
+    playlist.clearHistory();
+    ofy().save().entity(playlist);
+
+    List<String> ids = new ArrayList<>(playlist.getAllSongIds());
+    String seedId = ids.get(new Random().nextInt(ids.size()));
+
+    Pair<Double, ArrayList<Integer>> experimentResult = user.play(playlist, seedId);
+
+    skips.put(l, experimentResult.getSecond());
+    rewards.put(l, experimentResult.getFirst());
+
+    Logger.getLogger("").warning("SKIPS " + skips.get(l) + " REWARD " + rewards.get(l));
+
+    ofy().save().entities(this).now();
+  }
+
   public void addPlaylist(List<SongFeature> songs) {
     Logger.getLogger("").warning(songs.size() + " songs added.");
     curr++;
@@ -73,6 +136,11 @@ public class Experiment {
       if(sf != null)
         playlistMap.put(sf.getId(), curr);
     }
+  }
+
+  public void addPlaylist(String[] songs) {
+    Playlist p = playlist();
+    p.addSongs(songs).now();
   }
 
   private double evaluate(List<SongFeature> songs, int[] assignments) {
@@ -154,5 +222,27 @@ public class Experiment {
     sb.substring(0, sb.length() - 1);
     sb.append("}");
     return sb.toString();
+  }
+
+  public HashMap<String, ArrayList<Integer>> getSkips() {
+    if(skips == null) {
+      skips = new HashMap<>();
+    }
+    return skips;
+  }
+
+  public void setSkips(HashMap<String, ArrayList<Integer>> skips) {
+    this.skips = skips;
+  }
+
+  public HashMap<String, Double> getRewards() {
+    if(rewards == null) {
+      rewards = new HashMap<>();
+    }
+    return rewards;
+  }
+
+  public void setRewards(HashMap<String, Double> rewards) {
+    this.rewards = rewards;
   }
 }

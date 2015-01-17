@@ -1,9 +1,9 @@
 package uk.co.yojan.kiara.analysis.users;
 
-import uk.co.yojan.kiara.analysis.learning.LearnedRecommender;
-import uk.co.yojan.kiara.analysis.learning.Recommender;
-import uk.co.yojan.kiara.analysis.learning.RewardFunction;
-import uk.co.yojan.kiara.analysis.learning.VariedSkipReward;
+import uk.co.yojan.kiara.analysis.learning.recommendation.TopDownRecommender;
+import uk.co.yojan.kiara.analysis.learning.recommendation.Recommender;
+import uk.co.yojan.kiara.analysis.learning.rewards.RewardFunction;
+import uk.co.yojan.kiara.analysis.learning.rewards.VariedSkipReward;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import uk.co.yojan.kiara.server.models.User;
 
@@ -17,7 +17,7 @@ import java.util.Random;
 public class ErraticEarl extends HypotheticalUser {
 
   private static RewardFunction rewardFunction = new VariedSkipReward();
-  private static Recommender recommender = new LearnedRecommender();
+  private static Recommender recommender = new TopDownRecommender();
 
   @Override
   double behave(SongFeature current, SongFeature previous) {
