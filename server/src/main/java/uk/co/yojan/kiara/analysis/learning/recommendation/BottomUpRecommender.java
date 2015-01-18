@@ -83,7 +83,8 @@ public class BottomUpRecommender implements Recommender {
         // otherwise, go higher up the tree for the next iteration.
         Key<NodeCluster> parent = parentNodeCluster.getParent();
         if (parent == null) {
-          log.warning("Something went wrong. No songs were recommended even after the root was reached.");
+          log.warning("Something went wrong. No songs were recommended even after the root was reached. " + parentNodeCluster.getId());
+
           return parentNodeCluster.getSongIds().get(new Random().nextInt(parentNodeCluster.getChildren().size()));
         }
 
@@ -280,4 +281,28 @@ public class BottomUpRecommender implements Recommender {
    * TODO: implement Max-Boltzmann Exploration method by combining greedyEpsilong and softMax,
    * probably with a higher temperature.
    */
+
+  // Input: 2 * key + mode
+  // Output: boolean if keys compatible
+  private boolean harmonicMatching(int currentKey, int nextKey) {
+    // c, c#, d, eb, e, f, gb, g, ab, a, bb, b
+    // 0, 1 , 2, 3,  4, 5, 6,  7, 8,  9, 10, 11
+    // c, g, d, a, e, b, gb, db, ab, eb, bb, f
+    int key = currentKey / 2;
+    int mode = currentKey % 2;
+
+    int nkey = nextKey / 2;
+    int nmode = nextKey % 2;
+
+    int poss = 2 * ((currentKey + 7) % 12) + mode;
+    int poss2 = 2 * ((currentKey - 7) % 12) + mode;
+    int poss3;
+    if(mode == 0) {
+      poss3 = 2 * ((currentKey + 9) % 12) + 1;
+    } else {
+      poss3 = 2 * ((currentKey - 9) % 12);
+    }
+
+    return nextKey == poss || nextKey == poss2 || nextKey == poss3;
+  }
 }

@@ -189,7 +189,7 @@ public class TopDownRecommender implements Recommender {
    * Distance between end of song a and start of song b based on the the timbre vectors, tempo and loudness.
    * @return a double representing the rough euclidean distance squared between two songs.
    */
-  private Double distance(SongFeature a, SongFeature b) {
+  public static Double distance(SongFeature a, SongFeature b) {
     double d = 0.0;
     if(a == null || b == null) return Double.POSITIVE_INFINITY;
     if(a.getFinalTempo() == null) {
