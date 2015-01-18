@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.analysis.learning.recommendation;
 
 import com.googlecode.objectify.Key;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.Cluster;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
@@ -57,10 +58,13 @@ public class BottomUpRecommender implements Recommender {
     int leafClusterIndex = parentNodeCluster.clusterIndex(currentSongLeafCluster.getSongId());
 
     while(true) {
+      // compute actions to be excluded
+      List<Integer> excludeActions = excludeActions(parentNodeCluster, p.history());
+
       // Compute the next cluster to try
       //noinspection ConstantConditions
-      int nextClusterIndex = SOFT_MAX ? softMaxAction(parentNodeCluster, leafClusterIndex)
-                                      : greedyEpsilon(parentNodeCluster, leafClusterIndex, t);
+      int nextClusterIndex = SOFT_MAX ? softMaxAction(parentNodeCluster, leafClusterIndex, excludeActions)
+                                      : greedyEpsilon(parentNodeCluster, leafClusterIndex, t, excludeActions);
       Cluster nextCluster = parentNodeCluster.getChildren().get(nextClusterIndex);
 
       String recommendedSongId = null;
@@ -95,6 +99,8 @@ public class BottomUpRecommender implements Recommender {
       }
     }
   }
+
+
 
   /**
    *
@@ -212,20 +218,28 @@ public class BottomUpRecommender implements Recommender {
    *
    * @return  the action to be taken, i.e. the index of the cluster in cluster to go to.
    */
-  private int softMaxAction(NodeCluster cluster, int clusterIndex) {
+  private int softMaxAction(NodeCluster cluster, int clusterIndex, List<Integer> excludeActions) {
 
     List<Double> stateRow = cluster.getQRow(clusterIndex);
 
     List<Double> actionProbabilities = new ArrayList<>();
 
     double denominator = 0.0;
-    for(Double qVal : stateRow) {
-      denominator += Math.exp(qVal / Constants.SOFTMAX_TEMPERATURE);
+    for(int action = 0; action < stateRow.size(); action++) {
+      if(!excludeActions.contains(action)) {
+        Double actionVal = stateRow.get(action);
+        denominator += Math.exp(actionVal / Constants.SOFTMAX_TEMPERATURE);
+      }
     }
 
-    for(Double actionVal : stateRow) {
-      double prob = Math.exp(actionVal / Constants.SOFTMAX_TEMPERATURE) / denominator;
-      actionProbabilities.add(prob);
+    for(int action = 0; action < stateRow.size(); action++) {
+      if(!excludeActions.contains(action)) {
+        Double actionVal = stateRow.get(action);
+        double prob = Math.exp(actionVal / Constants.SOFTMAX_TEMPERATURE) / denominator;
+        actionProbabilities.add(prob);
+      } else {
+        actionProbabilities.add(null);
+      }
     }
 
     // u ~ Uniform(0,1)
@@ -233,13 +247,17 @@ public class BottomUpRecommender implements Recommender {
 
     double cumulative = 0.0;
     for(int i = 0; i < actionProbabilities.size(); i++) {
-      cumulative += actionProbabilities.get(i);
-      if(u < cumulative) {
-        return i;
+      if (actionProbabilities.get(i) != null) {
+        cumulative += actionProbabilities.get(i);
+        if (u < cumulative) {
+          return i;
+        }
       }
     }
     return -1;
   }
+
+
 
 
   /**
@@ -251,11 +269,18 @@ public class BottomUpRecommender implements Recommender {
    *
    * @return  the action to be taken, i.e. the index of the cluster in cluster to go to.
    */
-  private int greedyEpsilon(NodeCluster cluster, int clusterIndex, int t) {
+  private int greedyEpsilon(NodeCluster cluster, int clusterIndex, int t, List<Integer> excludeActions) {
     // u ~ Uniform(0,1)
     double u = new Random().nextDouble();
     if(u < epsilon(cluster.getLevel(), t)) {
-      return new Random().nextInt(cluster.getChildren().size());
+      // return a random action excluding those from excludeActions
+      List<Integer> actions = new ArrayList<>();
+      for(int i = 0; i < cluster.getChildren().size(); i++) {
+        if(!excludeActions.contains(i)) {
+          actions.add(i);
+        }
+      }
+      return actions.get(new Random().nextInt(actions.size()));
     } else {
 
       List<Double> stateRow = cluster.getQRow(clusterIndex);
@@ -266,21 +291,28 @@ public class BottomUpRecommender implements Recommender {
 
       // nextClusterIndex = argmax_i{Q(state)(i)}
       for (int i = 0; i < stateRow.size(); i++) {
-        Double qValue = stateRow.get(i);
-        if (maxQ < qValue) {
-          minIndex = i;
-          maxQ = qValue;
+        if(!excludeActions.contains(i)) {
+          Double qValue = stateRow.get(i);
+          if (maxQ < qValue) {
+            minIndex = i;
+            maxQ = qValue;
+          }
         }
       }
       return minIndex;
     }
   }
 
-
   /**
-   * TODO: implement Max-Boltzmann Exploration method by combining greedyEpsilong and softMax,
-   * probably with a higher temperature.
+   * TODO
+   * Value Difference Based Exploration extends the epsilon greedy method by
+   * introducing a state-dependent exploration probability.
+   *
+   * Agent behaves more explorative in situations where the knowledge about the environment is uncertain.
    */
+  private int vdbeSoftMax(NodeCluster cluster, int clusterIndex, int t) {
+    throw new NotImplementedException();
+  }
 
   // Input: 2 * key + mode
   // Output: boolean if keys compatible
@@ -305,4 +337,34 @@ public class BottomUpRecommender implements Recommender {
 
     return nextKey == poss || nextKey == poss2 || nextKey == poss3;
   }
+
+
+  /**
+   * Filter actions based on the history previously played songs.
+   * i.e. Actions in which no song that hasn't recently played exists should not count.
+   *
+   * @param cluster cluster at which action decision needs to be made
+   * @param history list of song ids that cannot be played as a result of this action
+   * @return list of child indices of actions that should be discounted
+   */
+  private List<Integer> excludeActions(NodeCluster cluster, List<String> history) {
+    List<Integer> excludeIndices = new ArrayList<>();
+    Set<String> usedSet = new HashSet<>(history);
+    List<Cluster> children = cluster.getChildren();
+
+    for(int i = 0; i < children.size(); i++) {
+      Cluster c = children.get(i);
+      if(c instanceof LeafCluster) {
+        if(usedSet.contains(((LeafCluster) c).getSongId())) {
+          excludeIndices.add(i);
+        }
+      } else if(c instanceof NodeCluster) {
+        if(usedSet.containsAll(((NodeCluster) c).getSongIds())) {
+          excludeIndices.add(i);
+        }
+      }
+    }
+    return excludeIndices;
+  }
 }
+
