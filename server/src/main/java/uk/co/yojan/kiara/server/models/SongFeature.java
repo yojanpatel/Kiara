@@ -34,9 +34,9 @@ public class SongFeature {
   private ArrayList<ArrayList<Double>> timbreMoments;
 
   private Double duration;
-  private Double tempo;
-  @Feature private Double normalisedTempo;
-  private Double tempoConfidence;
+  @Feature private Double tempo;
+  private Double normalisedTempo;
+  @Feature private Double tempoConfidence;
   @Feature private Double loudness;
   @Feature private Double energy;
   @Feature private Double valence;

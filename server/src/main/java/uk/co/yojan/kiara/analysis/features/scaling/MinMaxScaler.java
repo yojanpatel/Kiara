@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.analysis.features.scaling;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.co.yojan.kiara.analysis.cluster.KMeans;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -37,6 +38,11 @@ public class MinMaxScaler implements FeatureScaler {
       scaled.add(new Instance(1.0, scaledFeatures));
     }
     return scaled;
+  }
+
+  @Override
+  public double[][] scale(double[][] unscaled) {
+    throw new NotImplementedException();
   }
 
   private void computeMinMax(Instances instances) {

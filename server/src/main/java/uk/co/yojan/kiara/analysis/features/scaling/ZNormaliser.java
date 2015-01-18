@@ -43,6 +43,29 @@ public class ZNormaliser implements FeatureScaler {
     return scaled;
   }
 
+  @Override
+  public double[][] scale(double[][] unscaled) {
+
+    computeMeansAndStddev(unscaled);
+
+    int atts = unscaled[0].length;
+    int num = unscaled.length;
+    double[][] scaled =  new double[unscaled.length][unscaled[0].length];
+
+    for(int i = 0; i < num; i++) {
+
+      double[] unscaledFeatures = unscaled[i];
+      double[] scaledFeatures = new double[atts];
+
+      for(int j = 0; j < atts; j++) {
+        scaledFeatures[j] = (unscaledFeatures[j] - means.get(j)) / stddev.get(j);
+      }
+
+      scaled[i] = scaledFeatures;
+    }
+    return scaled;
+  }
+
 
   private void computeMeansAndStddev(Instances instances) {
     int atts = instances.numAttributes();
@@ -61,6 +84,41 @@ public class ZNormaliser implements FeatureScaler {
       // for each attribute
       for(int j = 0; j < atts; j++) {
         double val = curr.value(j);
+
+        // store the sum of each value
+        means.set(j, means.get(j) + val);
+
+        // store the sum of the square of each value
+        stddev.set(j, means.get(j) + Math.pow(val, 2));
+      }
+    }
+
+    for(int j = 0; j < atts; j++) {
+      // divide by N to get mean
+      means.set(j, means.get(j) / num);
+
+      // take away the mean squared, divide by n and take square-root
+      stddev.set(j, Math.sqrt(stddev.get(j) - Math.pow(means.get(j), 2)));
+    }
+  }
+
+  private void computeMeansAndStddev(double[][] instances) {
+    int atts = instances[0].length;
+    int num = instances.length;
+
+    // initially store the sums
+    for(int j = 0; j < atts; j++) {
+      means.add(0.0);
+      stddev.add(0.0);
+    }
+
+    // for each instance
+    for(int i = 0; i < num; i++) {
+      double[] curr = instances[i];
+
+      // for each attribute
+      for(int j = 0; j < atts; j++) {
+        double val = curr[j];
 
         // store the sum of each value
         means.set(j, means.get(j) + val);
