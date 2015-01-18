@@ -3,8 +3,7 @@ package uk.co.yojan.kiara.server.resources;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
-import uk.co.yojan.kiara.analysis.tasks.AddSongTask;
-import uk.co.yojan.kiara.analysis.tasks.TaskManager;
+import uk.co.yojan.kiara.analysis.tasks.*;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.User;
@@ -97,10 +96,18 @@ public class PlaylistSongResource {
     if(save != null)
       save.now();
 
-    // update the playlist cluster representation
-    TaskManager.featureQueue().add(TaskOptions.Builder
-        .withPayload(new AddSongTask(spotifyId, playlistId))
-        .taskName("AddSong-" + spotifyId + "-" + playlistId + "-" +System.currentTimeMillis()));
+    if(p.needToRecluster()) {
+      TaskManager.clusterQueue().add(TaskOptions.Builder
+          .withPayload(new ReClusterTask(playlistId))
+          .countdownMillis(10 * 1000)
+          .taskName("ReCluster-" + playlistId));
+    } else {
+      // ad-hoc: update the playlist cluster representation
+      TaskManager.featureQueue().add(TaskOptions.Builder
+          .withPayload(new AddSongTask(spotifyId, playlistId))
+          .countdownMillis(10 * 1000)
+          .taskName("AddSong-" + spotifyId + "-" + playlistId + "-" + System.currentTimeMillis()));
+    }
 
     return Response.ok().entity(created).build();
   }
@@ -164,8 +171,41 @@ public class PlaylistSongResource {
     p.addSongs(createdSongs).now();
     for(Result r : songSaveResults) r.now();
     // Update the HashMap for playlist.
+    if(p.needToRecluster()) {
+      TaskManager.clusterQueue().add(TaskOptions.Builder
+          .withPayload(new ReClusterTask(playlistId))
+          .countdownMillis(10 * 1000)
+          .taskName("ReCluster-" + playlistId));
+    } else {
+      // ad-hoc: update the playlist cluster representation
+      TaskManager.featureQueue().add(TaskOptions.Builder
+          .withPayload(new BatchAddSongTask(spotifyIds, playlistId))
+          .countdownMillis(10 * 1000)
+          .taskName("BatchAddSongs-" + playlistId + "-" + System.currentTimeMillis()));
+    }
 
     return Response.ok().entity(createdSongs).build();
+  }
+
+  @DELETE
+  public Response deleteSong(String spotifyId,
+                             @PathParam("user_id") String userId,
+                             @PathParam("playlist_id") Long playlistId) {
+    User u = ofy().load().key(Key.create(User.class, userId)).now();
+    u.incrementCounter();
+    Result us = ofy().save().entity(u);
+
+    if(!u.hasPlaylist(playlistId)) {
+      return Response.notModified().build();
+    }
+
+    spotifyId = spotifyId.replace("\"", "").replace("spotify:track:", "");
+    Playlist p = u.getPlaylist(playlistId);
+    p.removeSong(spotifyId).now();
+    TaskManager.getQueue().add(TaskOptions.Builder
+        .withPayload(new RemoveSongTask(playlistId, spotifyId))
+        .taskName("DeleteSong-" + playlistId + "-" + System.currentTimeMillis()));
+    return Response.ok().build();
   }
 
 

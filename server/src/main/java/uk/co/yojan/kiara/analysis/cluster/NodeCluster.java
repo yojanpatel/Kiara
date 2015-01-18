@@ -8,7 +8,6 @@ import com.googlecode.objectify.annotation.Subclass;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
@@ -54,6 +53,10 @@ public class NodeCluster extends Cluster {
 
   public void addSongId(String songId) {
     songIds.add(songId);
+  }
+
+  public void removeSongId(String songId) {
+    songIds.remove(songId);
   }
 
   public LeafCluster convertToLeaf() {
@@ -205,7 +208,6 @@ public class NodeCluster extends Cluster {
   }
 
   public void initialiseIdentity() {
-    Logger.getLogger("").warning("Initialising Identity Matrix for Q");
     Q = new ArrayList<>();
     for(int i = 0; i < children.size(); i++) {
       ArrayList<Double> stateRow = new ArrayList<>();

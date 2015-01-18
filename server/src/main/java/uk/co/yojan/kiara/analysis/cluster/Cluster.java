@@ -25,4 +25,5 @@ public class Cluster {
   public void setLevel(int level) {
     this.level = level;
   }
+
 }
