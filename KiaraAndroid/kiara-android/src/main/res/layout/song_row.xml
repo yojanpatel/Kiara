@@ -7,21 +7,23 @@
     app:rippleOverlay="true"
     app:rippleDuration="200"
     app:rippleColor="@color/white"
-    app:rippleAlpha="0.15"
+    app:rippleAlpha="0.1"
     app:rippleHover="true">
 
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp">
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="4dp">
 
       <ImageView
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:id="@+id/song_img"
           android:contentDescription="@string/album_art"
-          android:paddingLeft="8dp"
+          android:layout_marginRight="8dp"
           android:transitionName="@string/transition_album_cover"
           android:src="@drawable/ic_placeholder_200"/>
 
@@ -34,7 +36,7 @@
           android:paddingTop="4dp"
           android:paddingLeft="8dp"
           android:singleLine="true"
-          android:paddingBottom="1dp"
+          android:layout_marginRight="8dp"
           android:textColor="@color/grey50"
           android:layout_toRightOf="@+id/song_img"/>
 
@@ -55,10 +57,9 @@
           android:layout_width="fill_parent"
           android:layout_height="0.5dp"
           android:layout_alignBottom="@+id/song_img"
-          android:layout_marginLeft="8dp"
-          android:layout_alignLeft="@id/song_name"
-          android:background="@color/grey700"
-          android:visibility="gone"/>
+          android:paddingTop="8dp"
+          android:background="@color/grey800"
+          android:visibility="visible"/>
     </RelativeLayout>
 
 </com.balysv.materialripple.MaterialRippleLayout>

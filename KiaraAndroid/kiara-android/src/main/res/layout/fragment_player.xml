@@ -233,8 +233,8 @@
         android:layout_alignTop="@+id/dummy"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/like"
-        android:layout_toStartOf="@+id/like"/>
+        android:layout_toStartOf="@+id/favourite"
+        android:layout_toLeftOf="@+id/favourite"/>
 
     <com.getbase.floatingactionbutton.FloatingActionButton
         android:id="@+id/favouritefab"
