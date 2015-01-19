@@ -5,7 +5,7 @@
      android:layout_width="wrap_content"
      android:layout_height="wrap_content"
      tools:context="uk.co.yojan.kiara.android.fragments.PlayerControlFragment"
-     android:background="@color/grey900">
+     android:background="@color/grey1000">
 
   <View
       android:layout_width="fill_parent"
@@ -28,9 +28,10 @@
       android:layout_alignParentRight="true"
       android:layout_centerVertical="true"
       android:padding="8dp"
+      android:layout_marginRight="8dp"
       fab:ib_color="@color/white"
       fab:ib_pressedRingWidth="8dp"
-      fab:ib_startRingWidth="16dp"
+      fab:ib_startRingWidth="8dp"
       android:src="@drawable/ic_play_circle_outline_white_36dp"/>
 
   <TextView
@@ -39,12 +40,12 @@
       android:id="@+id/song_name"
       android:textColor="@color/grey200"
       android:textSize="16sp"
-      android:layout_toRightOf="@id/album_image"
-      android:padding="4dp"
       android:text="Same Old Song"
-      android:layout_toLeftOf="@id/playpause"
       android:singleLine="true"
-      android:layout_marginTop="8dp"/>
+      android:layout_marginTop="8dp"
+      android:layout_alignTop="@+id/album_image"
+      android:layout_toRightOf="@+id/album_image"
+      android:layout_toEndOf="@+id/album_image"/>
 
   <TextView
       android:layout_width="wrap_content"
@@ -52,11 +53,10 @@
       android:id="@+id/detail"
       android:textColor="@color/grey400"
       android:textSize="14sp"
-      android:layout_below="@id/song_name"
-      android:layout_alignLeft="@id/song_name"
-      android:paddingLeft="4dp"
       android:singleLine="true"
-      android:layout_toLeftOf="@id/playpause"
-      android:text="The Weeknd - Trilogy"/>
+      android:text="The Weeknd - Trilogy"
+      android:layout_below="@+id/song_name"
+      android:layout_alignLeft="@+id/song_name"
+      android:layout_alignStart="@+id/song_name"/>
 
 </RelativeLayout>

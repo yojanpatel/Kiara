@@ -318,5 +318,5 @@ public class KiaraActivity extends ActionBarActivity {
     alertDialog.show();
   }
 
-  
+
 }

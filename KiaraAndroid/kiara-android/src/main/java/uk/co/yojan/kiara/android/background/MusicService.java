@@ -102,22 +102,23 @@ public class MusicService extends Service
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     Log.d(log, "onStartCommand");
+    if(intent != null) {
+      if (intent.getBooleanExtra(Constants.PLAY_ACTION, false)) {
+        String spotifyUri = intent.getStringExtra(Constants.SONG_URI);
+        Log.d(log, "Play action received " + spotifyUri);
 
-    if(intent.getBooleanExtra(Constants.PLAY_ACTION, false)) {
-      String spotifyUri = intent.getStringExtra(Constants.SONG_URI);
-      Log.d(log, "Play action received " + spotifyUri);
+      } else if (intent.getAction() != null) {
+        if (intent.getAction().equals(Constants.ACTION_STOP_SERVICE)) {
+          Log.d(log, "Stopping service from intent.");
+          stopSelf();
 
-    } else if(intent.getAction() != null) {
-      if (intent.getAction().equals(Constants.ACTION_STOP_SERVICE)) {
-        Log.d(log, "Stopping service from intent.");
-        stopSelf();
-
-      } else if (intent.getAction().equals(Constants.ACTION_PLAY_PAUSE)) {
-        Log.d(log, "play/pause from intent.");
-        pauseplay();
-      } else if (intent.getAction().equals(Constants.ACTION_FAVOURITE)) {
-        Log.d(log, "fav from intent");
-        toggleFav();
+        } else if (intent.getAction().equals(Constants.ACTION_PLAY_PAUSE)) {
+          Log.d(log, "play/pause from intent.");
+          pauseplay();
+        } else if (intent.getAction().equals(Constants.ACTION_FAVOURITE)) {
+          Log.d(log, "fav from intent");
+          toggleFav();
+        }
       }
     }
     return START_STICKY;

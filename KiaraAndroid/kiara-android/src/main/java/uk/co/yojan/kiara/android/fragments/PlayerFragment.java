@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.getbase.floatingactionbutton.FloatingActionButton;
@@ -138,7 +139,10 @@ public class PlayerFragment extends KiaraFragment {
     initButtons();
     initialiseSeekBar();
 
-    updateUi(currentSong);
+    picasso.load(currentSong.getImageURL()).into(albumArt);
+    songName.setText(currentSong.getSongName());
+    artistName.setText(currentSong.getArtistName());
+    albumName.setText(currentSong.getAlbumName());
 
     return rootView;
   }
@@ -242,7 +246,7 @@ public class PlayerFragment extends KiaraFragment {
   }
 
   private void updateUi(Song newSong) {
-    if(this.currentSong == null || currentSong.getSpotifyId().equals(newSong.getSpotifyId())) {
+    if(this.currentSong == null || !currentSong.getSpotifyId().equals(newSong.getSpotifyId())) {
       currentSong = newSong;
       picasso.load(newSong.getImageURL()).into(albumArt);
       songName.setText(newSong.getSongName());
@@ -275,9 +279,13 @@ public class PlayerFragment extends KiaraFragment {
       seekBar.setProgress(0);
       updateUi(musicService.getCurrentSong());
 
-    } else if(eventType == PlayerNotificationCallback.EventType.PAUSE ||
-              eventType == PlayerNotificationCallback.EventType.LOST_PERMISSION) {
+    } else if(eventType == PlayerNotificationCallback.EventType.PAUSE) {
       playpause.setImageDrawable(play);
+    } else if(eventType == PlayerNotificationCallback.EventType.LOST_PERMISSION) {
+      playpause.setImageDrawable(play);
+      Toast.makeText(mContext,
+          "Kiara has been paused because your Spotify account is being used somewhere else.",
+          Toast.LENGTH_LONG).show();
     }
   }
 
