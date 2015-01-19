@@ -1,5 +1,7 @@
 package uk.co.yojan.kiara.analysis.learning;
 
+import uk.co.yojan.kiara.server.Constants;
+
 import java.util.LinkedList;
 
 /**
@@ -7,8 +9,6 @@ import java.util.LinkedList;
  * of events recorded to allow re-learning if the structure changes.
  */
 public class EventHistory {
-
-  public static int EVENT_HISTORY_SIZE = 1000;
 
   /*
    * Event String representation:
@@ -19,7 +19,7 @@ public class EventHistory {
     // if new session, no previous song.
     if(previousSongId == null) return;
 
-    if(eventHistory.size() >= EVENT_HISTORY_SIZE) {
+    if(eventHistory.size() >= Constants.EVENT_HISTORY_SIZE) {
       eventHistory.removeFirst();
     }
 
@@ -30,7 +30,7 @@ public class EventHistory {
     // if new session, no previous song.
     if(previousSongId == null) return;
 
-    if(eventHistory.size() >= EVENT_HISTORY_SIZE) {
+    if(eventHistory.size() >= Constants.EVENT_HISTORY_SIZE) {
       eventHistory.removeFirst();
     }
     // rough round to 2dp
@@ -41,7 +41,7 @@ public class EventHistory {
     // if new session, no previous song.
     if(previousSongId == null) return;
 
-    if(eventHistory.size() >= EVENT_HISTORY_SIZE) {
+    if(eventHistory.size() >= Constants.EVENT_HISTORY_SIZE) {
       eventHistory.removeFirst();
     }
 
@@ -52,19 +52,16 @@ public class EventHistory {
     // if new session, no previous song.
     if(previousSongId == null) return;
 
-    if(eventHistory.size() >= EVENT_HISTORY_SIZE) {
+    if(eventHistory.size() >= Constants.EVENT_HISTORY_SIZE) {
       eventHistory.removeFirst();
     }
     eventHistory.add(previousSongId + "-" + favSongId + "-" + PlayerEvent.FAVOURITE);
   }
 
   public static int getEventHistorySize() {
-    return EVENT_HISTORY_SIZE;
+    return Constants.EVENT_HISTORY_SIZE;
   }
 
-  public static void setEventHistorySize(int eventHistorySize) {
-    EVENT_HISTORY_SIZE = eventHistorySize;
-  }
 
   private static double round2dp(double d) {
     return Math.round(d * 100)/100.0;

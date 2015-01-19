@@ -41,7 +41,7 @@ public class RemoveSongTask implements DeferredTask {
         if(replacement == null) {
           replacement = ofy().load().key(Key.create(NodeCluster.class, root.getChildIds().get(indexToKeep))).now();
         }
-        
+
         ofy().delete().key(Key.create(LeafCluster.class, leafId(playlistId, songId)));
         NodeCluster parent = r.now();
         degglomerate(parent, root, replacement);

@@ -195,5 +195,4 @@ public class AddSongTask implements DeferredTask {
 
     return distanceFunction.distance(instances.firstInstance(), instances.lastInstance());
   }
-
 }

@@ -1,9 +1,11 @@
 package uk.co.yojan.kiara.analysis.learning;
 
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -16,9 +18,9 @@ public class QLearner {
 
   // Learning rate, decreases with leaf distance with the node
   // alpha = BASE_ALPHA ^ (node distance)
-  public double alpha(int from, int to, int node) {
+  public double alpha(int from, int to, int node, int t) {
     int closestLevel = Math.min(from, to);
-    double a =  Math.pow(BASE_ALPHA, closestLevel - node);
+    double a =  Math.exp(-0.001 * t) * Math.pow(BASE_ALPHA, closestLevel - node);
 
     assert a <= 1.0;
     assert a >= 0.0;
@@ -30,7 +32,7 @@ public class QLearner {
   // 0 - myopic, short-sighted
   // 1 - long-term high reward
   public double gamma() {
-    return 0.5;
+    return 0.2;
   }
 
   /**
@@ -46,12 +48,13 @@ public class QLearner {
    * @return  the updated Q(s, a) value
    */
   public Result learn(NodeCluster cluster, int stateIndex, int actionIndex, double reward, int fromLevel, int toLevel) {
-
-    double clusterAlpha = alpha(fromLevel, toLevel, cluster.getLevel());
-
-    updateQMatrix(cluster.getQ(), stateIndex, actionIndex, reward, clusterAlpha, gamma());
-
+    basicLearn(cluster, stateIndex, actionIndex, reward, fromLevel, toLevel);
     return ofy().save().entity(cluster);
+  }
+
+  private void basicLearn(NodeCluster cluster, int stateIndex, int actionIndex, double reward, int fromLevel, int toLevel) {
+    double clusterAlpha = alpha(fromLevel, toLevel, cluster.getLevel(), 0); // TODO: time dependent alpha
+    updateQMatrix(cluster.getQ(), stateIndex, actionIndex, reward, clusterAlpha, gamma());
   }
 
   /**
@@ -113,10 +116,52 @@ public class QLearner {
       ancestor = ofy().load().key(ancestor.getParent()).now();
 
       // assert: clusterIndex(previousSong) == clusterIndex(currentSong)
+
+      learn(
+          ancestor,
+          ancestor.clusterIndex(previousSong.getSongId()),
+          ancestor.clusterIndex(currentSong.getSongId()),
+          reward,
+          previousSong.getLevel(),
+          currentSong.getLevel());
+    }
+  }
+
+  public void optimizedUpdate(HashMap<Key<NodeCluster>, NodeCluster> nodes,
+                              HashMap<Key<LeafCluster>, LeafCluster> leaves,
+                              LeafCluster previousSong,
+                              LeafCluster currentSong,
+                              double reward) {
+    // LCA is the first NodeCluster going towards the root (i.e. following parent links)
+    // such that the shadow contains both the previous song id, and the current song id.
+    NodeCluster ancestor = nodes.get(previousSong.getParent());
+    while(!commonAncestor(ancestor, previousSong.getSongId(), currentSong.getSongId())) {
+      ancestor = nodes.get(ancestor.getParent());
+    }
+
+    // assert: ancestor is the lowest common ancestor of cluster nodes previousSong and currentSong
+    if(ancestor.clusterIndex(previousSong.getSongId()) == -1)
+      Logger.getLogger("").warning("LOOK: " + previousSong.getSongId());
+
+    basicLearn(
+        ancestor,
+        ancestor.clusterIndex(previousSong.getSongId()),
+        ancestor.clusterIndex(currentSong.getSongId()),
+        reward,
+        previousSong.getLevel(),
+        currentSong.getLevel());
+
+
+    // traverse up the tree til the root, and update the diagonal values.
+    while(ancestor.getParent() != null) {
+
+      ancestor = nodes.get(ancestor.getParent());
+
+      // assert: clusterIndex(previousSong) == clusterIndex(currentSong)
       if(ancestor.clusterIndex(previousSong.getSongId()) == -1)
         Logger.getLogger("").warning("LOOK: " + previousSong.getSongId());
 
-      learn(
+      basicLearn(
           ancestor,
           ancestor.clusterIndex(previousSong.getSongId()),
           ancestor.clusterIndex(currentSong.getSongId()),

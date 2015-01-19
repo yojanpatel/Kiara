@@ -84,8 +84,13 @@ public class ReClusterTask implements DeferredTask {
       qLearner.optimizedUpdate(nodes, leaves, previous, current, r);
     }
 
+    p.setLastClusterSize(p.getAllSongIds().size());
+
+    Result r0 = ofy().save().entity(p);
     Result r1 = ofy().save().entities(nodes.values());
     Result r2 = ofy().save().entities(leaves.values());
+
+    r0.now();
     r1.now();
     r2.now();
   }
