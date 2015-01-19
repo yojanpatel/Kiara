@@ -60,15 +60,16 @@ public class MusicService extends Service
 
   private int lastSkip;
 
+  public LinkedList<Song> playQueue;
+  public Song recommendedSong;
+  private boolean currentSongQueued; // if the song playing is the result of a user queue.
+
   // build up currentState to send to the server when a new track is played.
   // this includes updating its favourite state, skip state, time etc.
   ActionEvent currentState;
 
   private Bitmap currentSongAlbumCover;
   private Bitmap nextAlbumCover;
-
-
-  public LinkedList<Song> playQueue;
 
   // Locks that have to be acquired from Android if streaming is taking place.
   private PowerManager.WakeLock wakeLock;
@@ -213,6 +214,10 @@ public class MusicService extends Service
       Log.d("Kiara", currentState.isSkipped() + " " + currentState.getPercentage());
 
       currentState.setStartedSongId(stripSpotifyUri(playerState.trackUri));
+      if(currentSongQueued) {
+        Log.d("Kiara", "Song playing was queued.");
+        currentState.setQueued(true);
+      }
       application.learningApi().transition(application.userId(),
           playlistId,
           currentState,
@@ -237,7 +242,6 @@ public class MusicService extends Service
 
     // TRACK_END: the song was skipped (nextSong() was called)
     } else if (eventType == EventType.TRACK_END) {
-      Log.d("KiKiK", lastSkip + " SKIP TIME");
       if(lastSkip < 98) {
         Log.d("KiaraPlayerEvent", "Track ended due to skip " + playerState.trackUri + " " + lastSkip);
 
@@ -253,7 +257,7 @@ public class MusicService extends Service
 
     } else if (eventType == EventType.LOST_PERMISSION) {
         Log.d("KiaraPlayerEvent", "Lost permission, pausing.");
-
+        mHandler.removeCallbacks(mRunnable);
     }
 
     application.getBus().post(new PlaybackEvent(eventType, playerState));
@@ -295,7 +299,6 @@ public class MusicService extends Service
 
     // play song on the spotify player
     player.play("spotify:track:" + song.getSpotifyId());
-
 
     // signal playback session is in progress, runnable, acquire wake locks etc.
     sharedPreferences().edit().putBoolean(Constants.IN_SESSION, true).commit();
@@ -346,12 +349,18 @@ public class MusicService extends Service
     if(playQueue.size() > 0) {
       lastSkip = 100 * position / duration;
       Log.d(log, "playing the nextSong " + playQueue.getFirst().getSongName());
-
       currentSongAlbumCover = nextAlbumCover;
       nextAlbumCover = null;
-
+      currentSongQueued = true;
       playSong(playQueue.getFirst());
       playQueue.removeFirst();
+
+    } else if(recommendedSong != null) {
+      lastSkip = 100 * position / duration;
+      Log.d(log, "playing the nextSong " + recommendedSong.getSongName());
+      currentSongQueued = false;
+      playSong(recommendedSong);
+      recommendedSong = null;
     } else {
       playing = false;
       pause();
@@ -363,13 +372,9 @@ public class MusicService extends Service
   }
 
   public void queueSong(Song song) {
-    playQueue.addLast(song);
-    application.learningApi().trackQueued(
-        application.userId(),
-        playlistId,
-        currentSong.getSpotifyId(),
-        song.getSpotifyId(),
-        updateOnCallback);
+    if(!playQueue.contains(song)) {
+      playQueue.addLast(song);
+    }
   }
 
   public RepeatState repeat() {
@@ -573,8 +578,7 @@ public class MusicService extends Service
   retrofit.Callback<Song> updateOnCallback =  new retrofit.Callback<Song>() {
     @Override
     public void success(Song s, Response response) {
-      playQueue.clear();
-      playQueue.add(s);
+      recommendedSong = s;
       application.getBus().post(s);
     }
 

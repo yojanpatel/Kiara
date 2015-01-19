@@ -137,9 +137,16 @@ public class PlayerFragment extends KiaraFragment {
 
     initButtons();
     initialiseSeekBar();
+
     updateUi(currentSong);
 
     return rootView;
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    updateUi(currentSong);
   }
 
   @Override
@@ -234,12 +241,14 @@ public class PlayerFragment extends KiaraFragment {
     });
   }
 
-  private void updateUi(Song currentSong) {
-    this.currentSong = currentSong;
-    picasso.load(currentSong.getImageURL()).into(albumArt);
-    songName.setText(currentSong.getSongName());
-    artistName.setText(currentSong.getArtistName());
-    albumName.setText(currentSong.getAlbumName());
+  private void updateUi(Song newSong) {
+    if(this.currentSong == null || currentSong.getSpotifyId().equals(newSong.getSpotifyId())) {
+      currentSong = newSong;
+      picasso.load(newSong.getImageURL()).into(albumArt);
+      songName.setText(newSong.getSongName());
+      artistName.setText(newSong.getArtistName());
+      albumName.setText(newSong.getAlbumName());
+    }
   }
 
   @Subscribe
@@ -257,10 +266,13 @@ public class PlayerFragment extends KiaraFragment {
     PlayerNotificationCallback.EventType eventType = event.getEvent();
     PlayerState state = event.getState();
 
-    if(eventType == PlayerNotificationCallback.EventType.PLAY ||
-       eventType == PlayerNotificationCallback.EventType.TRACK_START) {
+    if(eventType == PlayerNotificationCallback.EventType.PLAY) {
+      playpause.setImageDrawable(pause);
+
+    } else if(eventType == PlayerNotificationCallback.EventType.TRACK_START) {
       playpause.setImageDrawable(pause);
       favouriteFab.setIcon(R.drawable.ic_favorite_outline_white_24dp);
+      seekBar.setProgress(0);
       updateUi(musicService.getCurrentSong());
 
     } else if(eventType == PlayerNotificationCallback.EventType.PAUSE ||
@@ -299,7 +311,6 @@ public class PlayerFragment extends KiaraFragment {
       musicService = binder.getService();
       bound = true;
 
-
       // if session already in progress and arriving from control fragment
       if(playlistId == -1) {
         playlistId = musicService.getPlaylistId();
@@ -308,6 +319,7 @@ public class PlayerFragment extends KiaraFragment {
       }
       Log.d("PLAYLISTID", playlistId + " ");
       musicService.playSongWeak(currentSong);
+      updateUi(musicService.getCurrentSong());
       playpause.setImageDrawable(
           musicService.isPlaying() ? pause : play
       );
