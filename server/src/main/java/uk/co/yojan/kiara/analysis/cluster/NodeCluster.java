@@ -5,9 +5,7 @@ import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Serialize;
 import com.googlecode.objectify.annotation.Subclass;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
@@ -136,10 +134,18 @@ public class NodeCluster extends Cluster {
       }
     }
 
-    ArrayList<Cluster> children = new ArrayList<>();
-    children.addAll(ofy().load().keys(nodeKeys).values());
-    children.addAll(ofy().load().keys(leafKeys).values());
-    return children;
+    ArrayList<Cluster> childNodes = new ArrayList<>();
+    Map<Key<NodeCluster>, NodeCluster> clusterNodes = ofy().load().keys(nodeKeys);
+    Map<Key<LeafCluster>, LeafCluster> leafNodes = ofy().load().keys(leafKeys);
+
+    for(String id : children) {
+      if(leaves.contains(id)) {
+        childNodes.add(leafNodes.get(Key.create(LeafCluster.class, id)));
+      } else {
+        childNodes.add(clusterNodes.get(Key.create(NodeCluster.class, id)));
+      }
+    }
+    return childNodes;
   }
 
   public void setChildren(List<Cluster> clusters) {
@@ -189,12 +195,17 @@ public class NodeCluster extends Cluster {
     for(int clusterIndex = 0; clusterIndex < getChildren().size(); clusterIndex++) {
       Cluster cluster = getChildren().get(clusterIndex);
 
+      System.out.println(cluster.getClass().getCanonicalName() + " " + cluster.getId());
+
       if (cluster instanceof LeafCluster) {
+        System.out.println("...");
         if(((LeafCluster) cluster).getSongId().equals(songId)) {
+          System.out.println(((LeafCluster) cluster).getSongId() + "==" + songId);
           return clusterIndex;
         }
       } else if(cluster instanceof NodeCluster) {
         if(((NodeCluster) cluster).getSongIds().contains(songId)) {
+          System.out.println(cluster.getId());
           return clusterIndex;
         }
       }
@@ -255,5 +266,9 @@ public class NodeCluster extends Cluster {
 
   public List<String> getChildIds() {
     return children;
+  }
+
+  public void addLeaf(String leafId) {
+    leaves.add(leafId);
   }
 }

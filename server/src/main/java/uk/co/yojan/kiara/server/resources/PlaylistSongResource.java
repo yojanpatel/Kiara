@@ -188,7 +188,8 @@ public class PlaylistSongResource {
   }
 
   @DELETE
-  public Response deleteSong(String spotifyId,
+  @Path("/{song_id}")
+  public Response deleteSong(@PathParam("song_id") String spotifyId,
                              @PathParam("user_id") String userId,
                              @PathParam("playlist_id") Long playlistId) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
@@ -205,6 +206,7 @@ public class PlaylistSongResource {
     TaskManager.getQueue().add(TaskOptions.Builder
         .withPayload(new RemoveSongTask(playlistId, spotifyId))
         .taskName("DeleteSong-" + playlistId + "-" + System.currentTimeMillis()));
+
     return Response.ok().build();
   }
 
