@@ -1,7 +1,7 @@
 package uk.co.yojan.kiara.analysis.learning.recommendation;
 
 import com.googlecode.objectify.Key;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import org.apache.commons.lang.NotImplementedException;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.Cluster;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
@@ -21,63 +21,62 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 public class BottomUpRecommender implements Recommender {
 
   private static final Logger log = Logger.getLogger("BottomUpRecommender");
-  private static final boolean SOFT_MAX = false;
+  private static final boolean SOFT_MAX = true;
 
   private static final double EPSILON = 0.3;
 
+  public double temperature(int level, int t) {
+    log.warning(Constants.SOFTMAX_TEMPERATURE * Math.exp(-0.05 * t) + " T");
+    return 1 + Constants.SOFTMAX_TEMPERATURE * Math.exp(-0.05 * t);
+  }
+
   public double epsilon(int level, int t) {
-    if(level < 2) return EPSILON / 2;
-    return EPSILON;
+    return 0.4 * Math.exp(-0.05 * t);
   }
 
   /**
    * Bottom-up traversal starting from the LeafCluster of the currently playing track.
    *
    * @param userId     the id of the user
-   * @param playlistId the id of the playlist to reccomend next track for
+   * @param p the id of the playlist to reccomend next track for
    * @return the spotify id of the song to play next
    */
   @Override
-  public String recommend(String userId, Long playlistId) {
-
-    // TODO: uncomment when done with experimenting
-    // Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
-    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+  public String recommend(String userId, Playlist p, String recentSongId) {
     LinkedList<String> history = p.history();
     int t = p.events().size();
 
-    // Recommend song based on the last finished song.
-    // If there is no previously finished song (recent), recommend based on the last song that was played
-    String recentSongId = p.lastFinished();
-    if(recentSongId == null) {
-      recentSongId = p.previousSong();
-    }
-
-    LeafCluster currentSongLeafCluster = OfyUtils.loadLeafCluster(playlistId, recentSongId).now();
-    NodeCluster parentNodeCluster = ofy().load().key(currentSongLeafCluster.getParent()).now();
+    LeafCluster currentSongLeafCluster = OfyUtils.loadLeafCluster(p.getId(), recentSongId).now();
+    NodeCluster  parentNodeCluster = ofy().load().key(currentSongLeafCluster.getParent()).now();
     int leafClusterIndex = parentNodeCluster.clusterIndex(currentSongLeafCluster.getSongId());
 
     while(true) {
       // compute actions to be excluded
       List<Integer> excludeActions = excludeActions(parentNodeCluster, p.history());
+      boolean actionsAvailable = excludeActions.size() < parentNodeCluster.getChildren().size();
 
-      // Compute the next cluster to try
-      //noinspection ConstantConditions
-      int nextClusterIndex = SOFT_MAX ? softMaxAction(parentNodeCluster, leafClusterIndex, excludeActions)
-                                      : greedyEpsilon(parentNodeCluster, leafClusterIndex, t, excludeActions);
-      Cluster nextCluster = parentNodeCluster.getChildren().get(nextClusterIndex);
-
+      // recommendedSongId will remain null if no actions available, causing a move up the tree
       String recommendedSongId = null;
 
-      if (nextCluster instanceof LeafCluster) {
-        // recommend if not in history
-        String leafSongId = ((LeafCluster) nextCluster).getSongId();
-        if(!history.contains(leafSongId)) {
-          recommendedSongId = leafSongId;
+      if(actionsAvailable) {
+        // Compute the next cluster to try
+        //noinspection ConstantConditions
+        int nextClusterIndex = SOFT_MAX ? softMaxAction(parentNodeCluster, leafClusterIndex, t, excludeActions)
+                                        : greedyEpsilon(parentNodeCluster, leafClusterIndex, t, excludeActions);
+
+        assert !excludeActions.contains(nextClusterIndex);
+
+        Cluster nextCluster = parentNodeCluster.getChildren().get(nextClusterIndex);
+        if (nextCluster instanceof LeafCluster) {
+          // recommend if not in history
+          String leafSongId = ((LeafCluster) nextCluster).getSongId();
+          if (!history.contains(leafSongId)) {
+            recommendedSongId = leafSongId;
+          }
+        } else if (nextCluster instanceof NodeCluster) {
+          // Use a rough cosine similarity to choose the next song from the child NodeCluster's shadow.
+          recommendedSongId = selectSong((NodeCluster) nextCluster, recentSongId, history);
         }
-      } else if (nextCluster instanceof NodeCluster) {
-        // Use a rough cosine similarity to choose the next song from the child NodeCluster's shadow.
-        recommendedSongId = selectSong((NodeCluster) nextCluster, recentSongId, history);
       }
 
       // recommendedSongId is not null if the prediction is valid.
@@ -88,7 +87,6 @@ public class BottomUpRecommender implements Recommender {
         Key<NodeCluster> parent = parentNodeCluster.getParent();
         if (parent == null) {
           log.warning("Something went wrong. No songs were recommended even after the root was reached. " + parentNodeCluster.getId());
-
           return parentNodeCluster.getSongIds().get(new Random().nextInt(parentNodeCluster.getChildren().size()));
         }
 
@@ -122,6 +120,8 @@ public class BottomUpRecommender implements Recommender {
     String currentRecommendation = null;
 
     Collection<SongFeature> candidates = ofy().load().keys(convertIdsToKeys(nodeCluster.getSongIds())).values();
+
+
 
     for (SongFeature song : candidates) {
       if(song == null) continue;
@@ -218,37 +218,47 @@ public class BottomUpRecommender implements Recommender {
    *
    * @return  the action to be taken, i.e. the index of the cluster in cluster to go to.
    */
-  private int softMaxAction(NodeCluster cluster, int clusterIndex, List<Integer> excludeActions) {
+  private int softMaxAction(NodeCluster cluster, int clusterIndex, int t, List<Integer> excludeActions) {
 
-    List<Double> stateRow = cluster.getQRow(clusterIndex);
+    List<Double> unnormalizedstateRow = cluster.getQRow(clusterIndex);
+    List<Double> stateRow = new ArrayList<>();
+    double max = Double.NEGATIVE_INFINITY;
+    for(Double d : unnormalizedstateRow) max = Math.max(max, d);
+    for(Double d : unnormalizedstateRow) stateRow.add(d / max);
+
 
     List<Double> actionProbabilities = new ArrayList<>();
-
+    log.warning("EXCLUDE: " + excludeActions.toString());
     double denominator = 0.0;
     for(int action = 0; action < stateRow.size(); action++) {
       if(!excludeActions.contains(action)) {
         Double actionVal = stateRow.get(action);
-        denominator += Math.exp(actionVal / Constants.SOFTMAX_TEMPERATURE);
+        denominator += Math.exp(actionVal / temperature(cluster.getLevel(), t));
       }
     }
+    log.warning("Denominator: " + denominator);
 
     for(int action = 0; action < stateRow.size(); action++) {
       if(!excludeActions.contains(action)) {
         Double actionVal = stateRow.get(action);
-        double prob = Math.exp(actionVal / Constants.SOFTMAX_TEMPERATURE) / denominator;
+        double prob = Math.exp(actionVal / temperature(cluster.getLevel(), t)) / denominator;
+        log.warning("actionVal: " + actionVal);
         actionProbabilities.add(prob);
       } else {
-        actionProbabilities.add(null);
+        actionProbabilities.add(Double.NaN);
       }
     }
+    log.warning("STATE: " + stateRow.toString());
+    log.warning("PROB: " + actionProbabilities.toString());
 
     // u ~ Uniform(0,1)
     Double u = new Random().nextDouble();
-
+    log.warning(u + " drawn from U(0,1)");
     double cumulative = 0.0;
     for(int i = 0; i < actionProbabilities.size(); i++) {
-      if (actionProbabilities.get(i) != null) {
+      if (actionProbabilities.get(i) != Double.NaN) {
         cumulative += actionProbabilities.get(i);
+        log.warning(cumulative + " current cumulative");
         if (u < cumulative) {
           return i;
         }
@@ -352,19 +362,61 @@ public class BottomUpRecommender implements Recommender {
     Set<String> usedSet = new HashSet<>(history);
     List<Cluster> children = cluster.getChildren();
 
+    if(cluster.getParent() != null) {
+      return excludeIndices;
+    }
+
     for(int i = 0; i < children.size(); i++) {
       Cluster c = children.get(i);
-      if(c instanceof LeafCluster) {
-        if(usedSet.contains(((LeafCluster) c).getSongId())) {
+      if (c instanceof LeafCluster) {
+        if (usedSet.contains(((LeafCluster) c).getSongId())) {
           excludeIndices.add(i);
         }
-      } else if(c instanceof NodeCluster) {
-        if(usedSet.containsAll(((NodeCluster) c).getSongIds())) {
+      } else if (c instanceof NodeCluster) {
+        if (usedSet.containsAll(((NodeCluster) c).getSongIds())) {
           excludeIndices.add(i);
         }
       }
     }
     return excludeIndices;
+  }
+
+  public static void main(String[] args) {
+    double[] a = {0.0, 1.0, 0.0};
+    ArrayList<Integer> excludeActions = new ArrayList<>();
+    excludeActions.add(1);
+    ArrayList<Double> actionProbabilities = new ArrayList<>();
+
+    double denominator = 0.0;
+    for(int action = 0; action < a.length; action++) {
+      if(!excludeActions.contains(action)) {
+        Double actionVal = a[action];
+        denominator += Math.exp(actionVal / new BottomUpRecommender().temperature(2, 172));
+      }
+    }
+
+    for(int action = 0; action < a.length; action++) {
+      if(!excludeActions.contains(action)) {
+        Double actionVal = a[action];
+        double prob = Math.exp(actionVal / new BottomUpRecommender().temperature(2, 172)) / denominator;
+        actionProbabilities.add(prob);
+      } else {
+        actionProbabilities.add(Double.NaN);
+      }
+    }
+    Double u = new Random().nextDouble();
+    log.warning(u + " drawn from U(0,1)");
+    double cumulative = 0.0;
+    for(int i = 0; i < actionProbabilities.size(); i++) {
+      if (actionProbabilities.get(i) != Double.NaN) {
+        cumulative += actionProbabilities.get(i);
+        log.warning(cumulative + " current cumulative");
+        if (u < cumulative) {
+          System.out.println(i);
+          return;
+        }
+      }
+    }
   }
 }
 

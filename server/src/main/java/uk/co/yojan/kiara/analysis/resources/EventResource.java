@@ -1,13 +1,17 @@
 package uk.co.yojan.kiara.analysis.resources;
 
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
-import uk.co.yojan.kiara.analysis.learning.*;
+import uk.co.yojan.kiara.analysis.learning.ActionEvent;
+import uk.co.yojan.kiara.analysis.learning.EventHistory;
+import uk.co.yojan.kiara.analysis.learning.QLearner;
+import uk.co.yojan.kiara.analysis.learning.recommendation.BottomUpRecommender;
 import uk.co.yojan.kiara.analysis.learning.recommendation.Recommender;
-import uk.co.yojan.kiara.analysis.learning.recommendation.TopDownRecommender;
-import uk.co.yojan.kiara.analysis.learning.rewards.BinaryRewardFunction;
 import uk.co.yojan.kiara.analysis.learning.rewards.RewardFunction;
+import uk.co.yojan.kiara.analysis.learning.rewards.VariedSkipReward;
+import uk.co.yojan.kiara.server.Constants;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 
@@ -19,17 +23,6 @@ import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
-
-
-/**
- * IMPORTANT TODO:
- *   ordering of event requests to server
- *   example: skip A, start B send from android
- *            start B, skip A finished order at server due to different service times
- *
- *            find a way to not use history of the playlist (.previousSong())
- *
- */
 
 /**
  * IMPORTANT: all events that cause learning to occur, i.e. call QLearner.update()
@@ -44,96 +37,8 @@ public class EventResource {
 
   // TODO dynamically change based on some setting parameter
   // Change the object to choose the reward function.
-  public static RewardFunction reward = new BinaryRewardFunction();
-  public static Recommender recommender = new TopDownRecommender();
-
-  @POST
-  @Path("/start/{songId}")
-  public Response trackStarted(@PathParam("userId") String userId,
-                               @PathParam("playlistId") Long playlistId,
-                               @PathParam("songId") String songId) {
-
-    long t1 = System.currentTimeMillis();
-    // update the listening history sliding window and other session state.
-    Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    long t2 = System.currentTimeMillis();
-    playlist.nowPlaying(songId); // async
-    long t3 = System.currentTimeMillis();
-    Result save = ofy().save().entity(playlist);
-    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
-    long t4 = System.currentTimeMillis();
-    save.now();
-    Logger.getLogger("").warning((t2 - t1) + " " + (t3 - t2) + " " + (t4 - t3));
-
-    return Response.ok(next).build();
-  }
-
-  @POST
-  @Path("/finish/{songId}")
-  public Response trackFinished(@PathParam("userId") String userId,
-                                @PathParam("playlistId") Long playlistId,
-                                @PathParam("songId") String songId) {
-
-    double r = reward.rewardTrackFinished();
-    long t1 = System.currentTimeMillis();
-    Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    Logger.getLogger("").warning("Last played: " + playlist.lastFinished());
-    long t2 = System.currentTimeMillis();
-    if(playlist.lastFinished() != null) {
-      // record event in the events history for playlist
-      EventHistory.addEnd(playlist.events(), playlist.lastFinished(), songId);
-
-      if (playlist.lastFinished() != null) {
-        LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.lastFinished()).now();
-        LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
-        QLearner.update(previous, current, r);
-      }
-    }
-
-    // update the last successful song played in the playlist
-    playlist.justFinished(songId);
-    long t3 = System.currentTimeMillis();
-    Result save = ofy().save().entity(playlist);
-    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
-    long t4 = System.currentTimeMillis();
-    save.now(); // sync
-    Logger.getLogger("").warning((t2 - t1) + " " + (t3 - t2) + " " + (t4 - t3));
-    return Response.ok().entity(next).build();
-  }
-
-  @POST
-  @Path("/skip/{songId}/{skipTime}")
-  public Response skip(@PathParam("userId") String userId,
-                       @PathParam("playlistId") Long playlistId,
-                       @PathParam("songId") String songId,
-                       @PathParam("skipTime") int skipTime) {
-    double r = reward.rewardSkip(skipTime);
-    Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    Logger.getLogger("").warning("Last played: " + playlist.lastFinished());
-
-
-    if(playlist.lastFinished() != null) {
-      // record event in the events history for playlist
-      EventHistory.addSkipped(playlist.events(), playlist.lastFinished(), songId, skipTime);
-      ofy().save().entity(playlist).now(); // async
-      long t1 = System.currentTimeMillis();
-      LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.lastFinished()).now();
-      LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
-      long t2 = System.currentTimeMillis();
-      Logger.getLogger("").warning("time taken to load leafclusters" + (t2-t1));
-      Logger.getLogger("s").warning(playlist.lastFinished() + "-->" + songId);
-
-      long t3 = System.currentTimeMillis();
-      QLearner.update(previous, current, r);
-      long t4 = System.currentTimeMillis();
-      Logger.getLogger("").warning("time taken to update " + (t4-t3));
-    }
-
-    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
-
-    return Response.ok().entity(next).build();
-  }
-
+  public static RewardFunction reward = new VariedSkipReward();
+  public static Recommender recommender = new BottomUpRecommender();
 
   @POST
   @Path("/queue/{currentSongId}/{queuedSongId}")
@@ -158,33 +63,9 @@ public class EventResource {
       QLearner.update(current, queued, r);
     }
 
-    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
+    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlist, playlist.lastFinished())).now();
     return Response.ok().entity(next).build();  }
 
-  @POST
-  @Path("/favourite/{songId}")
-  public Response favourite(@PathParam("userId") String userId,
-                            @PathParam("playlistId") Long playlistId,
-                            @PathParam("songId") String songId) {
-    double r = reward.rewardFavourite();
-
-    Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    Logger.getLogger("").warning("Last played: " + playlist.lastFinished());
-
-    if(playlist.lastFinished() != null) {
-      // record event in the events history for playlist
-      EventHistory.addFavourite(playlist.events(), playlist.lastFinished(), songId);
-      ofy().save().entity(playlist).now(); // async
-
-      LeafCluster previous = OfyUtils.loadLeafCluster(playlistId, playlist.lastFinished()).now();
-      LeafCluster current = OfyUtils.loadLeafCluster(playlistId, songId).now();
-
-      QLearner.update(previous, current, r);
-    }
-
-    Song next = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
-    return Response.ok().entity(next).build();
-  }
 
   /**
    * An event represents a transition in the music player listening.
@@ -198,8 +79,6 @@ public class EventResource {
    *   -- getEndedSongId() is the song that just completed playing, the source of the transition event. (CURRENT)
    *   -- getStartedSongId() is the song that has just started playing, the destination of the transition event. (NEXT)
    *
-   *   TODO: refactor into individual methods
-   *
    * @param userId
    * @param playlistId
    * @param event
@@ -210,9 +89,31 @@ public class EventResource {
                                   @PathParam("playlistId") Long playlistId,
                                   ActionEvent event) {
     // essentially does all of skip/finish, fav and start.
-    Playlist playlist = OfyUtils.loadPlaylist(userId, playlistId);
-    learnFromEvent(playlist, event).now();
-    Song recommended = OfyUtils.loadSong(recommender.recommend(userId, playlistId)).now();
+
+    // TODO: uncomment when done with experimenting
+    // Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
+    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+    learnFromEvent(p, event).now();
+
+    // Recommend song based on the last finished song.
+    // If there is no previously finished song (recent), recommend based on the last song that was played
+    String recentSongId = p.lastFinished();
+    if(recentSongId == null) {
+      recentSongId = p.previousSong();
+    }
+
+    Song recommended = OfyUtils.loadSong(recommender.recommend(userId, p, recentSongId)).now();
+    return Response.ok(recommended).build();
+  }
+
+  @GET
+  @Path("/recommend")
+  public Response recommend(@PathParam("userId") String userId,
+                            @PathParam("playlistId") Long playlistId,
+                            @QueryParam("s") String songId) {
+
+    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+    Song recommended = OfyUtils.loadSong(recommender.recommend(userId, p, songId)).now();
     return Response.ok(recommended).build();
   }
 
@@ -227,6 +128,7 @@ public class EventResource {
     // started == null: should not happen.
     String started = event.getStartedSongId();
     assert started != null;
+    Result<LeafCluster> startedLeafClusterResult = OfyUtils.loadLeafCluster(playlistId, started);
 
     // Learn iff lastFinished --> justFinished transition exists.
     boolean transitionUpdatePossible = justFinished != null && lastFinished != null;
@@ -239,7 +141,8 @@ public class EventResource {
         EventHistory.addFavourite(playlist.events(), lastFinished, justFinished);
       }
 
-      // Determine if skipped or finished naturally.
+      // Determine if skipped or finished naturally, this section regards learning
+      // from the song that just finished.
       if(event.isSkipped()) {
         r += reward.rewardSkip(event.getPercentage());
         EventHistory.addSkipped(playlist.events(), lastFinished, justFinished, event.getPercentage());
@@ -247,15 +150,28 @@ public class EventResource {
         r+= reward.rewardTrackFinished();
         EventHistory.addEnd(playlist.events(), lastFinished, justFinished);
       }
+
+
+
       Result<LeafCluster> result = OfyUtils.loadLeafCluster(playlistId, lastFinished);
       LeafCluster currentLeaf = OfyUtils.loadLeafCluster(playlistId, justFinished).now();
       LeafCluster previousLeaf = result.now();
 
       // the total reward is augmented by favouriting.
       QLearner.update(previousLeaf, currentLeaf, r);
+
+      // Determine if the new song that is playing was queued. In this case,
+      // need to emit reward for the queuing action.
+      if(event.isQueued()) {
+        // Learn with respect to the song that will have just finished.
+        LeafCluster finished = (!event.isSkipped() || event.getPercentage() > Constants.SKIP_SONG_FINISH)
+                                  ? currentLeaf : previousLeaf;
+
+        QLearner.update(finished, startedLeafClusterResult.now(), reward.rewardQueue());
+      }
     }
 
-    if((!event.isSkipped() || event.getPercentage() > 80) && justFinished != null) {
+    if((!event.isSkipped() || event.getPercentage() > Constants.SKIP_SONG_FINISH) && justFinished != null) {
       playlist.justFinished(justFinished);
     }
     playlist.nowPlaying(started);

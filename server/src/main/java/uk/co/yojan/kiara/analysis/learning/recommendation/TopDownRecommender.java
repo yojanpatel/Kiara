@@ -29,25 +29,17 @@ public class TopDownRecommender implements Recommender {
   }
 
   /**
-   * @param userId     the id of the user
-   * @param playlistId the id of the playlist to reccomend next track for
+   * @param userId   the id of the user
+   * @param playlist the playlist to reccomend next track for
    * @return the spotify id of the song to play next
    */
   @Override
-  public String recommend(String userId, Long playlistId) {
-    // TODO: uncomment when done with experimenting
-//    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
-    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
-    LinkedList<String> history = p.history();
-    int t = p.events().size();
-
-    String recentSongId = p.lastFinished();
-    if(recentSongId == null) {
-      recentSongId = p.previousSong();
-    }
+  public String recommend(String userId, Playlist playlist, String recentSongId) {
+    LinkedList<String> history = playlist.history();
+    int t = playlist.events().size();
 
     // start at the root node
-    NodeCluster current = OfyUtils.loadRootCluster(playlistId).now();
+    NodeCluster current = OfyUtils.loadRootCluster(playlist.getId()).now();
 
     // child index for the cluster that contained the song just played
     int clusterIndex = current.clusterIndex(recentSongId);
@@ -64,8 +56,6 @@ public class TopDownRecommender implements Recommender {
       //   Prob(a) = exp(Q(s,a)) / Sum(exp(Q(s, i)) / T)
       //   http://en.wikipedia.org/wiki/Softmax_function
       if (epsilonProb < epsilon(current.getLevel(), t)) {
-        log.warning("Probabilistic Choice based on Distribution of Q");
-
         List<Double> actionProbabilities = new ArrayList<>();
 
         double denominator = 0.0;
@@ -111,7 +101,6 @@ public class TopDownRecommender implements Recommender {
         log.warning(nextLeaf.getSongId());
         // String id = nextClusterId.split("-")[1];
         if (!history.contains(nextLeaf.getSongId())) {
-          log.warning("A leaf was recommended, was not found in history: " + nextLeaf.getSongId());
           return nextLeaf.getSongId();
         } else {
           // break from while loop and recommend using heuristic from current

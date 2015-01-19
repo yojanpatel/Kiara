@@ -19,19 +19,17 @@ public class ClusterRecommender implements Recommender {
   private static final int PERIMETER_SIZE = 4;
 
   /**
-   * @param userId     the id of the user
-   * @param playlistId the id of the playlist to reccomend next track for
+   * @param userId   the id of the user
+   * @param playlist the playlist to reccomend next track for
    * @return the spotify id of the song to play next
    */
   @Override
-  public String recommend(String userId, Long playlistId) {
-    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
-
-    LinkedList<String> history = p.history();
-    String recentSongId = p.previousSong();
+  public String recommend(String userId, Playlist playlist, String songId) {
+    LinkedList<String> history = playlist.history();
+    String recentSongId = playlist.previousSong();
     ArrayList<String> perimeter = new ArrayList<>();
 
-    LeafCluster leaf = OfyUtils.loadLeafCluster(playlistId, recentSongId).now();
+    LeafCluster leaf = OfyUtils.loadLeafCluster(playlist.getId(), recentSongId).now();
     NodeCluster parent = ofy().load().key(leaf.getParent()).now();
 
     if(parent != null) {

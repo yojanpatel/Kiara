@@ -1,6 +1,5 @@
 package uk.co.yojan.kiara.analysis.learning.recommendation;
 
-import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.server.models.Playlist;
 
 import java.util.ArrayList;
@@ -11,16 +10,14 @@ import java.util.List;
 public class RandomReccomender implements Recommender {
   /**
    * @param userId     the id of the user
-   * @param playlistId the id of the playlist to reccomend next track for
+   * @param playlist the playlist to reccomend next track for
    * @return the spotify id of the song to play next
    */
   @Override
-  public String recommend(String userId, Long playlistId) {
-    Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
+  public String recommend(String userId, Playlist playlist, String songId) {
+    List<String> songs = new ArrayList<>(playlist.getAllSongIds());
 
-    List<String> songs = new ArrayList<>(p.getAllSongIds());
-
-    LinkedList<String> history = p.history();
+    LinkedList<String> history = playlist.history();
 
     String reccomendedSongId = songs.get((int) (Math.random() * songs.size()));
     while(history.contains(reccomendedSongId)) {
