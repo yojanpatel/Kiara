@@ -8,6 +8,7 @@ import uk.co.yojan.kiara.analysis.learning.ActionEvent;
 import uk.co.yojan.kiara.analysis.learning.EventHistory;
 import uk.co.yojan.kiara.analysis.learning.QLearner;
 import uk.co.yojan.kiara.analysis.learning.recommendation.BottomUpRecommender;
+import uk.co.yojan.kiara.analysis.learning.recommendation.RandomReccomender;
 import uk.co.yojan.kiara.analysis.learning.recommendation.Recommender;
 import uk.co.yojan.kiara.analysis.learning.rewards.RewardFunction;
 import uk.co.yojan.kiara.analysis.learning.rewards.VariedSkipReward;
@@ -93,7 +94,6 @@ public class EventResource {
     // TODO: uncomment when done with experimenting
     // Playlist p = OfyUtils.loadPlaylist(userId, playlistId);
     Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
-    learnFromEvent(p, event).now();
 
     // Recommend song based on the last finished song.
     // If there is no previously finished song (recent), recommend based on the last song that was played
@@ -101,6 +101,14 @@ public class EventResource {
     if(recentSongId == null) {
       recentSongId = p.previousSong();
     }
+
+    if(!p.useCluster()) {
+      Song recommended = OfyUtils.loadSong(new RandomReccomender().recommend(userId, p, recentSongId)).now();
+      return Response.ok().entity(recommended).build();
+    }
+
+
+    learnFromEvent(p, event).now();
 
     Song recommended = OfyUtils.loadSong(recommender.recommend(userId, p, recentSongId)).now();
     return Response.ok(recommended).build();
@@ -113,6 +121,11 @@ public class EventResource {
                             @QueryParam("s") String songId) {
 
     Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+    if(!p.useCluster()) {
+      Song recommended = OfyUtils.loadSong(new RandomReccomender().recommend(userId, p, songId)).now();
+      return Response.ok().entity(recommended).build();
+    }
+
     Song recommended = OfyUtils.loadSong(recommender.recommend(userId, p, songId)).now();
     return Response.ok(recommended).build();
   }

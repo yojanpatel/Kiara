@@ -18,6 +18,7 @@ public class TaskManager {
   private static Queue updateQueue = null;
   private static Queue featureQueue = null;
   private static Queue clusterQueue = null;
+  private static Queue transactionQueue = null;
 
   private TaskManager() {}
 
@@ -47,6 +48,13 @@ public class TaskManager {
       clusterQueue = QueueFactory.getQueue("cluster");
     }
     return clusterQueue;
+  }
+
+  public static Queue transactionQueue() {
+    if(transactionQueue == null) {
+      transactionQueue = QueueFactory.getQueue("transaction");
+    }
+    return transactionQueue;
   }
 
   public static void fetchAnalysis(String spotifyId, String artist, String title) {

@@ -175,7 +175,7 @@ public class PlaylistSongResource {
       TaskManager.clusterQueue().add(TaskOptions.Builder
           .withPayload(new ReClusterTask(playlistId))
           .countdownMillis(10 * 1000)
-          .taskName("ReCluster-" + playlistId));
+          .taskName("ReCluster-" + playlistId + "-" + System.currentTimeMillis()));
     } else {
       // ad-hoc: update the playlist cluster representation
       TaskManager.featureQueue().add(TaskOptions.Builder

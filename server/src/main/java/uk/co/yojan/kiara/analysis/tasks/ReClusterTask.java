@@ -22,7 +22,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 
 public class ReClusterTask implements DeferredTask {
 
-  RewardFunction reward = new VariedSkipReward();
+  RewardFunction reward;
 
   NodeCluster root;
   Playlist p;
@@ -33,13 +33,7 @@ public class ReClusterTask implements DeferredTask {
   HashMap<Key<LeafCluster>, LeafCluster> leaves;
 
   public ReClusterTask(Long playlistId) {
-    p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
-    root = OfyUtils.loadRootCluster(playlistId).now();
     this.playlistId = playlistId;
-    this.events = p.events();
-
-    nodes = new HashMap<>();
-    leaves = new HashMap<>();
   }
 
   /**
@@ -55,11 +49,37 @@ public class ReClusterTask implements DeferredTask {
    */
   @Override
   public void run() {
+    reward = new VariedSkipReward();
+
+    nodes = new HashMap<>();
+    leaves = new HashMap<>();
+
+    p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+    root = OfyUtils.loadRootCluster(playlistId).now();
+    this.events = p.events();
+
+    // Set intermediate playlist state (cluster is not ready for a minute or so)
+    // also reset changes made since last recluster
+    p.setLastClusterSize(p.getAllSongIds().size());
+    p.setChangesSinceLastCluster(0);
+    p.setClusterReady(false);
+    Result r0 = ofy().save().entity(p);
     PlaylistClusterer.cluster(playlistId, 9);
+    r0.now();
+
     try {
-      Thread.sleep(60 * 1000); // 60s
+      int timeToSleep = p.size()  > 100 ? ((p.size() / 100) * 10 * 1000) : 10 * 1000;
+      Thread.sleep(timeToSleep);
     } catch (InterruptedException e) {
       e.printStackTrace();
+    }
+
+    p.setClusterReady(true);
+    ofy().save().entities(p);
+
+    if(events.size() < 10) {
+      ofy().save().entity(p).now();
+      return;
     }
 
     QLearner qLearner = new QLearner();
@@ -84,9 +104,8 @@ public class ReClusterTask implements DeferredTask {
       qLearner.optimizedUpdate(nodes, leaves, previous, current, r);
     }
 
-    p.setLastClusterSize(p.getAllSongIds().size());
 
-    Result r0 = ofy().save().entity(p);
+
     Result r1 = ofy().save().entities(nodes.values());
     Result r2 = ofy().save().entities(leaves.values());
 

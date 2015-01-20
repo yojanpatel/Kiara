@@ -15,11 +15,20 @@ public class EventHistory {
    *   source_id-target_id-action[-extra]
    */
 
+  private static int EVENT_HISTORY_SIZE = -1;
+
+  public static int size() {
+    if(EVENT_HISTORY_SIZE == -1) {
+      return Constants.EVENT_HISTORY_SIZE;
+    }
+    return EVENT_HISTORY_SIZE;
+  }
+
   public static void addEnd(LinkedList<String> eventHistory, String previousSongId, String endedSongId) {
     // if new session, no previous song.
     if(previousSongId == null) return;
 
-    if(eventHistory.size() >= Constants.EVENT_HISTORY_SIZE) {
+    if(eventHistory.size() >= size()) {
       eventHistory.removeFirst();
     }
 
@@ -30,7 +39,7 @@ public class EventHistory {
     // if new session, no previous song.
     if(previousSongId == null) return;
 
-    if(eventHistory.size() >= Constants.EVENT_HISTORY_SIZE) {
+    if(eventHistory.size() >= size()) {
       eventHistory.removeFirst();
     }
     // rough round to 2dp
@@ -41,7 +50,7 @@ public class EventHistory {
     // if new session, no previous song.
     if(previousSongId == null) return;
 
-    if(eventHistory.size() >= Constants.EVENT_HISTORY_SIZE) {
+    if(eventHistory.size() >= size()) {
       eventHistory.removeFirst();
     }
 
@@ -52,16 +61,19 @@ public class EventHistory {
     // if new session, no previous song.
     if(previousSongId == null) return;
 
-    if(eventHistory.size() >= Constants.EVENT_HISTORY_SIZE) {
+    if(eventHistory.size() >= size()) {
       eventHistory.removeFirst();
     }
     eventHistory.add(previousSongId + "-" + favSongId + "-" + PlayerEvent.FAVOURITE);
   }
 
   public static int getEventHistorySize() {
-    return Constants.EVENT_HISTORY_SIZE;
+    return size();
   }
 
+  public static void setEventHistorySize(int eventHistorySize) {
+    EVENT_HISTORY_SIZE = eventHistorySize;
+  }
 
   private static double round2dp(double d) {
     return Math.round(d * 100)/100.0;

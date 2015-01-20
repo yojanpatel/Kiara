@@ -31,10 +31,15 @@ public class ClusterResource {
 
     // fetch songs to display
     ArrayList<Key<Song>> songKeys = new ArrayList<>();
+    ArrayList<Key<SongFeature>> songFeatureKeys = new ArrayList<>();
     for(String songId : root.getSongIds()) {
       songKeys.add(Key.create(Song.class, songId));
+      songFeatureKeys.add(Key.create(SongFeature.class, songId));
     }
+
+    Map<Key<SongFeature>, SongFeature> songFeatures = ofy().load().keys(songFeatureKeys);
     Map<Key<Song>, Song> songs = ofy().load().keys(songKeys);
+
     StringBuilder html = new StringBuilder();
     List<List<Double>> Q = root.getQ();
     for(List<Double> stateRow : Q) {
@@ -58,8 +63,9 @@ public class ClusterResource {
         }
       } else if(hd instanceof LeafCluster) {
         Song leaf = songs.get(Key.create(Song.class, ((LeafCluster) hd).getSongId()));
+        SongFeature features = songFeatures.get(Key.create(SongFeature.class, ((LeafCluster) hd).getSongId()));
         for(int i = 0; i < hd.getLevel(); i++) html.append("&nbsp;&nbsp;&nbsp;&nbsp;");
-        html.append(leaf.getArtist() + " - " + leaf.getSongName() + "<br>");
+        html.append(leaf.getArtist() + " - " + leaf.getSongName() + " " + (features != null ? features.getTempo() : "") + "<br>");
       }
     }
     return Response.ok().entity(html.toString()).build();
@@ -80,7 +86,7 @@ public class ClusterResource {
   @GET
   @Path("/hierarchical/{playlistId}")
   public Response hierarchical(@PathParam("playlistId") Long playlistId,
-                           @DefaultValue("3") @QueryParam("k") int k) {
+                           @DefaultValue("9") @QueryParam("k") int k) {
 
     return Response.ok().entity(PlaylistClusterer.cluster(playlistId, k).getId()).build();
   }

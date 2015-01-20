@@ -1,7 +1,10 @@
 package uk.co.yojan.kiara.analysis.cluster;
 
+import com.google.appengine.api.taskqueue.DeferredTask;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Result;
+import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.tasks.KMeansClusterTask;
 import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.models.Playlist;
@@ -10,6 +13,7 @@ import uk.co.yojan.kiara.server.models.SongFeature;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Stack;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
@@ -25,7 +29,12 @@ public class PlaylistClusterer {
   public static NodeCluster cluster(Long playlistId, int k) {
 
     // Fetch the playlist from persistent DataStore
-    Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+    Result<Playlist> r = ofy().load().key(Key.create(Playlist.class, playlistId));
+
+    deleteClusterHierarchy(playlistId);
+
+    final Playlist p = r.now();
+    p.setClusterReady(false);
     Collection<String> songIds = p.getAllSongIds();
 
     // Initialise the root node for the hierarchy
@@ -37,6 +46,7 @@ public class PlaylistClusterer {
     ofy().save().entity(root).now();
 
     queueClusterTask(root.getId(), k);
+    queueDelayedUpdate(p.getId());
 
     return root;
   }
@@ -129,6 +139,7 @@ public class PlaylistClusterer {
     // Assign the clusters to the children of root
     cluster.setChildren(clusters);
 
+
     // Save to the DataStore.
     ofy().save().entity(cluster).now();
     ofy().save().entities(clusters).now();
@@ -148,6 +159,28 @@ public class PlaylistClusterer {
         TaskOptions.Builder
             .withPayload(new KMeansClusterTask(clusterId, k))
             .taskName("Cluster-" + clusterId+ "-" + System.currentTimeMillis()));
+  }
+
+  private static void queueDelayedUpdate(final Long playlistId) {
+    TaskManager.clusterQueue().add(
+        TaskOptions.Builder
+            .withPayload(new DeferredTask() {
+              @Override
+              public void run() {
+                Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
+                int timeToSleep = p.size()  > 100 ? ((p.size() / 100) * 10 * 1000) : 10 * 1000;
+                try {
+                  Thread.sleep(timeToSleep);
+                } catch (InterruptedException e) {
+                  e.printStackTrace();
+                }
+                p.setClusterReady(true);
+                p.setChangesSinceLastCluster(0);
+                Logger.getLogger("").warning("SAVING PLAYLIST CLUSTER");
+                ofy().save().entities(p);
+              }
+            })
+            .taskName("Transaction-" + playlistId + "-" + System.currentTimeMillis()));
   }
 
   public static Collection<Key<SongFeature>> featureKeys(Collection<String> songIds) {
@@ -173,6 +206,34 @@ public class PlaylistClusterer {
   public static String clusterId(NodeCluster parent, int index, int k) {
     String[] s = parent.getId().split("-");
     return s[0] + "-" + (Integer.parseInt(s[1]) + 1) + "-" + (index + Integer.parseInt(s[2]) * k);
+  }
+
+  public static void deleteClusterHierarchy(Long playlistId) {
+    Stack<NodeCluster> s = new Stack<>();
+    Logger.getLogger("").warning("Deleting hierarchy");
+    long l1 = System.currentTimeMillis();
+    int counter = 0;
+    NodeCluster root = OfyUtils.loadRootCluster(playlistId).now();
+    if(root == null) return;
+    s.push(root);
+    while(!s.isEmpty()) {
+      NodeCluster n = s.pop();
+      if(n == null) continue;
+      List<Cluster> children = n.getChildren();
+      for(Cluster c : children) {
+        if(c instanceof LeafCluster) {
+          ofy().delete().entity(c);
+          counter++;
+        } else {
+          s.push((NodeCluster) c);
+        }
+      }
+      ofy().delete().entity(n);
+      counter++;
+    }
+
+    long l2 = System.currentTimeMillis();
+    Logger.getLogger("").warning("deleting " + counter + " took " + (l2 - l1) + "ms.");
   }
 
   public static void main(String[] args) {

@@ -34,6 +34,10 @@ public class Playlist {
   // version for caching
   private long v;
 
+  private int lastClusterSize;
+  private int changesSinceLastCluster;
+
+  private boolean clusterReady;
 
   // A sliding window of the songs played recently.
   private LinkedList<String> history;
@@ -152,10 +156,12 @@ public class Playlist {
   public Result addSong(String spotifyId) {
     songIdKeyMap.put(spotifyId, Key.create(Song.class, spotifyId));
     incrementCounter();
+    changesSinceLastCluster++;
     return ofy().save().entity(this);
   }
 
   public Result addSong(Song song) {
+    changesSinceLastCluster++;
     return addSong(song.getSpotifyId());
   }
 
@@ -164,12 +170,14 @@ public class Playlist {
       songIdKeyMap.put(id, Key.create(Song.class, id));
     }
     incrementCounter();
+    changesSinceLastCluster += ids.length;
     return ofy().save().entity(this);
   }
 
   public Result addSongs(Song... songs) {
     ArrayList<Song> ss = new ArrayList<Song>();
     for(Song s : songs) ss.add(s);
+    changesSinceLastCluster += songs.length;
     return addSongs(ss);
   }
 
@@ -177,15 +185,30 @@ public class Playlist {
     for(Song s : songs) {
       songIdKeyMap.put(s.getId(), Key.create(Song.class, s.getId()));
     }
+    changesSinceLastCluster += songs.size();
     incrementCounter();
     return ofy().save().entity(this);
   }
 
-  public Playlist removeSong(String songId) {
+  public Result removeSong(String songId) {
     songIdKeyMap.remove(songId);
+    changesSinceLastCluster++;
     incrementCounter();
-    ofy().save().entity(this).now();
-    return this;
+    return ofy().save().entity(this);
+  }
+
+  public boolean needToRecluster2() {
+    if(getAllSongIds().size() < Constants.SMALLEST_PLAYLIST_SIZE) {
+      return false;
+    }
+   return getAllSongIds().size() > Constants.RECLUSTER_FACTOR * lastClusterSize;
+  }
+
+  public boolean needToRecluster() {
+    if(getAllSongIds().size() < 10) {
+      return false;
+    }
+    return changesSinceLastCluster > Constants.RECLUSTER_FACTOR * getAllSongIds().size();
   }
 
   public LinkedList<String> history() {
@@ -209,5 +232,37 @@ public class Playlist {
   public void clearHistory() {
     history = new LinkedList<>();
     events = new LinkedList<>();
+  }
+
+  public int getLastClusterSize() {
+    return lastClusterSize;
+  }
+
+  public void setLastClusterSize(int lastClusterSize) {
+    this.lastClusterSize = lastClusterSize;
+  }
+
+  public int getChangesSinceLastCluster() {
+    return changesSinceLastCluster;
+  }
+
+  public void setChangesSinceLastCluster(int changesSinceLastCluster) {
+    this.changesSinceLastCluster = changesSinceLastCluster;
+  }
+
+  public boolean isClusterReady() {
+    return clusterReady;
+  }
+
+  public void setClusterReady(boolean clusterReady) {
+    this.clusterReady = clusterReady;
+  }
+
+  public boolean useCluster() {
+    return size() > Constants.SMALLEST_PLAYLIST_SIZE && isClusterReady();
+  }
+
+  public int size() {
+    return getAllSongIds().size();
   }
 }
