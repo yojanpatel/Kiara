@@ -14,6 +14,8 @@ public class ActionEvent {
 
   String startedSongId;
 
+  boolean queued;
+
   public boolean isSkipped() {
     return skipped;
   }
@@ -60,5 +62,13 @@ public class ActionEvent {
 
   public void setFavourited(boolean favourited) {
     this.favourited = favourited;
+  }
+
+  public boolean isQueued() {
+    return queued;
+  }
+
+  public void setQueued(boolean queued) {
+    this.queued = queued;
   }
 }

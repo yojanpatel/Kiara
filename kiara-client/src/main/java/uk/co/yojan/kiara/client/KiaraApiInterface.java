@@ -151,8 +151,9 @@ public interface KiaraApiInterface {
                       Callback<Song> cb);
 
 
-  @DELETE("/users/{userId}/songs/{songId}")
+  @DELETE("/users/{userId}/playlists/{playlistId}/songs/{songId}")
   public void deleteSong(@Path("userId") String userId,
+                         @Path("playlistId") Long playlistId,
                          @Path("songId") Long songId,
                          Callback<Response> cb);
 
