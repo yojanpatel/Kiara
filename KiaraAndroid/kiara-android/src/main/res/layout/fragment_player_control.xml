@@ -42,7 +42,6 @@
       android:textSize="16sp"
       android:text="Same Old Song"
       android:singleLine="true"
-      android:layout_marginTop="8dp"
       android:layout_alignTop="@+id/album_image"
       android:layout_toRightOf="@+id/album_image"
       android:layout_toEndOf="@+id/album_image"/>
