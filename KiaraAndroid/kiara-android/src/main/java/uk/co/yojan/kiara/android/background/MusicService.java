@@ -61,7 +61,14 @@ public class MusicService extends Service
   private int lastSkip;
 
   public LinkedList<Song> playQueue;
+
+  // last finished recommended song if song is skipped early
   public Song recommendedSong;
+  // updated recommendation if song is not skipped, based on the currently playing song
+  public Song updatedRecommendedSong;
+
+  private boolean requestedUpdate;
+
   private boolean currentSongQueued; // if the song playing is the result of a user queue.
 
   // build up currentState to send to the server when a new track is played.
@@ -80,6 +87,7 @@ public class MusicService extends Service
 
   private Handler mHandler = new Handler();
   private Runnable mRunnable;
+  private Runnable nextSongRunnable;
 
   // Binder given to clients.
   private final IBinder mBinder = new MusicBinder();
@@ -212,6 +220,7 @@ public class MusicService extends Service
         Log.d("Kiara", "No session state found for playback. Starting now.");
         currentState = new ActionEvent();
       }
+
       Log.d("Kiara", currentState.isSkipped() + " " + currentState.getPercentage());
 
       currentState.setStartedSongId(stripSpotifyUri(playerState.trackUri));
@@ -271,8 +280,18 @@ public class MusicService extends Service
 
   @Override
   public void onPlayerState(PlayerState playerState) {
-    duration = playerState.durationInMs;
+    if(duration == 0) {
+      duration = playerState.durationInMs;
+    }
+
     position = playerState.positionInMs;
+
+    if(position > duration / 2 && !requestedUpdate) {
+      requestedUpdate = true;
+      requestUpdatedRecommendation(currentSong.getSpotifyId());
+    }
+
+    // TODO: use intents / broadcast receivers instead
     application.getBus().post(playerState);
   }
 
@@ -286,6 +305,26 @@ public class MusicService extends Service
         mHandler.postDelayed(this, 500);
       }
     };
+
+
+  }
+  private void requestUpdatedRecommendation(final String id) {
+    application.learningApi().recommend(application.userId(), playlistId, id, new Callback<Song>() {
+      @Override
+      public void success(Song song, Response response) {
+        if(id.equals(currentSong.getSpotifyId())) {
+          // update only if the current song playing is same as requested
+          Log.d("UPDATE", "updated recommendation for " + id + " " + song.getSpotifyId());
+          updatedRecommendedSong = song;
+          application.getBus().post(song);
+        }
+      }
+
+      @Override
+      public void failure(RetrofitError error) {
+        Log.e("MusicService", error.toString());
+      }
+    });
   }
 
 
@@ -295,15 +334,20 @@ public class MusicService extends Service
     Log.d(log, "Playing song " + song.getSongName());
 
     // update state regarding the playback
-    playing = true;
     currentSong = song;
+    playing = true;
+    duration = 0;
+    requestedUpdate = false;
 
     // play song on the spotify player
     player.play("spotify:track:" + song.getSpotifyId());
 
     // signal playback session is in progress, runnable, acquire wake locks etc.
     sharedPreferences().edit().putBoolean(Constants.IN_SESSION, true).commit();
+
+    mHandler.removeCallbacks(mRunnable);
     mHandler.post(mRunnable);
+
     acquireLocks();
 
     startForeground(Constants.MUSIC_NOTIF_ID, buildNotif(playing, favourited).build());
@@ -360,7 +404,13 @@ public class MusicService extends Service
       lastSkip = 100 * position / duration;
       Log.d(log, "playing the nextSong " + recommendedSong.getSongName());
       currentSongQueued = false;
-      playSong(recommendedSong);
+
+      if(lastSkip > 80 && updatedRecommendedSong != null) {
+        playSong(updatedRecommendedSong);
+      } else {
+        playSong(recommendedSong);
+      }
+      updatedRecommendedSong = null;
       recommendedSong = null;
     } else {
       playing = false;
@@ -432,6 +482,8 @@ public class MusicService extends Service
       Log.d(log, "seeking to " + (duration*(event.progress/255)) + " " + position);
       player.seekToPosition(position);
     }
+
+
   }
 
   private void acquireLocks() {
