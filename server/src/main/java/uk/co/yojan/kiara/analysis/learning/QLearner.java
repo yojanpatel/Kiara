@@ -69,7 +69,10 @@ public class QLearner {
       maxQ = Math.max(maxQ, d);
     }
 
-    double updatedQ = (1 - clusterAlpha) * stateRow.get(actionIndex) + clusterAlpha * (reward + gamma * maxQ);
+    Double updatedQ = (1 - clusterAlpha) * stateRow.get(actionIndex) + clusterAlpha * (reward + gamma * maxQ);
+    if(updatedQ.isNaN() || updatedQ.isInfinite()) {
+      Logger.getLogger("").warning("Nan/Inf updated Q");
+    }
 
     stateRow.set(actionIndex, updatedQ);
   }

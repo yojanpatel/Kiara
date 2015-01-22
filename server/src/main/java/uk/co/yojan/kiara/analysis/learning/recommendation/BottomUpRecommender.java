@@ -18,15 +18,14 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 /**
  * Uses the Q-Learning matrices to recommend the next song to be played
  */
-public class BottomUpRecommender implements Recommender {
+public class
+    BottomUpRecommender implements Recommender {
 
   private static final Logger log = Logger.getLogger("BottomUpRecommender");
-  private static final boolean SOFT_MAX = true;
 
   private static final double EPSILON = 0.3;
 
   public double temperature(int level, int t) {
-    log.warning(Constants.SOFTMAX_TEMPERATURE * Math.exp(-0.05 * t) + " T");
     return 1 + Constants.SOFTMAX_TEMPERATURE * Math.exp(-0.05 * t);
   }
 
@@ -47,7 +46,7 @@ public class BottomUpRecommender implements Recommender {
     int t = p.events().size();
 
     LeafCluster currentSongLeafCluster = OfyUtils.loadLeafCluster(p.getId(), recentSongId).now();
-    NodeCluster  parentNodeCluster = ofy().load().key(currentSongLeafCluster.getParent()).now();
+    NodeCluster parentNodeCluster = ofy().load().key(currentSongLeafCluster.getParent()).now();
     int leafClusterIndex = parentNodeCluster.clusterIndex(currentSongLeafCluster.getSongId());
 
     while(true) {
@@ -61,7 +60,7 @@ public class BottomUpRecommender implements Recommender {
       if(actionsAvailable) {
         // Compute the next cluster to try
         //noinspection ConstantConditions
-        int nextClusterIndex = SOFT_MAX ? softMaxAction(parentNodeCluster, leafClusterIndex, t, excludeActions)
+        int nextClusterIndex = Constants.SOFT_MAX ? softMaxAction(parentNodeCluster, leafClusterIndex, t, excludeActions)
                                         : greedyEpsilon(parentNodeCluster, leafClusterIndex, t, excludeActions);
 
         assert !excludeActions.contains(nextClusterIndex);
@@ -228,37 +227,36 @@ public class BottomUpRecommender implements Recommender {
 
 
     List<Double> actionProbabilities = new ArrayList<>();
-    log.warning("EXCLUDE: " + excludeActions.toString());
-    double denominator = 0.0;
+    Double denominator = 0.0;
     for(int action = 0; action < stateRow.size(); action++) {
       if(!excludeActions.contains(action)) {
         Double actionVal = stateRow.get(action);
         denominator += Math.exp(actionVal / temperature(cluster.getLevel(), t));
       }
     }
-    log.warning("Denominator: " + denominator);
 
     for(int action = 0; action < stateRow.size(); action++) {
       if(!excludeActions.contains(action)) {
         Double actionVal = stateRow.get(action);
-        double prob = Math.exp(actionVal / temperature(cluster.getLevel(), t)) / denominator;
-        log.warning("actionVal: " + actionVal);
+        double temp = temperature(cluster.getLevel(), t);
+        double prob = Math.exp(actionVal / temp) / denominator;
+        if(denominator.isNaN() || denominator.isInfinite()) {
+          System.out.print("");
+        }
         actionProbabilities.add(prob);
       } else {
         actionProbabilities.add(Double.NaN);
       }
     }
-    log.warning("STATE: " + stateRow.toString());
-    log.warning("PROB: " + actionProbabilities.toString());
-
     // u ~ Uniform(0,1)
     Double u = new Random().nextDouble();
-    log.warning(u + " drawn from U(0,1)");
-    double cumulative = 0.0;
+    Double cumulative = 0.0;
     for(int i = 0; i < actionProbabilities.size(); i++) {
-      if (actionProbabilities.get(i) != Double.NaN) {
+      if (!Double.isNaN(actionProbabilities.get(i)) && actionProbabilities.get(i) != Double.NaN) {
         cumulative += actionProbabilities.get(i);
-        log.warning(cumulative + " current cumulative");
+        if(cumulative.isNaN() || cumulative.isInfinite()) {
+          System.out.print("");
+        }
         if (u < cumulative) {
           return i;
         }

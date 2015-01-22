@@ -195,17 +195,12 @@ public class NodeCluster extends Cluster {
     for(int clusterIndex = 0; clusterIndex < getChildren().size(); clusterIndex++) {
       Cluster cluster = getChildren().get(clusterIndex);
 
-      System.out.println(cluster.getClass().getCanonicalName() + " " + cluster.getId());
-
       if (cluster instanceof LeafCluster) {
-        System.out.println("...");
         if(((LeafCluster) cluster).getSongId().equals(songId)) {
-          System.out.println(((LeafCluster) cluster).getSongId() + "==" + songId);
           return clusterIndex;
         }
       } else if(cluster instanceof NodeCluster) {
         if(((NodeCluster) cluster).getSongIds().contains(songId)) {
-          System.out.println(cluster.getId());
           return clusterIndex;
         }
       }
