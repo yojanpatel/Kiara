@@ -30,12 +30,17 @@ public class SongFeature {
 
   /* 14 timbre components * 8 statistical moments */
   @Serialize(zip=true)
-//  @Feature(dims = 2, size = {12, 8})
+  @Feature(dims = 2, size = {12, 8})
   private ArrayList<ArrayList<Double>> timbreMoments;
 
   @Serialize(zip=true)
 //  @Feature(size = {9})
   private ArrayList<Double> timbreAreaMoments;
+
+  @Serialize(zip=true)
+//  @Feature(dims = 2, size = {12, 8})
+  private ArrayList<ArrayList<Double>> loudSegmentTimbreMoments;
+
 
   private Double duration;
   @Feature private Double tempo;
@@ -48,21 +53,20 @@ public class SongFeature {
   // A bar (or measure) is a segment of time defined as a given number of beats.
   // Bar offsets also indicate downbeats, the first beat of the measure.
 //  @Feature
-private Double barLengthMean;
+  private Double barLengthMean;
 //  @Feature
-  private Double barLengthVar;
+  @Feature private Double barLengthVar;
 
   // Tatums represent the lowest regular pulse train that a listener intuitively
   // infers from the timing of perceived musical events (segments).
 //  @Feature
-  private Double tatumLengthMean;
-//  @Feature
-  private Double tatumLengthVar;
+  @Feature private Double tatumLengthMean;
+  @Feature private Double tatumLengthVar;
 
   // Sections are defined by large variations in rhythm or timbre.
-  @Feature private Double sectionLengthMean;
-  @Feature private Double maxSectionTempo;
-  @Feature private Double minSectionTempo;
+  private Double sectionLengthMean;
+  private Double maxSectionTempo;
+  private Double minSectionTempo;
 
   private Double liveness;
   private Double speechiness;
@@ -82,8 +86,6 @@ private Double barLengthMean;
   @Serialize(zip=true)
   private ArrayList<ArrayList<Double>> finalTimbreMoments;
 
-  @Serialize(zip = true)
-  private ArrayList<Double> segmentLoudness;
 
   @Serialize(zip = true)
   private ArrayList<Double> lengths;
@@ -182,14 +184,6 @@ private Double barLengthMean;
     this.normalisedTempo = normalisedTempo;
   }
 
-  public Double getSegmentLoudness() {
-    return loudness;
-  }
-
-  public void setSegmentLoudness(Double segmentLoudness) {
-    this.loudness = loudness;
-  }
-
   public Double getEnergy() {
     return energy;
   }
@@ -216,7 +210,7 @@ private Double barLengthMean;
     distance += Math.pow((other.getTempo() - this.getTempo()), 2);
     distance += Math.pow((other.getEnergy() - this.getEnergy()), 2);
     distance += Math.pow((other.getValence() - this.getValence()), 2);
-    distance += Math.pow((other.getSegmentLoudness() - this.getSegmentLoudness()), 2);
+    distance += Math.pow((other.getLoudness() - this.getLoudness()), 2);
 
     for(int pitch = 0; pitch < pitchMoments.size(); pitch++) {
       ArrayList<Double> thisPitchVector = this.getPitchMoment(pitch);
@@ -476,16 +470,29 @@ private Double barLengthMean;
     this.instrumentalness = instrumentalness;
   }
 
-  public void setLoudness(ArrayList<Double> loudness) {
-    this.segmentLoudness = loudness;
-  }
-
   public ArrayList<Double> getLengths() {
     return lengths;
   }
 
   public void setLengths(ArrayList<Double> lengths) {
     this.lengths = lengths;
+  }
+
+
+  public Double getLoudness() {
+    return loudness;
+  }
+
+  public void setLoudness(Double loudness) {
+    this.loudness = loudness;
+  }
+
+  public ArrayList<ArrayList<Double>> getLoudSegmentTimbreMoments() {
+    return loudSegmentTimbreMoments;
+  }
+
+  public void setLoudSegmentTimbreMoments(ArrayList<ArrayList<Double>> loudSegmentTimbreMoments) {
+    this.loudSegmentTimbreMoments = loudSegmentTimbreMoments;
   }
 
   /**
@@ -498,6 +505,10 @@ private Double barLengthMean;
    */
   private Double normaliseTempo(Double tempo) {
     return (1 - Math.cos(Math.PI * tempo / 500)) / 2;
+  }
+
+  private Double normaliseUnbounded(Double num) {
+    return 0.0;
   }
 
   public static void main(String[] args) {
