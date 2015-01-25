@@ -1,7 +1,5 @@
-package uk.co.yojan.kiara.analysis.features;
+package uk.co.yojan.kiara.analysis.features.metric;
 
-import com.numericalmethod.suanshu.algebra.linear.vector.doubles.Vector;
-import com.numericalmethod.suanshu.algebra.linear.vector.doubles.dense.DenseVector;
 import uk.co.yojan.kiara.server.models.SongFeature;
 
 import java.util.ArrayList;
@@ -88,40 +86,50 @@ public class WeightList {
 
   // Currently optimising with respect to Timbre Means, and the other
   // meta features
-  public static ArrayList<Double> convert(Vector vector) {
-    // 12 timbre, 7 meta features as above.
-    assert vector.size() == (12 + 7);
+//  public static ArrayList<Double> convert(Vector vector) {
+//    // 12 timbre, 7 meta features as above.
+//    assert vector.size() == (12 + 7);
+//
+//    WeightList weightList = new WeightList();
+//
+//    List<Double> timbreWeights = new ArrayList<>();
+//    for(int i = 0; i < 12; i++) {
+//      timbreWeights.add(vector.get(i));
+//    }
+//
+//    List<Double> attWeights = new ArrayList<>();
+//    for(int i = 12; i < vector.size(); i++) {
+//      attWeights.add(vector.get(i));
+//    }
+//
+//    weightList.setTimbreWeights(timbreWeights);
+//    weightList.setAttWeights(attWeights);
+//    weightList.normalize();
+//
+//    return weightList.get();
+//  }
+//
+  public static List<Double> convert(List<Double> weights) {
+    List<Double> vector = new ArrayList<>();
 
-    WeightList weightList = new WeightList();
-
-    List<Double> timbreWeights = new ArrayList<>();
     for(int i = 0; i < 12; i++) {
-      timbreWeights.add(vector.get(i));
+      for(int j = 0; j < 8; j++) {
+        vector.add(weights.get(i));
+      }
     }
 
-    List<Double> attWeights = new ArrayList<>();
-    for(int i = 12; i < vector.size(); i++) {
-      attWeights.add(vector.get(i));
-    }
-
-    weightList.setTimbreWeights(timbreWeights);
-    weightList.setAttWeights(attWeights);
-    weightList.normalize();
-
-    return weightList.get();
-  }
-
-  public static Vector convert(List<Double> weights) {
-    Vector vector = new DenseVector();
-
-    for(int i = 0; i < 12; i++) {
-      vector.add(weights.get(8 * i));
-    }
-
-    for(int i = 12 * 8; i < weights.size(); i++) {
+    for(int i = 12; i < weights.size(); i++) {
       vector.add(weights.get(i));
     }
+    assert vector.size() > 96;
+    return  vector;
+//    return vector.toArray(new Double[vector.size()]);
+  }
 
-    return vector;
+  public static void normalize(List<Double> weights) {
+    Double max = Collections.max(weights);
+    for(int i = 0; i < weights.size(); i++) {
+      weights.set(i, weights.get(i) / max);
+    }
   }
 }

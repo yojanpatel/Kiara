@@ -2,10 +2,9 @@ package uk.co.yojan.kiara.analysis.tasks;
 
 import com.google.appengine.api.taskqueue.DeferredTask;
 import com.googlecode.objectify.Key;
-import com.numericalmethod.suanshu.algebra.linear.vector.doubles.Vector;
-import javafx.util.Pair;
-import uk.co.yojan.kiara.analysis.features.WeightList;
 import uk.co.yojan.kiara.analysis.features.metric.DistanceMetricOptimization;
+import uk.co.yojan.kiara.analysis.features.metric.IndexPair;
+import uk.co.yojan.kiara.analysis.features.metric.SimilarPair;
 import uk.co.yojan.kiara.analysis.features.scaling.ZNormaliser;
 import uk.co.yojan.kiara.analysis.learning.EventHistory;
 import uk.co.yojan.kiara.server.models.Playlist;
@@ -43,12 +42,14 @@ public class DistanceWeightLearnTask implements DeferredTask {
       index.put(features.get(i).getId(), i);
     }
 
-    ArrayList<Pair<Integer, Integer>> sim = EventHistory.similar(events, index);
-    ArrayList<Pair<Integer, Integer>> dif = EventHistory.different(events, index);
+    ArrayList<IndexPair> sim = EventHistory.similar(events, index);
+    ArrayList<IndexPair> dif = EventHistory.different(events, index);
 
-    ArrayList<Pair<String, String>> constrained = p.getSimilarSongs();
-    for(Pair<String, String> constraint : constrained) {
-      sim.add(new Pair<>(index.get(constraint.getKey()), index.get(constraint.getValue())));
+    ArrayList<SimilarPair> constrained = p.getSimilarSongs();
+    for(SimilarPair constraint : constrained) {
+      if(index.containsKey(constraint.first()) && index.containsKey(constraint.second())) {
+        sim.add(new IndexPair(index.get(constraint.first()), index.get(constraint.second())));
+      }
     }
 
     try {
@@ -56,15 +57,27 @@ public class DistanceWeightLearnTask implements DeferredTask {
       Instances normalised = new ZNormaliser().scale(constructDataSet(features));
 
       // run newton raphson optimisation to find minimising weights
-      DistanceMetricOptimization optimizer = new DistanceMetricOptimization(sim, dif, normalised);
-      Vector v = optimizer.optimize();
+      List<Double> wlist= p.getWeights();
+      if(wlist == null || wlist.isEmpty()) {
+        wlist = new ArrayList<>();
+        for(int i = 0; i < DistanceMetricOptimization.dimensions; i++) {
+          wlist.add(1.0);
+        }
+      }
+
+
+      DistanceMetricOptimization optimizer = new DistanceMetricOptimization(sim, dif, normalised, wlist);
+      double[] solution = optimizer.optimize();
 
       // convert the vector to list of doubles
-      ArrayList<Double> weights = WeightList.convert(v);
+      ArrayList<Double> weights = new ArrayList<>();
+      for(Double d : solution) weights.add(d);
       p.setWeights(weights);
 
       ofy().save().entity(p).now();
     } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }

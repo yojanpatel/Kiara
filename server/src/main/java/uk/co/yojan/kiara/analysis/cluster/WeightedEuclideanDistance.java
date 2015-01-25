@@ -7,6 +7,8 @@ import weka.core.neighboursearch.PerformanceStats;
 
 import java.util.List;
 
+import static uk.co.yojan.kiara.analysis.features.metric.WeightList.normalize;
+
 public class WeightedEuclideanDistance extends EuclideanDistance {
 
   private List<Double> weights;
@@ -14,12 +16,15 @@ public class WeightedEuclideanDistance extends EuclideanDistance {
   public WeightedEuclideanDistance(List<Double> weights) {
     super();
     this.weights = weights;
+    normalize(weights);
   }
 
   public WeightedEuclideanDistance(Instances data, List<Double> weights) {
-    super();
+    super(data);
     this.weights = weights;
     setInstances(weight(data));
+    normalize(weights);
+    setInstances(weight(getInstances()));
   }
 
 
@@ -38,10 +43,14 @@ public class WeightedEuclideanDistance extends EuclideanDistance {
 
   private Instance weight(Instance data) {
     double[] attVals = data.toDoubleArray();
+//    Instance weighted = new Instance(data);
+
     for(int j = 0; j < data.numAttributes(); j++) {
-      attVals[j] = attVals[j] * weights.get(j);
+      if(weights.get(j) != null && !Double.isNaN(weights.get(j))) {
+        data.setValue(j, data.value(j) * weights.get(j));
+      }
     }
-    return new Instance(1.0, attVals);
+    return data;
   }
 
   @Override
