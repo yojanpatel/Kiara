@@ -6,6 +6,8 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Serialize;
+import javafx.util.Pair;
 import uk.co.yojan.kiara.server.Constants;
 import uk.co.yojan.kiara.server.serializers.PlaylistDeserializer;
 import uk.co.yojan.kiara.server.serializers.PlaylistSerializer;
@@ -31,6 +33,11 @@ public class Playlist {
   private long lastViewedTimestamp;
   private Map<String, Key<Song>> songIdKeyMap = new HashMap<String, Key<Song>>(); // spotifyId ---> Key(spotifyId)
 
+  @Serialize(zip = true)
+  private ArrayList<Double> weights;
+
+
+
   // version for caching
   private long v;
 
@@ -38,6 +45,7 @@ public class Playlist {
   private int changesSinceLastCluster;
 
   private boolean clusterReady;
+  private boolean relearning;
 
   // A sliding window of the songs played recently.
   private LinkedList<String> history;
@@ -49,6 +57,8 @@ public class Playlist {
   // A sliding window of the user's events caused affected the learning algorithms.
   // also allows training of Q based on different reward functions/strategies
   private LinkedList<String> events;
+
+  private ArrayList<String> similarSongs;
 
   public void nowPlaying(String songId) {
     if(history == null) history = new LinkedList<>();
@@ -169,6 +179,12 @@ public class Playlist {
     for(String id : ids) {
       songIdKeyMap.put(id, Key.create(Song.class, id));
     }
+
+    // add additional constraints to help recluster
+    for(int i = 0; i < ids.length - 1; i++) {
+      addSimilarSong(ids[i], ids[i+1]);
+    }
+
     incrementCounter();
     changesSinceLastCluster += ids.length;
     return ofy().save().entity(this);
@@ -176,7 +192,13 @@ public class Playlist {
 
   public Result addSongs(Song... songs) {
     ArrayList<Song> ss = new ArrayList<Song>();
-    for(Song s : songs) ss.add(s);
+    for (Song s : songs) ss.add(s);
+
+    // add additional constraints to help recluster
+    for(int i = 0; i < songs.length - 1; i++) {
+      addSimilarSong(songs[i].getSpotifyId(), songs[i+1].getSpotifyId());
+    }
+
     changesSinceLastCluster += songs.length;
     return addSongs(ss);
   }
@@ -185,6 +207,12 @@ public class Playlist {
     for(Song s : songs) {
       songIdKeyMap.put(s.getId(), Key.create(Song.class, s.getId()));
     }
+
+    // add additional constraints to help recluster
+    for(int i = 0; i < songs.size() - 1; i++) {
+      addSimilarSong(songs.get(i).getSpotifyId(), songs.get(i+1).getSpotifyId());
+    }
+
     changesSinceLastCluster += songs.size();
     incrementCounter();
     return ofy().save().entity(this);
@@ -197,15 +225,8 @@ public class Playlist {
     return ofy().save().entity(this);
   }
 
-  public boolean needToRecluster2() {
-    if(getAllSongIds().size() < Constants.SMALLEST_PLAYLIST_SIZE) {
-      return false;
-    }
-   return getAllSongIds().size() > Constants.RECLUSTER_FACTOR * lastClusterSize;
-  }
-
   public boolean needToRecluster() {
-    if(getAllSongIds().size() < 10) {
+    if(getAllSongIds().size() < Constants.SMALLEST_PLAYLIST_SIZE) {
       return false;
     }
     return changesSinceLastCluster > Constants.RECLUSTER_FACTOR * getAllSongIds().size();
@@ -262,7 +283,38 @@ public class Playlist {
     return size() > Constants.SMALLEST_PLAYLIST_SIZE && isClusterReady();
   }
 
+  public boolean isRelearning() {
+    return relearning;
+  }
+
+  public void setRelearning(boolean relearning) {
+    this.relearning = relearning;
+  }
+
+  public ArrayList<Double> getWeights() {
+    return weights;
+  }
+
+  public void setWeights(ArrayList<Double> weights) {
+    this.weights = weights;
+  }
+
   public int size() {
     return getAllSongIds().size();
+  }
+
+  public void addSimilarSong(String id1, String id2) {
+    if(similarSongs == null) similarSongs = new ArrayList<>();
+    similarSongs.add(id1 + "-" + id2);
+  }
+
+  public ArrayList<Pair<String, String>> getSimilarSongs() {
+    if(similarSongs == null) similarSongs = new ArrayList<>();
+    ArrayList<Pair<String, String>> similar = new ArrayList<>();
+    for(String s : similarSongs) {
+      String[] parts = s.split("-");
+      similar.add(new Pair<>(parts[0], parts[1]));
+    }
+    return similar;
   }
 }

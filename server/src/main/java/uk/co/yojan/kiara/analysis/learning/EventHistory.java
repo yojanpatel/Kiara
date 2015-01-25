@@ -1,7 +1,10 @@
 package uk.co.yojan.kiara.analysis.learning;
 
+import javafx.util.Pair;
 import uk.co.yojan.kiara.server.Constants;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -74,6 +77,34 @@ public class EventHistory {
   public static void setEventHistorySize(int eventHistorySize) {
     EVENT_HISTORY_SIZE = eventHistorySize;
   }
+
+  public static ArrayList<Pair<Integer, Integer>> similar(LinkedList<String> eventHistory, HashMap<String, Integer> index) {
+
+    ArrayList<Pair<Integer, Integer>> similar = new ArrayList<>();
+    for(String event : eventHistory) {
+      if(event.contains("FAVOURITE")) {
+        String[] s = event.split("-");
+        similar.add(new Pair<>(index.get(s[0]), index.get(s[1])));
+      }
+    }
+    return similar;
+  }
+
+  public static  ArrayList<Pair<Integer, Integer>> different(LinkedList<String> eventHistory, HashMap<String, Integer> index) {
+    ArrayList<Pair<Integer, Integer>> different = new ArrayList<>();
+    for(String event : eventHistory) {
+      if(event.contains("SKIP")) {
+        String[] s = event.split("-");
+        if(Integer.parseInt(s[3]) < 10) {
+          different.add(new Pair<>(index.get(s[0]), index.get(s[1])));
+        }
+      }
+    }
+    return different;
+  }
+
+
+
 
   private static double round2dp(double d) {
     return Math.round(d * 100)/100.0;

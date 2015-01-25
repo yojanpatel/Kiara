@@ -239,6 +239,10 @@ public class NodeCluster extends Cluster {
     return index;
   }
 
+  public Long playlistId() {
+    return Long.parseLong(getId().split("-")[0]);
+  }
+
   public int childIndex(Cluster c) {
     return children.indexOf(c.getId());
   }

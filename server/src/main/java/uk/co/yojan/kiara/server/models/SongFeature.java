@@ -55,7 +55,7 @@ public class SongFeature {
 //  @Feature
   private Double barLengthMean;
 //  @Feature
-  @Feature private Double barLengthVar;
+  private Double barLengthVar;
 
   // Tatums represent the lowest regular pulse train that a listener intuitively
   // infers from the timing of perceived musical events (segments).
@@ -249,7 +249,6 @@ public class SongFeature {
           }
         }/* 2D Matrix */
         else if(featureAnnotation.dims() == 2) {
-          System.out.println(featureAnnotation.size()[0] + "x" + featureAnnotation.size()[1]);
           for(int i = 0; i < featureAnnotation.size()[0]; i++) {
             for(int j = 0; j < featureAnnotation.size()[1]; j++) {
               featureNames.add(field.getName() + "-" + i + "-" + j);

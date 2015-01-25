@@ -4,7 +4,10 @@ import uk.co.yojan.kiara.analysis.features.scaling.FeatureScaler;
 import uk.co.yojan.kiara.analysis.features.scaling.ZNormaliser;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import weka.clusterers.SimpleKMeans;
-import weka.core.*;
+import weka.core.Attribute;
+import weka.core.FastVector;
+import weka.core.Instance;
+import weka.core.Instances;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,11 +93,9 @@ public class KMeans {
 
     kMeans.setNumClusters(k);
     kMeans.setPreserveInstancesOrder(true);
-    kMeans.setDistanceFunction(new EuclideanDistance());
-
   }
 
-  public KMeans(int k, List<SongFeature> features, ArrayList<Double> featureWeights) throws Exception {
+  public KMeans(int k, List<SongFeature> features, ArrayList<Double> weights) throws Exception {
     kMeans = new SimpleKMeans();
 
     this.k = k;
@@ -104,11 +105,15 @@ public class KMeans {
       this.instances = featureScaler.scale(constructDataSet(features));
     } else {
       this.instances = constructDataSet(features);
-
     }
+
     kMeans.setNumClusters(k);
     kMeans.setPreserveInstancesOrder(true);
 
+    if(weights != null) {
+      WeightedEuclideanDistance distanceFunction = new WeightedEuclideanDistance(weights);
+      kMeans.setDistanceFunction(distanceFunction);
+    }
   }
 
 

@@ -81,11 +81,13 @@ public class PlaylistClusterer {
       return;
     }
 
+    Result<Playlist> pr = ofy().load().key(Key.create(Playlist.class, cluster.playlistId()));
     // Fetch the relevant SongFeature entities
     List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(cluster.getSongIds())).values());
+    Playlist playlist = pr.now();
 
     // Perform K-Means using Weka on the feature set returning a mapping
-    KMeans kMeans = new KMeans(k, features);
+    KMeans kMeans = new KMeans(k, features, playlist.getWeights());
     int[] assignments = kMeans.run();
 
     // Initialise the child clusters
