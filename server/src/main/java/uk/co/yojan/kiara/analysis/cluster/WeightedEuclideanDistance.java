@@ -1,23 +1,20 @@
-package uk.co.yojan.kiara.analysis.cluster;//
+//
 // Source code recreated from a .class file by IntelliJ IDEA
 // (powered by Fernflower decompiler)
 //
 
+package weka.core;
 
-import weka.core.Instance;
-import weka.core.Instances;
-import weka.core.NormalizableDistance;
-import weka.core.RevisionUtils;
-import weka.core.TechnicalInformation;
-import weka.core.TechnicalInformationHandler;
 import weka.core.TechnicalInformation.Field;
 import weka.core.TechnicalInformation.Type;
 import weka.core.neighboursearch.PerformanceStats;
 
+import java.util.List;
+
 public class WeightedEuclideanDistance extends NormalizableDistance implements Cloneable, TechnicalInformationHandler {
   private static final long serialVersionUID = 1068606253458807903L;
 
-
+  private List<Double> weights;
 
   public WeightedEuclideanDistance() {
   }
@@ -26,7 +23,13 @@ public class WeightedEuclideanDistance extends NormalizableDistance implements C
     super(data);
   }
 
+  public List<Double> getWeights() {
+    return weights;
+  }
 
+  public void setWeights(List<Double> weights) {
+    this.weights = weights;
+  }
 
   public String globalInfo() {
     return "Implementing Euclidean distance (or similarity) function.\n\nOne object defines not one distance but the data model in which the distances between objects of that data model can be computed.\n\nAttention: For efficiency reasons the use of consistency checks (like are the data models of the two instances exactly the same), is low.\n\nFor more information, see:\n\n" + this.getTechnicalInformation().toString();
@@ -41,11 +44,68 @@ public class WeightedEuclideanDistance extends NormalizableDistance implements C
   }
 
   public double distance(Instance first, Instance second) {
-    return Math.sqrt(this.distance(first, second, Double.MAX_VALUE));
+    return Math.sqrt(this.distance(first, second, 1.0D / 0.0));
   }
 
   public double distance(Instance first, Instance second, PerformanceStats stats) {
-    return Math.sqrt(this.distance(first, second, Double.MAX_VALUE, stats));
+    return Math.sqrt(this.distance(first, second, 1.0D / 0.0, stats));
+  }
+
+  public double weightedDistance(Instance first, Instance second, double cutOffValue) {
+    double distance = 0.0D;
+    int firstNumValues = first.numValues();
+    int secondNumValues = second.numValues();
+    int numAttributes = this.m_Data.numAttributes();
+    int classIndex = this.m_Data.classIndex();
+    this.validate();
+    int p1 = 0;
+    int p2 = 0;
+
+    while(p1 < firstNumValues || p2 < secondNumValues) {
+      int firstI;
+      if(p1 >= firstNumValues) {
+        firstI = numAttributes;
+      } else {
+        firstI = first.index(p1);
+      }
+
+      int secondI;
+      if(p2 >= secondNumValues) {
+        secondI = numAttributes;
+      } else {
+        secondI = second.index(p2);
+      }
+
+      if(firstI == classIndex) {
+        ++p1;
+      } else if(firstI < numAttributes && !this.m_ActiveIndices[firstI]) {
+        ++p1;
+      } else if(secondI == classIndex) {
+        ++p2;
+      } else if(secondI < numAttributes && !this.m_ActiveIndices[secondI]) {
+        ++p2;
+      } else {
+        double diff;
+        if(firstI == secondI) {
+          diff = this.difference(firstI, first.valueSparse(p1), second.valueSparse(p2));
+          ++p1;
+          ++p2;
+        } else if(firstI > secondI) {
+          diff = this.difference(secondI, 0.0D, second.valueSparse(p2));
+          ++p2;
+        } else {
+          diff = this.difference(firstI, first.valueSparse(p1), 0.0D);
+          ++p1;
+        }
+
+        distance = this.updateDistance(distance, diff);
+        if(distance > cutOffValue) {
+          return 1.0D / 0.0;
+        }
+      }
+    }
+
+    return distance;
   }
 
   protected double updateDistance(double currDist, double diff) {
@@ -75,7 +135,7 @@ public class WeightedEuclideanDistance extends NormalizableDistance implements C
     int bestPoint = 0;
 
     for(int i = 0; i < pointList.length; ++i) {
-      double dist = this.distance(instance, allPoints.instance(pointList[i]), Double.MAX_VALUE);
+      double dist = this.distance(instance, allPoints.instance(pointList[i]), 1.0D / 0.0);
       if(dist < minDist) {
         minDist = dist;
         bestPoint = i;

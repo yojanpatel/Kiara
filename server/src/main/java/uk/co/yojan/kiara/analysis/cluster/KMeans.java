@@ -4,10 +4,7 @@ import uk.co.yojan.kiara.analysis.features.scaling.FeatureScaler;
 import uk.co.yojan.kiara.analysis.features.scaling.ZNormaliser;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import weka.clusterers.SimpleKMeans;
-import weka.core.Attribute;
-import weka.core.FastVector;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,15 +83,14 @@ public class KMeans {
     this.features = features;
 
     // Scale features
+    this.instances = constructDataSet(features);
     if(featureScaler != null) {
-      this.instances = featureScaler.scale(constructDataSet(features));
-    } else {
-      this.instances = constructDataSet(features);
-
+      this.instances = featureScaler.scale(instances);
     }
 
     kMeans.setNumClusters(k);
     kMeans.setPreserveInstancesOrder(true);
+    kMeans.setDistanceFunction(new EuclideanDistance());
 
   }
 
@@ -129,7 +125,7 @@ public class KMeans {
 
 
 
-  public Instances constructDataSet(List<SongFeature> data) throws IllegalAccessException {
+  public static Instances constructDataSet(List<SongFeature> data) throws IllegalAccessException {
     FastVector attInfo = new FastVector();
 
     /* Get all the feature names, from the annotated variables in the encapsulating
@@ -149,7 +145,7 @@ public class KMeans {
     return instances;
   }
 
-  public Instances constructDataSet(List<SongFeature> data, List<Double> featureWeights) throws IllegalAccessException {
+  public static Instances constructDataSet(List<SongFeature> data, List<Double> featureWeights) throws IllegalAccessException {
     FastVector attInfo = getAttributeNames();
 
     Instances instances = new Instances("Features", attInfo, data.size());
