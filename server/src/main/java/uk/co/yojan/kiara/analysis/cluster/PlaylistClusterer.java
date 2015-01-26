@@ -36,6 +36,7 @@ public class PlaylistClusterer {
     final Playlist p = r.now();
     p.setClusterReady(false);
     Collection<String> songIds = p.getAllSongIds();
+    System.out.println(songIds.size() + " songs");
 
     // Initialise the root node for the hierarchy
     NodeCluster root = new NodeCluster();
@@ -87,7 +88,7 @@ public class PlaylistClusterer {
     Playlist playlist = pr.now();
 
     // Perform K-Means using Weka on the feature set returning a mapping
-    KMeans kMeans = new KMeans(k, features, playlist.getWeights());
+    KMeans kMeans = new KMeans(k, features);
     int[] assignments = kMeans.run();
 
     // Initialise the child clusters
@@ -170,7 +171,7 @@ public class PlaylistClusterer {
               @Override
               public void run() {
                 Playlist p = ofy().load().key(Key.create(Playlist.class, playlistId)).now();
-                int timeToSleep = p.size()  > 100 ? ((p.size() / 100) * 10 * 1000) : 10 * 1000;
+                int timeToSleep = p.size()  > 100 ? ((p.size() / 100) * 15 * 1000) : 15 * 1000;
                 try {
                   Thread.sleep(timeToSleep);
                 } catch (InterruptedException e) {

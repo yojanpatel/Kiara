@@ -1,13 +1,11 @@
 package uk.co.yojan.kiara.analysis.users;
 
-import uk.co.yojan.kiara.analysis.learning.recommendation.TopDownRecommender;
 import uk.co.yojan.kiara.analysis.learning.recommendation.Recommender;
+import uk.co.yojan.kiara.analysis.learning.recommendation.TopDownRecommender;
 import uk.co.yojan.kiara.analysis.learning.rewards.RewardFunction;
 import uk.co.yojan.kiara.analysis.learning.rewards.VariedSkipReward;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import uk.co.yojan.kiara.server.models.User;
-
-import java.util.logging.Logger;
 
 /**
  * Hypothetical User for evaluation.
@@ -38,7 +36,6 @@ public class BeatLover extends HypotheticalUser {
       finish(current.getId());
       reward += rewardFunction.rewardTrackFinished();
     } else {
-      Logger.getLogger("").info("Skipping track as BeatLover (" + current.getTempo() + " - " + previous.getTempo() + ")");
       int percent;
       if(tempoDiff < 2 * TEMPO_THRESHOLD)
         percent = 60;
