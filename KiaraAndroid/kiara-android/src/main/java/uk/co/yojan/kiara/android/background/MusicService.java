@@ -29,6 +29,7 @@ import uk.co.yojan.kiara.android.events.Favourite;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.events.QueueSongRequest;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
+import uk.co.yojan.kiara.android.fragments.PlayerFragment;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.ActionEvent;
 import uk.co.yojan.kiara.client.data.Song;
@@ -45,6 +46,7 @@ public class MusicService extends Service
   private static final String log = MusicService.class.getCanonicalName();
 
   private KiaraApplication application;
+  private PlayerFragment playerFragment;
 
   private KiaraPlayer player;
   public enum RepeatState {FALSE, ONE, TRUE}
@@ -271,6 +273,9 @@ public class MusicService extends Service
     }
 
     application.getBus().post(new PlaybackEvent(eventType, playerState));
+    if(playerFragment != null) {
+      playerFragment.onPlaybackEvent(new PlaybackEvent(eventType, playerState));
+    }
   }
 
   @Override
@@ -293,6 +298,9 @@ public class MusicService extends Service
 
     // TODO: use intents / broadcast receivers instead
     application.getBus().post(playerState);
+    if(playerFragment != null) {
+      playerFragment.onPlayerState(playerState);
+    }
   }
 
   private void initialiseHandlers() {
@@ -472,6 +480,9 @@ public class MusicService extends Service
     Log.d(log, currentSong.getSongName() + " favourited ? " + favourited);
     updateNotif(playing, favourited);
     application.getBus().post(new Favourite(favourited));
+    if(playerFragment != null) {
+      playerFragment.onFavourite(new Favourite(favourited));
+    }
     return favourited;
   }
 
@@ -650,4 +661,12 @@ public class MusicService extends Service
     public void failure(RetrofitError error) {
     }
   };
+
+  public void registerPlayerFragment(PlayerFragment fragment) {
+    this.playerFragment = fragment;
+  }
+
+  public void unregisterPlayerFragment() {
+    this.playerFragment = null;
+  }
 }

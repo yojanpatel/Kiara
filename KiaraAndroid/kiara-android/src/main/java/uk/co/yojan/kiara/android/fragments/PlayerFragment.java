@@ -24,7 +24,6 @@ import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.spotify.sdk.android.Spotify;
 import com.spotify.sdk.android.playback.PlayerNotificationCallback;
 import com.spotify.sdk.android.playback.PlayerState;
-import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
@@ -159,6 +158,7 @@ public class PlayerFragment extends KiaraFragment {
     ButterKnife.reset(this);
     Spotify.destroyPlayer(this);
     if (bound) {
+      musicService.unregisterPlayerFragment();
       getKiaraActivity().unbindService(mConnection);
       bound = false;
     }
@@ -255,7 +255,6 @@ public class PlayerFragment extends KiaraFragment {
     }
   }
 
-  @Subscribe
   public void onFavourite(Favourite favourite) {
     if(favourite.isFavourited()) {
       favouriteFab.setIcon(R.drawable.ic_favorite_white_24dp);
@@ -264,7 +263,6 @@ public class PlayerFragment extends KiaraFragment {
     }
   }
 
-  @Subscribe
   public void onPlaybackEvent(PlaybackEvent event) {
     Log.d(log, "PlaybackEvent " + event.getEvent().toString());
     PlayerNotificationCallback.EventType eventType = event.getEvent();
@@ -289,7 +287,6 @@ public class PlayerFragment extends KiaraFragment {
     }
   }
 
-  @Subscribe
   public void onPlayerState(PlayerState playerState) {
     currentPosition = playerState.positionInMs;
     duration = playerState.durationInMs;
@@ -331,6 +328,7 @@ public class PlayerFragment extends KiaraFragment {
       playpause.setImageDrawable(
           musicService.isPlaying() ? pause : play
       );
+      musicService.registerPlayerFragment(PlayerFragment.this);
     }
 
     @Override
