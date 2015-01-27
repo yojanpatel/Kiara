@@ -6,8 +6,6 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
-import com.googlecode.objectify.annotation.Serialize;
-import javafx.util.Pair;
 import uk.co.yojan.kiara.server.Constants;
 import uk.co.yojan.kiara.server.serializers.PlaylistDeserializer;
 import uk.co.yojan.kiara.server.serializers.PlaylistSerializer;
@@ -33,8 +31,8 @@ public class Playlist {
   private long lastViewedTimestamp;
   private Map<String, Key<Song>> songIdKeyMap = new HashMap<String, Key<Song>>(); // spotifyId ---> Key(spotifyId)
 
-  @Serialize(zip = true)
-  private ArrayList<Double> weights;
+//  @Serialize(zip = true)
+//  private ArrayList<Double> weights;
 
 
 
@@ -58,7 +56,7 @@ public class Playlist {
   // also allows training of Q based on different reward functions/strategies
   private LinkedList<String> events;
 
-  private ArrayList<String> similarSongs;
+//  private ArrayList<String> similarSongs;
 
   public void nowPlaying(String songId) {
     if(history == null) history = new LinkedList<>();
@@ -82,8 +80,8 @@ public class Playlist {
 
   public String lastFinished() {
     // 1 hour threshold, if last song was played over an hour ago
-    if(timestamp < System.currentTimeMillis() - (60 * 1000)) {
-      Logger.getLogger("").warning("Previous song was played more than an hour ago, starting fresh. " + timestamp  + " " + (System.currentTimeMillis() - (60 * 1000)));
+    if(timestamp < System.currentTimeMillis() - (60 * 60 *  1000)) {
+      Logger.getLogger("").warning("Previous song was played more than an hour ago, starting fresh. " + timestamp  + " " + " " + System.currentTimeMillis() + " " + (System.currentTimeMillis() - (60 * 60 * 1000)));
       return null;
     }
     return lastFinished;
@@ -181,9 +179,9 @@ public class Playlist {
     }
 
     // add additional constraints to help recluster
-    for(int i = 0; i < ids.length - 1; i++) {
-      addSimilarSong(ids[i], ids[i+1]);
-    }
+//    for(int i = 0; i < ids.length - 1; i++) {
+//      addSimilarSong(ids[i], ids[i+1]);
+//    }
 
     incrementCounter();
     changesSinceLastCluster += ids.length;
@@ -195,9 +193,9 @@ public class Playlist {
     for (Song s : songs) ss.add(s);
 
     // add additional constraints to help recluster
-    for(int i = 0; i < songs.length - 1; i++) {
-      addSimilarSong(songs[i].getSpotifyId(), songs[i+1].getSpotifyId());
-    }
+//    for(int i = 0; i < songs.length - 1; i++) {
+//      addSimilarSong(songs[i].getSpotifyId(), songs[i+1].getSpotifyId());
+//    }
 
     changesSinceLastCluster += songs.length;
     return addSongs(ss);
@@ -209,9 +207,9 @@ public class Playlist {
     }
 
     // add additional constraints to help recluster
-    for(int i = 0; i < songs.size() - 1; i++) {
-      addSimilarSong(songs.get(i).getSpotifyId(), songs.get(i+1).getSpotifyId());
-    }
+//    for(int i = 0; i < songs.size() - 1; i++) {
+//      addSimilarSong(songs.get(i).getSpotifyId(), songs.get(i+1).getSpotifyId());
+//    }
 
     changesSinceLastCluster += songs.size();
     incrementCounter();
@@ -291,30 +289,30 @@ public class Playlist {
     this.relearning = relearning;
   }
 
-  public ArrayList<Double> getWeights() {
-    return weights;
-  }
-
-  public void setWeights(ArrayList<Double> weights) {
-    this.weights = weights;
-  }
+//  public ArrayList<Double> getWeights() {
+//    return weights;
+//  }
+//
+//  public void setWeights(ArrayList<Double> weights) {
+//    this.weights = weights;
+//  }
 
   public int size() {
     return getAllSongIds().size();
   }
 
-  public void addSimilarSong(String id1, String id2) {
-    if(similarSongs == null) similarSongs = new ArrayList<>();
-    similarSongs.add(id1 + "-" + id2);
-  }
-
-  public ArrayList<Pair<String, String>> getSimilarSongs() {
-    if(similarSongs == null) similarSongs = new ArrayList<>();
-    ArrayList<Pair<String, String>> similar = new ArrayList<>();
-    for(String s : similarSongs) {
-      String[] parts = s.split("-");
-      similar.add(new Pair<>(parts[0], parts[1]));
-    }
-    return similar;
-  }
+//  public void addSimilarSong(String id1, String id2) {
+//    if(similarSongs == null) similarSongs = new ArrayList<>();
+//    similarSongs.add(id1 + "-" + id2);
+//  }
+//
+//  public ArrayList<SimilarPair> getSimilarSongs() {
+//    if(similarSongs == null) similarSongs = new ArrayList<>();
+//    ArrayList<SimilarPair> similar = new ArrayList<>();
+//    for(String s : similarSongs) {
+//      String[] parts = s.split("-");
+//      similar.add(new SimilarPair(parts[0], parts[1]));
+//    }
+//    return similar;
+//  }
 }
