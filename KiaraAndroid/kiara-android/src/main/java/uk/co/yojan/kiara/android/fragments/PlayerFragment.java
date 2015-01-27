@@ -295,7 +295,7 @@ public class PlayerFragment extends KiaraFragment {
     seekBar.getProgressDrawable().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
     seekBar.getThumb().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
     favouriteFab.setColorNormal(accentColour);
-    playpause.setDefaultColor(accentColour);
+    playpause.setColor(accentColour);
 
     if(getView() != null) {
       getView().setBackgroundColor(darkColour);
