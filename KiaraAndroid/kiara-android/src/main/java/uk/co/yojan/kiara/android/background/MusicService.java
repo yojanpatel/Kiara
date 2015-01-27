@@ -1,5 +1,6 @@
 package uk.co.yojan.kiara.android.background;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -9,10 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.wifi.WifiManager;
-import android.os.Binder;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.PowerManager;
+import android.os.*;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import com.spotify.sdk.android.Spotify;
@@ -23,7 +21,10 @@ import com.squareup.picasso.Target;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
-import uk.co.yojan.kiara.android.*;
+import uk.co.yojan.kiara.android.Constants;
+import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
+import uk.co.yojan.kiara.android.KiaraApplication;
+import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
 import uk.co.yojan.kiara.android.events.Favourite;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
@@ -563,9 +564,14 @@ public class MusicService extends Service
     NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
         .setContentTitle(currentSong.getSongName())
         .setContentIntent(pi)
+        .setColor(getResources().getColor(R.color.pinkA200))
         .setSmallIcon(R.drawable.ic_new_releases_white_24dp)
         .setContentText(currentSong.getArtistName() + " - " + currentSong.getAlbumName())
         .addAction(R.drawable.ic_close_white_24dp, "Stop", stopService);
+
+    if(Build.VERSION.SDK_INT >= 21) {
+      notificationBuilder.setVisibility(Notification.VISIBILITY_PUBLIC);
+    }
 
     notificationBuilder.addAction(
         favourited ? R.drawable.ic_favorite_white_24dp : R.drawable.ic_favorite_outline_white_24dp,

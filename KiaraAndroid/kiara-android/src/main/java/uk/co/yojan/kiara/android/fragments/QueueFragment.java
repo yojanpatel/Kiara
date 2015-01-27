@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.adapters.SongListViewAdapter;
@@ -21,9 +22,12 @@ import uk.co.yojan.kiara.android.comparators.SongComparatorByArtist;
 import uk.co.yojan.kiara.android.events.QueueSongRequest;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
+import uk.co.yojan.kiara.client.data.Song;
 
 import java.util.ArrayList;
 import java.util.Collections;
+
+import static uk.co.yojan.kiara.android.parcelables.SongParcelable.convert;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -57,8 +61,10 @@ public class QueueFragment extends KiaraFragment {
   public static QueueFragment newInstance(long id, ArrayList<SongParcelable> songs) {
     QueueFragment fragment =  new QueueFragment();
     Bundle args = new Bundle();
-    args.putParcelableArrayList("songs", songs);
-    fragment.setArguments(args);
+    if(args.containsKey("songs")) {
+      args.putParcelableArrayList("songs", songs);
+      fragment.setArguments(args);
+    }
     return fragment;
   }
 
@@ -105,8 +111,10 @@ public class QueueFragment extends KiaraFragment {
         new RecyclerItemTouchListener.OnItemClickListener() {
           @Override
           public void onItemClick(View view, int position) {
-            Log.d(log, "Queueing " + mAdapter.getData().get(position).getSongName());
-            getBus().post(new QueueSongRequest(mAdapter.getData().get(position)));
+            SongParcelable queued = mAdapter.getData().get(position);
+            Log.d(log, "Queueing " + queued.getSongName());
+            getKiaraActivity().toast(queued.getArtistName() + " - " + queued.getSongName() + " queued.", true);
+            getBus().post(new QueueSongRequest(queued));
           }
         }));
 
@@ -144,5 +152,10 @@ public class QueueFragment extends KiaraFragment {
       }
     }
     return ret;
+  }
+
+  @Subscribe
+  public void updateSongs(ArrayList<Song> songs) {
+    this.songs = convert(songs);
   }
 }

@@ -5,11 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v7.graphics.Palette;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +28,7 @@ import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.spotify.sdk.android.Spotify;
 import com.spotify.sdk.android.playback.PlayerNotificationCallback;
 import com.spotify.sdk.android.playback.PlayerState;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
@@ -32,6 +37,7 @@ import uk.co.yojan.kiara.android.events.Favourite;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
 import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
+import uk.co.yojan.kiara.android.utils.PaletteTransformation;
 import uk.co.yojan.kiara.android.views.CircleButton;
 import uk.co.yojan.kiara.android.views.IconButton;
 import uk.co.yojan.kiara.client.data.Song;
@@ -73,6 +79,9 @@ public class PlayerFragment extends KiaraFragment {
   Drawable repeatOne;
   Drawable repeat;
 
+  private int accentpink;
+  private int darkgrey;
+
   private int currentPosition;
   private int duration;
 
@@ -112,6 +121,9 @@ public class PlayerFragment extends KiaraFragment {
     play = res.getDrawable(R.drawable.ic_play_arrow_white_36dp);
     favOutline = res.getDrawable(R.drawable.ic_favorite_outline_white_24dp);
     favFilled = res.getDrawable(R.drawable.ic_favorite_white_24dp);
+
+    accentpink = getResources().getColor(R.color.pinkA200);
+    darkgrey = getResources().getColor(R.color.grey900);
 
     repeatOne = res.getDrawable(R.drawable.ic_repeat_one_white_24dp);
     repeat = res.getDrawable(R.drawable.ic_repeat_white_24dp);
@@ -248,10 +260,45 @@ public class PlayerFragment extends KiaraFragment {
   private void updateUi(Song newSong) {
     if(this.currentSong == null || !currentSong.getSpotifyId().equals(newSong.getSpotifyId())) {
       currentSong = newSong;
-      picasso.load(newSong.getImageURL()).into(albumArt);
+      picasso.load(newSong.getImageURL()).transform(PaletteTransformation.instance())
+          .into(albumArt, new Callback.EmptyCallback() {
+  @Override
+  public void onSuccess() {
+    Bitmap bitmap = ((BitmapDrawable) albumArt.getDrawable()).getBitmap(); // Ew!
+    Palette palette = PaletteTransformation.getPalette(bitmap);
+    updateColours(palette);
+  }
+});
       songName.setText(newSong.getSongName());
       artistName.setText(newSong.getArtistName());
       albumName.setText(newSong.getAlbumName());
+    }
+  }
+
+  private void updateColours(Palette palette) {
+
+    int accentColour =
+        palette.getVibrantColor(
+          palette.getDarkVibrantColor(
+            palette.getMutedColor(
+                palette.getDarkMutedColor(accentpink))));
+    Log.d("PALETTE", palette.getSwatches().toString());
+    Log.d("PALETTE", accentColour + " Accent colour");
+
+    int darkColour = palette.getDarkMutedColor(palette.getDarkVibrantColor(darkgrey));
+
+    // ensure the colours extracted are bright for the images.
+    float[] hsv = new float[3];
+    Color.colorToHSV(accentColour, hsv);
+    if(hsv[1] < 0.1) accentColour = accentpink;
+
+    seekBar.getProgressDrawable().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
+    seekBar.getThumb().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
+    favouriteFab.setColorNormal(accentColour);
+    playpause.setDefaultColor(accentColour);
+
+    if(getView() != null) {
+      getView().setBackgroundColor(darkColour);
     }
   }
 

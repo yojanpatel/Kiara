@@ -9,6 +9,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 import uk.co.yojan.kiara.android.client.KiaraClient;
 import uk.co.yojan.kiara.android.events.*;
+import uk.co.yojan.kiara.android.fragments.PlayerFragment;
 import uk.co.yojan.kiara.client.KiaraApiInterface;
 import uk.co.yojan.kiara.client.data.Playlist;
 import uk.co.yojan.kiara.client.data.PlaylistWithSongs;
@@ -28,6 +29,8 @@ public class KiaraService {
   KiaraClient client;
   private Bus bus;
   private String userId;
+
+  private PlayerFragment playerFragment;
 
 
   public KiaraService(KiaraApiInterface api, Bus bus, String userId, KiaraClient client) {
@@ -157,6 +160,4 @@ public class KiaraService {
     });
 
   }
-
-
 }

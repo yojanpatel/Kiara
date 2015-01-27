@@ -8,6 +8,7 @@ import com.faradaj.blurbehind.BlurBehind;
 import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.events.GetSongsForPlaylist;
 import uk.co.yojan.kiara.android.fragments.PlayerFragment;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.Song;
@@ -62,7 +63,12 @@ public class PlayerActivity extends KiaraActivity {
             String userId = sharedPreferences().getString(Constants.USER_ID, null);
             List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
             Intent intent = new Intent(PlayerActivity.this, QueueActivity.class);
-            intent.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
+
+            if(songs == null) {
+              getBus().post(new GetSongsForPlaylist(playlistId));
+            } else {
+              intent.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
+            }
             intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
             startActivity(intent);
           }
@@ -75,6 +81,6 @@ public class PlayerActivity extends KiaraActivity {
 
   @Subscribe
   public void showPrediction(Song s) {
-    toast(s.getArtistName() + " - " + s.getSongName());
+    toast(s.getArtistName() + " - " + s.getSongName(), true);
   }
 }
