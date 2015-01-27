@@ -48,7 +48,8 @@ public class MusicService extends Service
   private KiaraApplication application;
   private PlayerFragment playerFragment;
 
-  private KiaraPlayer player;
+  private Player player;
+//  private KiaraPlayer player;
   public enum RepeatState {FALSE, ONE, TRUE}
   private RepeatState repeating;
   private boolean playing;
@@ -128,6 +129,9 @@ public class MusicService extends Service
         } else if (intent.getAction().equals(Constants.ACTION_FAVOURITE)) {
           Log.d(log, "fav from intent");
           toggleFav();
+        } else if (intent.getAction().equals(Constants.ACTION_NEXT)) {
+          Log.d(log, "next track from intent.");
+          nextSong();
         }
       }
     }
@@ -179,7 +183,8 @@ public class MusicService extends Service
       Spotify spotify = new Spotify();
       Config playerConfig = new Config(this, accessToken, Constants.CLIENT_ID);
 
-      KiaraPlayer kplayer = KiaraPlayer.create(playerConfig, new Player.InitializationObserver() {
+      Player kplayer = Player.create(playerConfig, new Player.InitializationObserver() {
+//      KiaraPlayer kplayer = KiaraPlayer.create(playerConfig, new Player.InitializationObserver() {
 
         @Override
         public void onInitialized() {
@@ -194,7 +199,7 @@ public class MusicService extends Service
       });
 
       spotify.setPlayer(kplayer);
-      player = (KiaraPlayer) spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
+      player = spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
 
         @Override
         public void onInitialized() {
@@ -280,7 +285,11 @@ public class MusicService extends Service
 
   @Override
   public void onPlaybackError(ErrorType errorType, String s) {
-    Log.e(log, s);
+    if(errorType == ErrorType.TRACK_UNAVAILABLE) {
+      // TODO: when available
+      nextSong();
+    }
+    Log.e(log, errorType + " " + s);
   }
 
   @Override
@@ -547,6 +556,10 @@ public class MusicService extends Service
     favIntent.setAction(Constants.ACTION_FAVOURITE);
     PendingIntent favService = PendingIntent.getService(this, 0, favIntent, 0);
 
+    Intent nextIntent = new Intent(this, MusicService.class);
+    favIntent.setAction(Constants.ACTION_NEXT);
+    PendingIntent nextTrackIntent = PendingIntent.getService(this, 0, nextIntent, 0);
+
     NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
         .setContentTitle(currentSong.getSongName())
         .setContentIntent(pi)
@@ -564,6 +577,10 @@ public class MusicService extends Service
         playing ? "Pause" : "Play",
         playpauseService
     );
+
+    notificationBuilder.addAction(
+        R.drawable.ic_skip_next_white_24dp, "Skip", nextTrackIntent);
+
 
     if(currentSongAlbumCover != null) {
       notificationBuilder.setLargeIcon(currentSongAlbumCover);
