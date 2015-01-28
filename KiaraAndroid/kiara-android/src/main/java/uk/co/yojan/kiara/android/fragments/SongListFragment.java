@@ -2,7 +2,6 @@ package uk.co.yojan.kiara.android.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
@@ -29,9 +28,9 @@ import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
+import uk.co.yojan.kiara.android.activities.SearchActivity;
 import uk.co.yojan.kiara.android.adapters.SongListViewAdapter;
 import uk.co.yojan.kiara.android.comparators.SongComparatorByArtist;
-import uk.co.yojan.kiara.android.dialogs.AddSongDialog;
 import uk.co.yojan.kiara.android.events.SongAdded;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
@@ -191,12 +190,16 @@ public class SongListFragment extends KiaraFragment {
   private void setUpFab() {
     Drawable plus = getResources().getDrawable(R.drawable.ic_add_white_24dp);
     fab = getKiaraActivity().getFab();
+
     fab.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        FragmentManager fm = getFragmentManager();
-        AddSongDialog asd = AddSongDialog.newInstance(playlistId);
-        asd.show(fm, "fragment_add_song");
+//        FragmentManager fm = getFragmentManager();
+//        AddSongDialog asd = AddSongDialog.newInstance(playlistId);
+//        asd.show(fm, "fragment_add_song");
+        Intent intent = new Intent(mContext, SearchActivity.class);
+        intent.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
+        startActivity(intent);
       }
     });
   }

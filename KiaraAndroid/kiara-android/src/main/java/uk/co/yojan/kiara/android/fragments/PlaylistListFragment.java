@@ -43,14 +43,6 @@ public class PlaylistListFragment extends KiaraFragment {
 
   private static final String log = PlaylistListFragment.class.getName();
 
-//  public static final String CASE_PARAM = "CASE_PARAM";
-//  public static final String USER_PARAM = "USER_PARAM";
-//  public static final String PLAYLIST_PARAM = "PLAYLIST_PARAM";
-//  public static final String PLAYLIST_ID_PARAM = "PLAYLIST_ID_PARAM";
-//  public static final String PLAYLIST_NAME_PARAM = "PLAYLIST_NAME_PARAM";
-//  public static final String ALBUM_PARAM = "ALBUM_PARAM";
-//  public static final String TRACK_PARAM = "TRACK_PARAM";
-
   private KiaraActivity parent;
   private Context mContext;
 

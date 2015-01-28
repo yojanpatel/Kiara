@@ -15,9 +15,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.graphics.Palette;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -53,6 +51,8 @@ public class PlayerFragment extends KiaraFragment {
   private static Picasso picasso;
 
   private boolean bound;
+
+  private Window window;
 
   @InjectView(R.id.album_image) ImageView albumArt;
   @InjectView(R.id.song_name) TextView songName;
@@ -137,10 +137,12 @@ public class PlayerFragment extends KiaraFragment {
           PorterDuff.Mode.SRC_IN);
     }
 
-    if(Build.VERSION.SDK_INT >= 21) {
-      albumArt.setBackground(mContext.getDrawable(R.drawable.ripple));
-    }
+    window = getKiaraActivity().getWindow();
 
+    // Translucent status bar
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      window.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+    }
 
     Intent startService = new Intent(mContext, MusicService.class);
     getKiaraActivity().startService(startService);
@@ -323,7 +325,9 @@ public class PlayerFragment extends KiaraFragment {
       //default for artist/album text
       albumName.setTextColor(textColour);
       artistName.setTextColor(textColour);
+
     }
+
 
     if(getView() != null) {
       getView().setBackgroundColor(darkColour);

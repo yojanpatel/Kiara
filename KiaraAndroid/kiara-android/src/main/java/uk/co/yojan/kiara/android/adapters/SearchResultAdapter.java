@@ -55,7 +55,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     this.mContext = context;
     picasso = Picasso.with(mContext);
-    picasso.setIndicatorsEnabled(true);
+    picasso.setIndicatorsEnabled(false);
   }
 
   @Override
@@ -82,11 +82,11 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
       ViewHolderTrack vhTrack = (ViewHolderTrack) viewHolder;
       Track track = data.getTracks().getTracks().get(position - 1);
       vhTrack.songName.setText(track.getName());
-      vhTrack.artistName.setText(track.getArtists().get(0).getName() + " - " + track.getAlbum().getName());
+      vhTrack.artistName.setText(track.getArtists().get(0).getName());
       if(track.getAlbum().getImages().size() > 0) {
         picasso.load(track.getAlbum().getImages().get(0).getUrl())
             .placeholder(R.drawable.ic_placeholder_200)
-            .resize(200, 200)
+            .resize(150, 150)
             .into(vhTrack.albumArt);
       }
 
@@ -95,14 +95,22 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
       ViewHolderArtist vhArtist = (ViewHolderArtist) viewHolder;
       Artist artist = data.getArtists().getArtists().get(position - artistLabel - 1);
       vhArtist.artistName.setText(artist.getName());
-      if(artist.getImages().size() > 0) {
+      boolean artistImage = artist.getImages().size() > 0 && !artist.getImages().get(0).getUrl().isEmpty();
+
+      // WHERE IS DYNAMIC TYPING?!? - Ew.
+      if(artistImage) {
         picasso.load(artist.getImages().get(0).getUrl())
-            .placeholder(R.drawable.ic_placeholder_200)
-            .resize(200, 200)
+            .placeholder(R.drawable.ic_placeholder_150)
+            .resize(150, 150)
+            .transform(new CircularCropTransformation())
+            .into(vhArtist.artistImg);
+      } else {
+        picasso.load(R.drawable.ic_placeholder_150)
+            .placeholder(R.drawable.ic_placeholder_150)
+            .resize(150, 150)
             .transform(new CircularCropTransformation())
             .into(vhArtist.artistImg);
       }
-
     } else if(viewType == ALBUM_TYPE) {
       ViewHolderAlbum vhAlbum = (ViewHolderAlbum) viewHolder;
       Album album = data.getAlbums().getAlbums().get(position - albumlabel - 1);
@@ -117,7 +125,10 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     } else if(viewType == LABEL_TYPE) {
       ViewHolderLabel vhLabel = (ViewHolderLabel) viewHolder;
       String text = "";
-      if(position == trackLabel) text = "Tracks";
+      if(position == trackLabel) {
+        text = "Tracks";
+        ((ViewHolderLabel)viewHolder).divider.setVisibility(View.GONE);
+      }
       else if(position == artistLabel) text = "Artists";
       else if(position == albumlabel) text = "Albums";
       vhLabel.label.setText(text);
@@ -148,14 +159,13 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @InjectView(R.id.song_img) ImageView albumArt;
     @InjectView(R.id.song_name) TextView songName;
     @InjectView(R.id.artist_name) TextView artistName;
+    @InjectView(R.id.album_name) TextView albumName;
     @InjectView(R.id.divider) View divider;
 
     public ViewHolderTrack(View itemView) {
       super(itemView);
       ButterKnife.inject(this, itemView);
-      songName.setTextColor(mContext.getResources().getColor(R.color.grey900));
-      artistName.setTextColor(mContext.getResources().getColor(R.color.grey900));
-      divider.setVisibility(View.VISIBLE);
+      divider.setVisibility(View.GONE);
     }
   }
 
@@ -181,13 +191,12 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public ViewHolderAlbum(View itemView) {
       super(itemView);
       ButterKnife.inject(this, itemView);
-      albumName.setTextColor(mContext.getResources().getColor(R.color.grey900));
-      artistName.setTextColor(mContext.getResources().getColor(R.color.grey900));
     }
   }
 
   public class ViewHolderLabel extends RecyclerView.ViewHolder {
     @InjectView(R.id.label_text) TextView label;
+    @InjectView(R.id.divider) View divider;
 
     public ViewHolderLabel(View itemView) {
       super(itemView);

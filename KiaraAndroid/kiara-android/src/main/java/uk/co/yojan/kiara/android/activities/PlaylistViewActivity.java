@@ -37,6 +37,7 @@ public class PlaylistViewActivity extends KiaraActivity {
       if(urlData != null) {
         setTitle("Choose playlist to add into");
       }
+
       Bundle args = intialiseArgs(urlData, subjData);
       if (savedInstanceState == null) {
         getFragmentManager().beginTransaction()
@@ -47,18 +48,13 @@ public class PlaylistViewActivity extends KiaraActivity {
           getFragmentManager().findFragmentById(R.id.container).setArguments(args);
         }
       }
-    }
 
-  @Override
-  protected void onResume() {
-    Log.d(log, "onResume");
-    super.onResume();
-    if(sharedPreferences().getBoolean(Constants.IN_SESSION, false)) {
-      Log.d(log, "adding control fragment to activity.");
-      getFragmentManager().beginTransaction()
-          .add(R.id.controller_container, PlayerControlFragment.newInstance()).commit();
+      if(sharedPreferences().getBoolean(Constants.IN_SESSION, false)) {
+        Log.d(log, "adding control fragment to activity.");
+        getFragmentManager().beginTransaction()
+            .add(R.id.controller_container, PlayerControlFragment.newInstance()).commit();
+      }
     }
-  }
 
   /* Spotify sharing URL patterns
      * http://open.spotify.com/user/{userId}/playlist/{playlistId}
