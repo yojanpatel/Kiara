@@ -2,4 +2,5 @@
 <resources>
   <integer name="send">0x00000004</integer>
   <integer name="go">0x00000002</integer>
+  <integer name="search">3</integer>
 </resources>

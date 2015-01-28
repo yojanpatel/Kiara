@@ -38,6 +38,9 @@
         android:layout_marginLeft="36dp"
         android:textStyle="bold"
         android:textColor="@color/white"/>
+
+
+
   </android.support.v7.widget.Toolbar>
 
   <View

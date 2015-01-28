@@ -27,5 +27,6 @@
     <string name="title_activity_queue">QueueActivity</string>
     <string name="search_playlist">Search Playlist</string>
     <string name="search">Search</string>
+    <string name="search_spotify">Search Spotify</string>
 
 </resources>

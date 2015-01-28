@@ -2,7 +2,9 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp">
 
   <ImageView
       android:layout_width="wrap_content"
@@ -15,17 +17,11 @@
       android:layout_height="wrap_content"
       android:id="@+id/artist_name"
       android:text="Artist Name"
-      android:textSize="14sp"
-      android:textColor="@color/grey900"
-      android:layout_marginTop="8dp"
+      android:textSize="16sp"
+      android:textColor="@color/grey50"
       android:layout_toRightOf="@+id/artist_img"
       android:layout_alignParentRight="true"
+      android:layout_centerVertical="true"
       android:padding="8dp"/>
-  
-  <View
-      android:layout_width="fill_parent"
-      android:layout_height="1dp"
-      android:background="@color/grey400"
-      android:layout_alignParentBottom="true"/>
 
 </RelativeLayout>

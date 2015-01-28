@@ -2,7 +2,9 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp">
 
   <ImageView
       android:layout_width="wrap_content"
@@ -19,24 +21,19 @@
       android:textSize="16sp"
       android:text="Song Name"
       android:padding="4dp"
-      android:textColor="@color/grey900"
+      android:textColor="@color/grey50"
       android:layout_toRightOf="@+id/album_img"/>
 
   <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:id="@+id/artist_name"
-      android:textSize="12sp"
-      android:textColor="@color/grey900"
+      android:textSize="16sp"
       android:text="Artist Name"
+      android:textColor="@color/grey400"
       android:layout_below="@+id/album_name"
       android:layout_alignLeft="@+id/album_name"
       android:paddingLeft="4dp"/>
 
-  <View
-      android:layout_width="fill_parent"
-      android:layout_height="1dp"
-      android:background="@color/grey400"
-      android:layout_alignParentBottom="true"/>
 
 </RelativeLayout>
