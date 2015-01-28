@@ -150,7 +150,15 @@ public class PlayerFragment extends KiaraFragment {
     initButtons();
     initialiseSeekBar();
 
-    picasso.load(currentSong.getImageURL()).into(albumArt);
+    picasso.load(currentSong.getImageURL()).transform(PaletteTransformation.instance())
+        .into(albumArt, new Callback.EmptyCallback() {
+          @Override
+          public void onSuccess() {
+            Bitmap bitmap = ((BitmapDrawable) albumArt.getDrawable()).getBitmap(); // Ew!
+            Palette palette = PaletteTransformation.getPalette(bitmap);
+            updateColours(palette);
+          }
+        });
     songName.setText(currentSong.getSongName());
     artistName.setText(currentSong.getArtistName());
     albumName.setText(currentSong.getAlbumName());
@@ -262,13 +270,13 @@ public class PlayerFragment extends KiaraFragment {
       currentSong = newSong;
       picasso.load(newSong.getImageURL()).transform(PaletteTransformation.instance())
           .into(albumArt, new Callback.EmptyCallback() {
-  @Override
-  public void onSuccess() {
-    Bitmap bitmap = ((BitmapDrawable) albumArt.getDrawable()).getBitmap(); // Ew!
-    Palette palette = PaletteTransformation.getPalette(bitmap);
-    updateColours(palette);
-  }
-});
+        @Override
+        public void onSuccess() {
+          Bitmap bitmap = ((BitmapDrawable) albumArt.getDrawable()).getBitmap(); // Ew!
+          Palette palette = PaletteTransformation.getPalette(bitmap);
+          updateColours(palette);
+        }
+      });
       songName.setText(newSong.getSongName());
       artistName.setText(newSong.getArtistName());
       albumName.setText(newSong.getAlbumName());
@@ -287,15 +295,35 @@ public class PlayerFragment extends KiaraFragment {
 
     int darkColour = palette.getDarkMutedColor(palette.getDarkVibrantColor(darkgrey));
 
-    // ensure the colours extracted are bright for the images.
+    int textColour = palette.getLightMutedColor(palette.getLightVibrantColor(-1));
+
+    // ensure the colours extracted are bright for the buttons.
     float[] hsv = new float[3];
     Color.colorToHSV(accentColour, hsv);
     if(hsv[1] < 0.1) accentColour = accentpink;
+
+    Color.colorToHSV(darkColour, hsv);
+    if(hsv[2] > 0.32) darkColour = darkgrey;
 
     seekBar.getProgressDrawable().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
     seekBar.getThumb().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
     favouriteFab.setColorNormal(accentColour);
     playpause.setColor(accentColour);
+
+    if(textColour != -1) {
+      float[] hsv2 = new float[3];
+      Color.colorToHSV(textColour, hsv2);
+
+      hsv2[2] += (1.0f - hsv2[2]) / 1.6f;
+      int brighterText = Color.HSVToColor(hsv2);
+
+      // brighten for title
+      songName.setTextColor(brighterText);
+
+      //default for artist/album text
+      albumName.setTextColor(textColour);
+      artistName.setTextColor(textColour);
+    }
 
     if(getView() != null) {
       getView().setBackgroundColor(darkColour);

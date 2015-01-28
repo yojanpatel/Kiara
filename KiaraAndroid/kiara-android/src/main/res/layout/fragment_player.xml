@@ -37,7 +37,7 @@
       android:layout_alignParentLeft="true"
       android:layout_alignParentStart="true"
       android:layout_alignParentRight="true"
-      android:layout_alignParentEnd="true"/>
+      android:layout_alignParentEnd="true" android:maxLines="2"/>
 
   <TextView
       android:layout_width="fill_parent"
@@ -52,7 +52,7 @@
       android:layout_alignParentLeft="true"
       android:layout_alignParentStart="true"
       android:layout_alignParentRight="true"
-      android:layout_alignParentEnd="true"/>
+      android:layout_alignParentEnd="true" android:singleLine="true"/>
 
   <TextView
       android:layout_width="fill_parent"
@@ -67,7 +67,7 @@
       android:layout_alignParentLeft="true"
       android:layout_alignParentStart="true"
       android:layout_alignParentRight="true"
-      android:layout_alignParentEnd="true"/>
+      android:layout_alignParentEnd="true" android:singleLine="true"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -227,7 +227,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/seekBar"
-        android:maxHeight="3dp"
+        android:maxHeight="4dp"
+        android:minHeight="4dp"
         android:paddingLeft="0dp"
         android:paddingRight="0dp"
         android:layout_alignTop="@+id/dummy"
