@@ -84,9 +84,11 @@ public class KiaraActivity extends ActionBarActivity {
       }
     } else {
         // go to main activity and prompt to log in.
-        Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
-        SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
-            new String[]{"user-read-private", "streaming"}, null, this);
+      if(!getClass().equals(MainActivity.class)) {
+        Intent main = new Intent(this, MainActivity.class);
+        main.setAction(Constants.AUTHENTICATE);
+        startActivity(main);
+      }
     }
   }
 
@@ -286,7 +288,7 @@ public class KiaraActivity extends ActionBarActivity {
     return (sharedPreferences().getLong(Constants.ACCESS_DEADLINE, 0L) < getTimestamp());
   }
 
-  private boolean loggedIn() {
+  protected boolean loggedIn() {
     return getUserId() != null;
 //    return false;
   }

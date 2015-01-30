@@ -2,15 +2,21 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.*;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.spotify.sdk.android.authentication.SpotifyAuthentication;
 import com.spotify.sdk.android.playback.ConnectionStateCallback;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+
+import java.util.Random;
 
 
 public class MainActivity extends KiaraActivity
@@ -18,37 +24,43 @@ public class MainActivity extends KiaraActivity
 
   private String LOG = MainActivity.class.getName();
 
+  private Window window;
+
   @InjectView(R.id.title) TextView kiaraTitle;
+  @InjectView(R.id.loginButton) ImageButton login;
+  @InjectView(R.id.progressBar) ProgressBar progressBar;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     initialiseAuthCallbacks(this);
-    super.onCreate(savedInstanceState);
 
+    super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     ButterKnife.inject(this);
     Typeface tf = Typeface.createFromAsset(getAssets(), "fonts/basictitlefont.ttf");
     kiaraTitle.setTypeface(tf);
 
-    /*
-    if(accessExpired()) {
+    window = getWindow();
 
-      // If refreshToken exists, we can use that to get another access token.
-      Log.d(LOG, "Access Token has expired.");
-      String refreshToken = sharedPreferences().getString(Constants.REFRESH_TOKEN, null);
-      if (refreshToken != null) {
-        Log.d(LOG, "Requesting Access Token refresh using the refresh token.");
-        getBus().post(new RefreshAccessTokenRequest(refreshToken));
-      } else {
-        Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
-        SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
-            new String[]{"user-read-private", "streaming"}, null, this);
-      }
-    } else {
-      String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
-//      getBus().post(new RefreshAccessTokenResponse(accessToken, -1));
-      finishLoading();
-    } */
+    // Translucent status bar
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      window.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+    }
+
+    pickBackground();
+    if(!loggedIn()) {
+      progressBar.setVisibility(View.GONE);
+      login.setVisibility(View.VISIBLE);
+      login.setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+          Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
+          SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
+              new String[]{"user-read-private", "streaming"}, null, MainActivity.this);
+        }
+      });
+    }
   }
 
   @Override
@@ -122,5 +134,17 @@ public class MainActivity extends KiaraActivity
   @Override
   public void onConnectionMessage(String s) {
     Log.d(LOG, "Received connection message: " + s);
+  }
+
+  private void pickBackground() {
+    int choice = new Random().nextInt(2);
+    if(choice == 0) {
+      findViewById(R.id.relative).setBackground(getResources().getDrawable(R.drawable.background_pink));
+    } else if(choice == 1) {
+      findViewById(R.id.relative).setBackground(getResources().getDrawable(R.drawable.background_blue));
+    } else if(choice == 2) {
+      findViewById(R.id.relative).setBackground(getResources().getDrawable(R.drawable.background_purple));
+
+    }
   }
 }

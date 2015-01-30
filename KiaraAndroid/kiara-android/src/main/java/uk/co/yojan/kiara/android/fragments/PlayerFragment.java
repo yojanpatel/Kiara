@@ -52,8 +52,6 @@ public class PlayerFragment extends KiaraFragment {
 
   private boolean bound;
 
-  private Window window;
-
   @InjectView(R.id.album_image) ImageView albumArt;
   @InjectView(R.id.song_name) TextView songName;
   @InjectView(R.id.artist_name) TextView artistName;
@@ -135,13 +133,6 @@ public class PlayerFragment extends KiaraFragment {
       repeat.setColorFilter(
           getResources().getColor(R.color.pinkA400),
           PorterDuff.Mode.SRC_IN);
-    }
-
-    window = getKiaraActivity().getWindow();
-
-    // Translucent status bar
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      window.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
     }
 
     Intent startService = new Intent(mContext, MusicService.class);
