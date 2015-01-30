@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -184,7 +185,6 @@ public class KiaraActivity extends ActionBarActivity {
           .putString(Constants.USER_IMG_URL, user.getPrimaryImageURL())
           .putString(Constants.USER_TYPE, user.getType()).commit();
       getKiaraApplication().initKiaraService(user.getId());
-      Toast.makeText(getApplicationContext(), sharedPreferences().getString(Constants.USER_ID, null), Toast.LENGTH_SHORT).show();
       authCallback();
     }
   };
@@ -321,4 +321,16 @@ public class KiaraActivity extends ActionBarActivity {
   }
 
 
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+
+    if(item.getItemId() == R.id.logout_menu) {
+      sharedPreferences().edit().clear().commit();
+      Intent main = new Intent(this, MainActivity.class);
+      startActivity(main);
+      finish();
+    }
+
+    return super.onOptionsItemSelected(item);
+  }
 }

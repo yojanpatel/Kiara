@@ -13,8 +13,10 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.spotify.sdk.android.authentication.SpotifyAuthentication;
 import com.spotify.sdk.android.playback.ConnectionStateCallback;
+import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.events.AuthCodeGrantRequest;
 
 import java.util.Random;
 
@@ -134,6 +136,13 @@ public class MainActivity extends KiaraActivity
   @Override
   public void onConnectionMessage(String s) {
     Log.d(LOG, "Received connection message: " + s);
+  }
+
+  @Subscribe
+  public void onAuthenticationInProgress(AuthCodeGrantRequest request) {
+    Log.d(LOG, "onAuthenticationInProgress");
+    progressBar.setVisibility(View.VISIBLE);
+    login.setVisibility(View.GONE);
   }
 
   private void pickBackground() {

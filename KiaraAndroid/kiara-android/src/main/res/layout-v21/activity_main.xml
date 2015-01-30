@@ -22,17 +22,17 @@
         android:typeface="serif"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:paddingBottom="64dp"
         android:paddingTop="16dp"/>
 
     <ImageButton
         android:id="@+id/loginButton"
+        android:layout_marginTop="32dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="visible"
+        android:visibility="gone"
         android:src="@drawable/spotify_log_in"
         android:background="@color/transparent"
-        android:layout_alignBottom="@+id/title"
+        android:layout_below="@+id/title"
         android:layout_centerHorizontal="true"/>
 
   <ProgressBar
