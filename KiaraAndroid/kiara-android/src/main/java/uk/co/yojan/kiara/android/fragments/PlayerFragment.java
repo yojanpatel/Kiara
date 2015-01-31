@@ -318,10 +318,16 @@ public class PlayerFragment extends KiaraFragment {
     // ensure the colours extracted are bright for the buttons.
     float[] hsv = new float[3];
     Color.colorToHSV(accentColour, hsv);
-    if(hsv[1] < 0.1) accentColour = accentpink;
+    if(hsv[1] < 0.1f) accentColour = accentpink;
 
+    // ensure colours are dark for background
+    // within [0.32, 0.5] adjustment made to the darkness
     Color.colorToHSV(darkColour, hsv);
-    if(hsv[2] > 0.32) darkColour = darkgrey;
+    if(hsv[2] > 0.5f) darkColour = darkgrey;
+    else if(hsv[2] > 0.32f) {
+      hsv[2] = 0.32f;
+      darkColour = Color.HSVToColor(hsv);
+    }
 
     seekBar.getProgressDrawable().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
     seekBar.getThumb().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
@@ -345,7 +351,6 @@ public class PlayerFragment extends KiaraFragment {
       //default for artist/album text
       albumName.setTextColor(textColour);
       artistName.setTextColor(textColour);
-
     }
 
     if(getView() != null) {
