@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/welcome"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/pinkA200"/>
+
+    <View
+        android:id="@+id/divider"
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_below="@id/title"
+        android:background="@color/pinkA200"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/divider">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+          <TextView
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/one"
+              android:layout_marginBottom="8dp"
+              android:layout_marginLeft="16dp"
+              android:layout_marginRight="16dp"
+              android:text="Kiara is an intelligent music player for your Spotify playlists. Please note that this is a beta version which is still undergoing final testing. The aim is to use your help to tune the performance further."/>
+
+          <TextView
+              android:id="@+id/two"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:text="It is essentially a radio for your playlists allowing you to do things like create a mixed playlist of different genres. You can queue the next track to play or Kiara can decide for you based on what it thinks you may prefer!"
+              android:layout_alignParentLeft="true"
+              android:layout_marginBottom="8dp"
+              android:layout_below="@id/one"
+              android:layout_marginLeft="16dp"
+              android:layout_marginRight="16dp"
+              android:layout_alignParentStart="true"/>
+
+          <TextView
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/three"
+              android:layout_marginBottom="8dp"
+              android:layout_marginLeft="16dp"
+              android:layout_marginRight="16dp"
+              android:text="To recommend the next song to play, Kiara is instrumented to send usage data such as when you skip or favourite a song to a server. These will be logged for a maximum of one month to help the recommendation become better over time as well as to help with the research being carried out."
+              android:layout_below="@+id/two"/>
+
+          <TextView
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/four"
+              android:layout_marginLeft="16dp"
+              android:layout_marginRight="16dp"
+              android:text="The program is distributed in the hope that it will be useful, but without any warranty. It is provided 'as is' without warranty of any kind, either expressed or implied, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose."
+              android:layout_marginBottom="8dp"
+              android:layout_below="@+id/three"
+              android:layout_alignParentLeft="true"
+              android:layout_alignParentStart="true"/>
+        </RelativeLayout>
+    </ScrollView>
+</RelativeLayout>

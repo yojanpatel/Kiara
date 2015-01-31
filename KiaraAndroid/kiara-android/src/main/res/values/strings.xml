@@ -29,5 +29,7 @@
     <string name="search">Search</string>
     <string name="search_spotify">Search Spotify</string>
     <string name="logout">Logout</string>
+    <string name="welcome">WELCOME</string>
+    <string name="agree">Agree</string>
 
 </resources>

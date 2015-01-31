@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -16,6 +17,7 @@ import com.spotify.sdk.android.playback.ConnectionStateCallback;
 import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.dialogs.WelcomeDialog;
 import uk.co.yojan.kiara.android.events.AuthCodeGrantRequest;
 
 import java.util.Random;
@@ -57,9 +59,15 @@ public class MainActivity extends KiaraActivity
 
         @Override
         public void onClick(View v) {
-          Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
-          SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
-              new String[]{"user-read-private", "streaming"}, null, MainActivity.this);
+          boolean termsAgreed = sharedPreferences().getBoolean(Constants.TERMS_AGREED, false);
+
+          if(termsAgreed) {
+            Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
+            SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
+                new String[]{"user-read-private", "streaming"}, null, MainActivity.this);
+          } else {
+            showWelcomeDialog();
+          }
         }
       });
     }
@@ -153,7 +161,22 @@ public class MainActivity extends KiaraActivity
       findViewById(R.id.relative).setBackground(getResources().getDrawable(R.drawable.background_blue));
     } else if(choice == 2) {
       findViewById(R.id.relative).setBackground(getResources().getDrawable(R.drawable.background_purple));
+    }
+  }
 
+  private void showWelcomeDialog() {
+    WelcomeDialog dialog = new WelcomeDialog();
+    dialog.show(getSupportFragmentManager(), "WelcomeDialog");
+
+
+//    Button pos = ((AlertDialog)dialog.getDialog()).getButton(DialogInterface.BUTTON_POSITIVE);
+//    Button neg = ((AlertDialog)dialog.getDialog()).getButton(DialogInterface.BUTTON_NEGATIVE);
+    Button pos = dialog.positiveButton;
+    Button neg = dialog.negativeButton;
+
+    if(pos != null && neg != null) {
+      pos.setTextColor(getResources().getColor(R.color.pinkA200));
+      neg.setTextColor(getResources().getColor(R.color.pinkA200));
     }
   }
 }
