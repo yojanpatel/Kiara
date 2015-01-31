@@ -34,7 +34,7 @@ public class WelcomeDialog extends DialogFragment {
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder.setPositiveButton(R.string.agree, new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int id) {
-        activity.sharedPreferences().edit().putBoolean(Constants.TERMS_AGREED, true);
+        activity.sharedPreferences().edit().putBoolean(Constants.TERMS_AGREED, true).commit();
       }
     }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int id) {
