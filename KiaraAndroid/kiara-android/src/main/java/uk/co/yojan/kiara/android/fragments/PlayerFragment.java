@@ -163,29 +163,6 @@ public class PlayerFragment extends KiaraFragment {
     artistName.setText(currentSong.getArtistName());
     albumName.setText(currentSong.getAlbumName());
 
-    queueButton.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Runnable run = new Runnable() {
-          @Override
-          public void run() {
-            String userId = getKiaraActivity().sharedPreferences().getString(Constants.USER_ID, null);
-            List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
-            Intent intent = new Intent(getKiaraActivity(), QueueActivity.class);
-
-            if(songs == null) {
-              getBus().post(new GetSongsForPlaylist(playlistId));
-            } else {
-              intent.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
-            }
-            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-            startActivity(intent);
-          }
-        };
-        BlurBehind.getInstance().execute(getKiaraActivity(), run);
-      }
-    });
-
     return rootView;
   }
 
@@ -279,6 +256,29 @@ public class PlayerFragment extends KiaraFragment {
         Log.d(log, "REPEAT BUTTON PRESSED ");
         MusicService.RepeatState repeatState = musicService.repeat();
         onRepeat(repeatState);
+      }
+    });
+
+    queueButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Runnable run = new Runnable() {
+          @Override
+          public void run() {
+            String userId = getKiaraActivity().sharedPreferences().getString(Constants.USER_ID, null);
+            List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
+            Intent intent = new Intent(getKiaraActivity(), QueueActivity.class);
+
+            if(songs == null) {
+              getBus().post(new GetSongsForPlaylist(playlistId));
+            } else {
+              intent.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
+            }
+            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(intent);
+          }
+        };
+        BlurBehind.getInstance().execute(getKiaraActivity(), run);
       }
     });
   }

@@ -15,6 +15,7 @@ import android.widget.ImageButton;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.squareup.otto.Subscribe;
+import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.adapters.SongListViewAdapter;
@@ -26,8 +27,6 @@ import uk.co.yojan.kiara.client.data.Song;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
-import static uk.co.yojan.kiara.android.parcelables.SongParcelable.convert;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -61,8 +60,8 @@ public class QueueFragment extends KiaraFragment {
   public static QueueFragment newInstance(long id, ArrayList<SongParcelable> songs) {
     QueueFragment fragment =  new QueueFragment();
     Bundle args = new Bundle();
-    if(args.containsKey("songs")) {
-      args.putParcelableArrayList("songs", songs);
+    if(songs != null && !songs.isEmpty()) {
+      args.putParcelableArrayList(Constants.ARG_PLAYLIST_SONG_LIST, songs);
       fragment.setArguments(args);
     }
     return fragment;
@@ -71,9 +70,12 @@ public class QueueFragment extends KiaraFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    this.activity = (KiaraActivity) getActivity();
+
     if (getArguments() != null) {
       // The values passed from the playlist with songs.
-      songs = getArguments().getParcelableArrayList("songs");
+      songs = getArguments().getParcelableArrayList(Constants.ARG_PLAYLIST_SONG_LIST);
       Collections.sort(songs, new SongComparatorByArtist());
       displaySongs = SongParcelable.clone(songs);
     }
@@ -96,9 +98,7 @@ public class QueueFragment extends KiaraFragment {
                            Bundle savedInstanceState) {
     View rootView = inflater.inflate(R.layout.fragment_queue, container, false);
     ButterKnife.inject(this, rootView);
-
     this.mContext = rootView.getContext();
-    this.activity = (KiaraActivity) getActivity();
 
     // Use previous set of songs (the ones cached already) until the network call is returned.
     this.mAdapter = new SongListViewAdapter(displaySongs, mContext);
@@ -156,6 +156,22 @@ public class QueueFragment extends KiaraFragment {
 
   @Subscribe
   public void updateSongs(ArrayList<Song> songs) {
-    this.songs = convert(songs);
+//    this.songs = convert(songs);
+
+    if(songs.size() > 0 && songs.get(0) != null) {
+      Log.d(log, "onSongsReceived, updating the list.");
+      for (Song s : songs) {
+        SongParcelable sp = new SongParcelable(s);
+        if(!this.songs.contains(sp)) {
+          this.songs.add(new SongParcelable(s));
+        }
+      }
+
+      Collections.sort(this.songs, new SongComparatorByArtist());
+      displaySongs = SongParcelable.clone(this.songs);
+
+      mAdapter.notifyDataSetChanged();
+      activity.setProgressBarVisibility(View.GONE);
+    }
   }
 }
