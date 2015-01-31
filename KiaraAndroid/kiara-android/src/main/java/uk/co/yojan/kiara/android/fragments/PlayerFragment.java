@@ -15,13 +15,16 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.graphics.Palette;
 import android.util.Log;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.faradaj.blurbehind.BlurBehind;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.spotify.sdk.android.Spotify;
 import com.spotify.sdk.android.playback.PlayerNotificationCallback;
@@ -30,15 +33,18 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.activities.QueueActivity;
 import uk.co.yojan.kiara.android.background.MusicService;
 import uk.co.yojan.kiara.android.events.Favourite;
+import uk.co.yojan.kiara.android.events.GetSongsForPlaylist;
 import uk.co.yojan.kiara.android.events.PlaybackEvent;
-import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.android.utils.PaletteTransformation;
 import uk.co.yojan.kiara.android.views.CircleButton;
 import uk.co.yojan.kiara.android.views.IconButton;
 import uk.co.yojan.kiara.client.data.Song;
+
+import java.util.List;
 
 /**
  * Fragment that handles the song streaming from Spotify.
@@ -64,6 +70,7 @@ public class PlayerFragment extends KiaraFragment {
   @InjectView(R.id.prev_track) IconButton previousTrackButton;
   @InjectView(R.id.next_track) IconButton nextTrackButton;
   @InjectView(R.id.replay_track) IconButton repeatButton;
+  @InjectView(R.id.queue_button) IconButton queueButton;
 
   private long playlistId;
   private Song currentSong;
@@ -123,8 +130,8 @@ public class PlayerFragment extends KiaraFragment {
     accentpink = getResources().getColor(R.color.pinkA200);
     darkgrey = getResources().getColor(R.color.grey900);
 
-    repeatOne = res.getDrawable(R.drawable.ic_repeat_one_white_24dp);
-    repeat = res.getDrawable(R.drawable.ic_repeat_white_24dp);
+    repeatOne = res.getDrawable(R.drawable.ic_repeat_one_white_36dp);
+    repeat = res.getDrawable(R.drawable.ic_repeat_white_36dp);
     if(Build.VERSION.SDK_INT >= 16) {
       repeatOne.setColorFilter(
           getResources().getColor(R.color.pinkA200),
@@ -155,6 +162,29 @@ public class PlayerFragment extends KiaraFragment {
     songName.setText(currentSong.getSongName());
     artistName.setText(currentSong.getArtistName());
     albumName.setText(currentSong.getAlbumName());
+
+    queueButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Runnable run = new Runnable() {
+          @Override
+          public void run() {
+            String userId = getKiaraActivity().sharedPreferences().getString(Constants.USER_ID, null);
+            List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
+            Intent intent = new Intent(getKiaraActivity(), QueueActivity.class);
+
+            if(songs == null) {
+              getBus().post(new GetSongsForPlaylist(playlistId));
+            } else {
+              intent.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
+            }
+            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(intent);
+          }
+        };
+        BlurBehind.getInstance().execute(getKiaraActivity(), run);
+      }
+    });
 
     return rootView;
   }
@@ -193,7 +223,9 @@ public class PlayerFragment extends KiaraFragment {
     seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        getBus().post(new SeekbarProgressChanged(seekBar, progress, fromUser));
+        if(fromUser) {
+          musicService.setSeekPosition(progress);
+        }
       }
 
       @Override
@@ -244,16 +276,9 @@ public class PlayerFragment extends KiaraFragment {
     repeatButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
+        Log.d(log, "REPEAT BUTTON PRESSED ");
         MusicService.RepeatState repeatState = musicService.repeat();
-        if (repeatState == MusicService.RepeatState.FALSE) {
-          repeatButton.setImageResource(R.drawable.ic_repeat_white_24dp);
-        }
-        if (repeatState == MusicService.RepeatState.ONE) {
-          repeatButton.setImageDrawable(repeatOne);
-        }
-        if (repeatState == MusicService.RepeatState.TRUE) {
-          repeatButton.setImageDrawable(repeat);
-        }
+        onRepeat(repeatState);
       }
     });
   }
@@ -300,6 +325,10 @@ public class PlayerFragment extends KiaraFragment {
 
     seekBar.getProgressDrawable().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
     seekBar.getThumb().setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
+
+    repeat.setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
+    repeatOne.setColorFilter(accentColour, PorterDuff.Mode.SRC_IN);
+
     favouriteFab.setColorNormal(accentColour);
     playpause.setColor(accentColour);
 
@@ -319,9 +348,20 @@ public class PlayerFragment extends KiaraFragment {
 
     }
 
-
     if(getView() != null) {
       getView().setBackgroundColor(darkColour);
+    }
+  }
+
+  public void onRepeat(MusicService.RepeatState repeatState) {
+    if (repeatState == MusicService.RepeatState.FALSE) {
+      repeatButton.setImageResource(R.drawable.ic_repeat_white_36dp);
+    }
+    if (repeatState == MusicService.RepeatState.ONE) {
+      repeatButton.setImageDrawable(repeatOne);
+    }
+    if (repeatState == MusicService.RepeatState.TRUE) {
+      repeatButton.setImageDrawable(repeat);
     }
   }
 
@@ -374,6 +414,7 @@ public class PlayerFragment extends KiaraFragment {
       elapsed.setText(elapsedText);
     }
   }
+
 
   private ServiceConnection mConnection = new ServiceConnection() {
 

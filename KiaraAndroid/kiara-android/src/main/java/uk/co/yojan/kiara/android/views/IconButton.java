@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.widget.ImageView;
 import uk.co.yojan.kiara.android.R;
@@ -15,7 +14,7 @@ import uk.co.yojan.kiara.android.R;
 public class IconButton extends ImageView {
 
   private static final int PRESSED_COLOR_LIGHTUP = 255 / 25;
-  private static final int PRESSED_RING_ALPHA = 50;
+  private static final int PRESSED_RING_ALPHA = 30;
   private static final int DEFAULT_PRESSED_RING_WIDTH_DIP = 4;
   private static final int ANIMATION_TIME_ID = android.R.integer.config_shortAnimTime;
 
@@ -31,11 +30,14 @@ public class IconButton extends ImageView {
   private int defaultColor = Color.BLACK;
   private int pressedColor;
 
+  private boolean outerRing = false;
+
   private int startRadius = 16;
   private int finishRadius;
   private int color = Color.argb(64,255,255,255); // 25% opacity white
 
   private ObjectAnimator pressedAnimator;
+  private ObjectAnimator alphaAnimator;
 
   public IconButton(Context context) {
     super(context);
@@ -66,6 +68,7 @@ public class IconButton extends ImageView {
   @Override
   protected void onDraw(Canvas canvas) {
     if(animationProgress > 0) {
+      if(outerRing) canvas.drawCircle(centerX, centerY, startRadius + pressedRingWidth, focusPaint);
       canvas.drawCircle(centerX, centerY, startRadius + animationProgress, focusPaint);
     }
     super.onDraw(canvas);
@@ -97,12 +100,13 @@ public class IconButton extends ImageView {
   }
 
   private void hidePressedRing() {
+    outerRing = false;
     pressedAnimator.setFloatValues(pressedRingWidth, 0f);
     pressedAnimator.start();
   }
 
   private void showPressedRing() {
-    Log.d("lol", "showPressedRing");
+    outerRing = true;
     pressedAnimator.setFloatValues(animationProgress, pressedRingWidth);
     pressedAnimator.start();
   }

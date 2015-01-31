@@ -52,7 +52,7 @@ public class MusicService extends Service
   private Player player;
 //  private KiaraPlayer player;
   public enum RepeatState {FALSE, ONE, TRUE}
-  private RepeatState repeating;
+  private RepeatState repeating = RepeatState.FALSE;
   private boolean playing;
   private boolean favourited;
 
@@ -222,6 +222,7 @@ public class MusicService extends Service
     // TRACK_START: called every time a new track starts playing
     if (eventType == EventType.TRACK_START) {
       Log.d("KiaraPlayerEvent", "Track started " + playerState.trackUri);
+      duration = playerState.durationInMs;
 
       // N W O
       if(currentState == null) {
@@ -236,14 +237,21 @@ public class MusicService extends Service
         Log.d("Kiara", "Song playing was queued.");
         currentState.setQueued(true);
       }
-      application.learningApi().transition(application.userId(),
-          playlistId,
-          currentState,
-          updateOnCallback);
 
+      // don't send learning data if previous and current song are the same (repeat)
+      if(!currentState.getStartedSongId().equals(currentState.getPreviousSongId())) {
+        application.learningApi().transition(application.userId(),
+            playlistId,
+            currentState,
+            updateOnCallback);
+      }
+
+      // if a song has started playing that was set to repeat only once, we can now reset the repeat state.
       if (repeating == RepeatState.ONE) {
-        player.setRepeat(false);
         repeating = RepeatState.FALSE;
+        if(playerFragment != null) {
+          playerFragment.onRepeat(RepeatState.FALSE);
+        }
       }
 
     // END_OF_CONTEXT: end of a song that finished playing
@@ -295,10 +303,6 @@ public class MusicService extends Service
 
   @Override
   public void onPlayerState(PlayerState playerState) {
-    if(duration == 0) {
-      duration = playerState.durationInMs;
-    }
-
     position = playerState.positionInMs;
 
     if(position > duration / 2 && !requestedUpdate) {
@@ -354,7 +358,6 @@ public class MusicService extends Service
     // update state regarding the playback
     currentSong = song;
     playing = true;
-    duration = 0;
     requestedUpdate = false;
 
     // play song on the spotify player
@@ -409,6 +412,11 @@ public class MusicService extends Service
   }
 
   public void nextSong() {
+    if(repeating == RepeatState.ONE || repeating == RepeatState.TRUE) {
+      playSong(currentSong);
+      return;
+    }
+
     if(playQueue.size() > 0) {
       lastSkip = 100 * position / duration;
       Log.d(log, "playing the nextSong " + playQueue.getFirst().getSongName());
@@ -457,6 +465,7 @@ public class MusicService extends Service
       repeating = RepeatState.FALSE;
       player.setRepeat(false);
     }
+    Log.d(log, "REPEAT STATE: " + repeating);
     return repeating;
   }
 
@@ -503,8 +512,18 @@ public class MusicService extends Service
       Log.d(log, "seeking to " + (duration*(event.progress/255)) + " " + position);
       player.seekToPosition(position);
     }
+  }
 
-
+  /**
+   *
+   * @param progress int seekbar progress position
+   */
+  public void setSeekPosition(int progress) {
+    if(player != null) {
+      int position = (int)(duration * ((float)progress/255.0));
+      Log.d(log, "seeking to " + (duration * progress/255) + " " + position);
+      player.seekToPosition(position);
+    }
   }
 
   private void acquireLocks() {

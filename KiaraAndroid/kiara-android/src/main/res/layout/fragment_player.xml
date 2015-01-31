@@ -89,17 +89,6 @@
         android:layout_alignBottom="@id/album_image"
         android:padding="8dp"/>
 
-    <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_play_circle_fill_white_48dp"
-        android:padding="8dp"
-        android:background="@color/transparent"
-        android:visibility="gone"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="16dp"
-        android:layout_centerHorizontal="true"/>
-
     <uk.co.yojan.kiara.android.views.CircleButton
         android:id="@+id/playpause"
         android:layout_width="64dp"
@@ -116,7 +105,7 @@
         android:id="@+id/next_track"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_skip_next_white_36dp"
+        android:src="@drawable/ic_next_36dp"
         fab:ib_color="@color/white"
         fab:ib_pressedRingWidth="8dp"
         fab:ib_startRingWidth="16dp"
@@ -134,22 +123,11 @@
         fab:ib_color="@color/white"
         fab:ib_pressedRingWidth="8dp"
         fab:ib_startRingWidth="16dp"
-        android:src="@drawable/ic_skip_previous_white_36dp"
+        android:src="@drawable/ic_prev_36dp"
         android:background="@color/transparent"
         android:layout_toLeftOf="@id/playpause"
         android:layout_alignTop="@id/playpause"
         android:layout_marginTop="6dp"/>
-
-    <ImageButton
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     android:padding="8dp"
-     android:visibility="gone"
-     android:src="@drawable/ic_skip_previous_white_36dp"
-     android:background="@color/transparent"
-     android:layout_toLeftOf="@id/playpause"
-     android:layout_alignTop="@id/playpause"
-     android:layout_marginTop="6dp"/>
 
     <uk.co.yojan.kiara.android.views.IconButton
         android:layout_width="wrap_content"
@@ -158,63 +136,30 @@
         android:padding="8dp"
         fab:ib_color="@color/white"
         fab:ib_pressedRingWidth="8dp"
-        fab:ib_startRingWidth="8dp"
-        android:src="@drawable/ic_repeat_white_24dp"
+        fab:ib_startRingWidth="16dp"
+        android:src="@drawable/ic_repeat_white_36dp"
         android:layout_marginTop="6dp"
         android:background="@color/transparent"
         android:layout_toLeftOf="@id/prev_track"
-        android:layout_alignTop="@id/prev_track"/>
+        android:layout_alignBottom="@id/prev_track"/>
 
-    <ImageButton
+    <uk.co.yojan.kiara.android.views.IconButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:id="@+id/queue_button"
         android:padding="8dp"
-        android:visibility="gone"
-        android:src="@drawable/ic_repeat_white_24dp"
+        fab:ib_color="@color/white"
+        fab:ib_pressedRingWidth="8dp"
+        fab:ib_startRingWidth="16dp"
+        android:src="@drawable/ic_queue_36dp"
         android:layout_marginTop="6dp"
         android:background="@color/transparent"
-        android:layout_toLeftOf="@id/prev_track"
-        android:layout_alignTop="@id/prev_track"/>
+        android:layout_toRightOf="@id/next_track"
+        android:layout_alignBottom="@id/next_track"/>
+
 
 
     <!-- Explicit Action Buttons - Like/Dislike // Favourite-->
-
-    <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/favourite"
-        android:src="@drawable/ic_favorite_outline_white_36dp"
-        android:background="@color/transparent"
-        android:padding="8dp"
-        android:layout_marginRight="8dp"
-        android:alpha="0.5"
-        android:visibility="invisible"
-        android:layout_alignParentRight="true"
-        android:layout_below="@id/album_image"/>
-
-    <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:id="@+id/like"
-        android:background="@color/transparent"
-        android:src="@drawable/ic_thumb_up_white_24dp"
-        android:padding="8dp"
-        android:layout_margin="16dp"
-        android:layout_alignBottom="@id/album_image"
-        android:visibility="invisible"/>
-
-    <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:id="@+id/dislike"
-        android:background="@color/transparent"
-        android:src="@drawable/ic_thumb_down_white_24dp"
-        android:padding="8dp"
-        android:layout_margin="16dp"
-        android:layout_alignBottom="@id/album_image"
-        android:visibility="invisible"/>
 
     <View
         android:layout_width="fill_parent"
@@ -234,8 +179,8 @@
         android:layout_alignTop="@+id/dummy"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_toStartOf="@+id/favourite"
-        android:layout_toLeftOf="@+id/favourite"/>
+        android:layout_toStartOf="@+id/favouritefab"
+        android:layout_toLeftOf="@+id/favouritefab"/>
 
     <com.getbase.floatingactionbutton.FloatingActionButton
         android:id="@+id/favouritefab"

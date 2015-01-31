@@ -4,16 +4,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import com.faradaj.blurbehind.BlurBehind;
 import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.events.GetSongsForPlaylist;
 import uk.co.yojan.kiara.android.fragments.PlayerFragment;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.Song;
-
-import java.util.List;
 
 public class PlayerActivity extends KiaraActivity {
 
@@ -55,26 +51,7 @@ public class PlayerActivity extends KiaraActivity {
       // as you specify a parent activity in AndroidManifest.xml.
       int id = item.getItemId();
       if (id == R.id.action_settings) {
-          return true;
-      } else if (id == R.id.action_queue) {
-        Runnable run = new Runnable() {
-          @Override
-          public void run() {
-            String userId = sharedPreferences().getString(Constants.USER_ID, null);
-            List<Song> songs = getKiaraApplication().kiaraClient().getCachedSongs(userId, playlistId);
-            Intent intent = new Intent(PlayerActivity.this, QueueActivity.class);
-
-            if(songs == null) {
-              getBus().post(new GetSongsForPlaylist(playlistId));
-            } else {
-              intent.putExtra(Constants.ARG_PLAYLIST_SONG_LIST, SongParcelable.convert(songs));
-            }
-            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-            startActivity(intent);
-          }
-        };
-        BlurBehind.getInstance().execute(PlayerActivity.this, run);
-
+        return true;
       }
       return super.onOptionsItemSelected(item);
     }
