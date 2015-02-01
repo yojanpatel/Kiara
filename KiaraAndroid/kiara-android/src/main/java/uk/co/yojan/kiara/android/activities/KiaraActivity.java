@@ -180,10 +180,12 @@ public class KiaraActivity extends ActionBarActivity {
     // Get basic user information and update the shared preferences.
     @Subscribe
     public void onCurrentUser(SpotifyUser user) {
-      sharedPreferences().edit()
-          .putString(Constants.USER_ID, user.getId())
-          .putString(Constants.USER_IMG_URL, user.getPrimaryImageURL())
-          .putString(Constants.USER_TYPE, user.getType()).commit();
+      EncryptedSharedPreferences.Editor edit = sharedPreferences().edit();
+      edit.putString(Constants.USER_ID, user.getId())
+        .putString(Constants.USER_IMG_URL, user.getPrimaryImageURL())
+        .putString(Constants.USER_TYPE, user.getType())
+        .putString(Constants.USER_COUNTRY, user.getCountry());
+      edit.commit();
       getKiaraApplication().initKiaraService(user.getId());
       authCallback();
     }
@@ -291,6 +293,9 @@ public class KiaraActivity extends ActionBarActivity {
 
   public String getUserId() {
     return getKiaraApplication().getUserId();
+  }
+  public String getCountry() {
+    return sharedPreferences().getString(Constants.USER_COUNTRY, "");
   }
 
 

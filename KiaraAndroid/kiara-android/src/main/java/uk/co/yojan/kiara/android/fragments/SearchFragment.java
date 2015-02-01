@@ -20,16 +20,18 @@ import butterknife.InjectView;
 import com.squareup.otto.Subscribe;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
-import uk.co.yojan.kiara.android.adapters.SearchResultAdapter;
+import uk.co.yojan.kiara.android.adapters.SearchAdapter;
 import uk.co.yojan.kiara.android.events.AddSong;
 import uk.co.yojan.kiara.android.events.SearchRequest;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
-import uk.co.yojan.kiara.client.data.spotify.SearchResult;
-import uk.co.yojan.kiara.client.data.spotify.Track;
+import uk.co.yojan.kiara.client.data.spotify.*;
 
-import java.util.List;
+import java.util.*;
 
 
 public class SearchFragment extends KiaraFragment {
@@ -40,7 +42,7 @@ public class SearchFragment extends KiaraFragment {
 
   @InjectView(R.id.results_list) RecyclerView mRecyclerView;
   private RecyclerView.LayoutManager mLayoutManager;
-  private SearchResultAdapter mAdapter;
+  private SearchAdapter mAdapter;
 
   private EditText searchEdit;
   private ImageButton resetQueryButton;
@@ -157,21 +159,56 @@ public class SearchFragment extends KiaraFragment {
 
   @Subscribe
   public void onSearchResultsReceived(final SearchResult result) {
-    Log.d("AddSongDialog", "search results received.");
-    this.mAdapter = new SearchResultAdapter(result, mContext);
+
+    this.mAdapter = new SearchAdapter(mContext, result);
     mRecyclerView.setAdapter(mAdapter);
+
     mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext,
-        new RecyclerItemTouchListener.OnItemClickListener() {
-          @Override
-          public void onItemClick(View view, int position) {
-            List<Track> tracks = result.getTracks().getTracks();
-            if(mAdapter.getItemViewType(position) == SearchResultAdapter.TRACK_TYPE) {
+      new RecyclerItemTouchListener.OnItemClickListener() {
+        @Override
+        public void onItemClick(View view, final int position) {
+          List<Track> tracks = result.getTracks().getTracks();
+
+
+          switch (mAdapter.getItemViewType(position)) {
+            case SearchAdapter.VIEW_TRACK:
               Track track = tracks.get(position - 1);
               getKiaraActivity().getBus().post(new AddSong(playlistId, track.getId()));
-              Log.d("results", track.getName());
-              Crouton.makeText(getActivity(), "Adding " + track.getName(), Style.INFO, (ViewGroup)getView()).show();
-            }
+              Crouton.makeText(getActivity(), "Adding " + track.getName(), Style.INFO, (ViewGroup) getView()).show();
+              break;
+            case SearchAdapter.VIEW_ARTIST:
+              Artist a = mAdapter.artist(position);
+              Map<String, String> options = new HashMap<String, String>();
+              options.put("album_type", "album");
+              options.put("market", getKiaraActivity().sharedPreferences().getString(Constants.USER_COUNTRY, "GB"));
+              getKiaraApplication().spotifyApi().getArtistAlbums(a.getId(), options, new Callback<Pager<Album>>() {
+                @Override
+                public void success(Pager<Album> albumPager, Response response) {
+                  mAdapter.addAlbums(position, removeDuplicates(albumPager.items));
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                  Log.e("SearchAdapter", error.getMessage());
+                }
+              });
+              break;
           }
-        }));
+        }
+      }));
+  }
+
+  private List<Album> removeDuplicates(List<Album> albums) {
+    HashSet<String> set = new HashSet<String>();
+    for(Album a : albums) set.add(a.getName());
+
+    ArrayList<Album> result = new ArrayList<Album>();
+    for(Album a : albums) {
+      if(set.contains(a.getName())) {
+        result.add(a);
+        set.remove(a.getName());
+      }
+    }
+    return result;
   }
 }

@@ -200,7 +200,7 @@ public class MusicService extends Service
 
   @Override
   public void onPlaybackEvent(EventType eventType, PlayerState playerState) {
-
+    Log.d(log, eventType.toString());
     // TRACK_START: called every time a new track starts playing
     if (eventType == EventType.TRACK_START) {
       Log.d("KiaraPlayerEvent", "Track started " + playerState.trackUri);
@@ -262,7 +262,6 @@ public class MusicService extends Service
         currentState.setSkipped(true);
         currentState.setPercentage(lastSkip);
       }
-
     } else if (eventType == EventType.LOST_PERMISSION) {
         Log.d("KiaraPlayerEvent", "Lost permission, pausing.");
         mHandler.removeCallbacks(mRunnable);

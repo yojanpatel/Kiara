@@ -197,7 +197,11 @@ public class SongListFragment extends KiaraFragment {
    */
   @Subscribe
   public void onSongsReceived(final ArrayList<Song> songs) {
+
     if(songs.size() > 0 && songs.get(0) instanceof Song) {
+
+      boolean initiallyEmpty = this.songs.isEmpty();
+
       Log.d(log, "onSongsReceived, updating the list.");
       for (Song s : songs) {
         SongParcelable sp = new SongParcelable(s);
@@ -205,7 +209,11 @@ public class SongListFragment extends KiaraFragment {
           this.songs.add(new SongParcelable(s));
         }
       }
-      getKiaraActivity().toast(songs.size() + " songs added.");
+
+      if(this.songs.size() != songs.size()) {
+        getKiaraActivity().toast(songs.size() + " songs added.");
+      }
+
       Collections.sort(this.songs, new SongComparatorByArtist());
       mAdapter.notifyDataSetChanged();
       activity.setProgressBarVisibility(View.GONE);

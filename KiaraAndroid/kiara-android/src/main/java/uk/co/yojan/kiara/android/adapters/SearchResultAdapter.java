@@ -154,6 +154,8 @@ public class SearchResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
   }
 
 
+
+
   public class ViewHolderTrack extends RecyclerView.ViewHolder {
 
     @InjectView(R.id.song_img) ImageView albumArt;

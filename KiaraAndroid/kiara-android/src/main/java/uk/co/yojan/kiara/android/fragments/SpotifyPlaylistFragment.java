@@ -120,6 +120,7 @@ public class SpotifyPlaylistFragment extends KiaraFragment {
     Log.d(log, "onResume");
     super.onResume();
     getBus().post(new GetSpotifyPlaylistsForUser(parent.getUserId()));
+
   }
 
 

@@ -4,6 +4,7 @@ package uk.co.yojan.kiara.android.adapters;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.support.v13.app.FragmentPagerAdapter;
+import uk.co.yojan.kiara.android.activities.BrowseTabActivity;
 import uk.co.yojan.kiara.android.fragments.SearchFragment;
 import uk.co.yojan.kiara.android.fragments.SpotifyPlaylistFragment;
 
@@ -27,10 +28,10 @@ public class BrowseAdapter extends FragmentPagerAdapter {
     Fragment fragment = null;
 
     // ImportFragment
-    if(position == 0) {
+    if(position == BrowseTabActivity.IMPORT) {
       fragment = SpotifyPlaylistFragment.newInstance(playlistId);
     } // SearchFragment
-    else if(position == 1) {
+    else if(position == BrowseTabActivity.SEARCH) {
       fragment = SearchFragment.newInstance(playlistId);
     }
     return fragment;
@@ -44,9 +45,9 @@ public class BrowseAdapter extends FragmentPagerAdapter {
   @Override
   public CharSequence getPageTitle(int position) {
 
-    if(position == 0) {
+    if(position == BrowseTabActivity.IMPORT) {
       return "Import";
-    } else if(position == 1) {
+    } else if(position == BrowseTabActivity.SEARCH) {
       return "Search";
     }
     return "";

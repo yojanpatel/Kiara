@@ -130,8 +130,8 @@ public class PlayerFragment extends KiaraFragment {
     accentpink = getResources().getColor(R.color.pinkA200);
     darkgrey = getResources().getColor(R.color.grey900);
 
-    repeatOne = res.getDrawable(R.drawable.ic_repeat_one_white_36dp);
-    repeat = res.getDrawable(R.drawable.ic_repeat_white_36dp);
+    repeatOne = res.getDrawable(R.drawable.ic_repeat_one_white_24dp);
+    repeat = res.getDrawable(R.drawable.ic_repeat_white_24dp);
     if(Build.VERSION.SDK_INT >= 16) {
       repeatOne.setColorFilter(
           getResources().getColor(R.color.pinkA200),
@@ -360,7 +360,7 @@ public class PlayerFragment extends KiaraFragment {
 
   public void onRepeat(MusicService.RepeatState repeatState) {
     if (repeatState == MusicService.RepeatState.FALSE) {
-      repeatButton.setImageResource(R.drawable.ic_repeat_white_36dp);
+      repeatButton.setImageResource(R.drawable.ic_repeat_white_24dp);
     }
     if (repeatState == MusicService.RepeatState.ONE) {
       repeatButton.setImageDrawable(repeatOne);

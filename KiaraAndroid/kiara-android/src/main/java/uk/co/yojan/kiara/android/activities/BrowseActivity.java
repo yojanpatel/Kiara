@@ -37,7 +37,7 @@ public class BrowseActivity extends KiaraActivity {
         .withFilterColor(R.color.grey400)
         .setBackground(this);
 
-
+    toast("Swipe to Delete");
 
     ((TextView)getToolbar().findViewById(R.id.playlistName)).setText(spotifyplaylistName);
 
