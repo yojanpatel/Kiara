@@ -7,14 +7,16 @@ import java.util.List;
 
 public class Playlist {
 
-  @Expose private Tracks tracks;
+  @Expose private String name;
+  @Expose private Owner owner;
+  @Expose private PlaylistTracks tracks;
   @Expose private List<Image> images = new ArrayList<Image>();
 
-  private Tracks getTracks() {
+  public PlaylistTracks getTracks() {
     return tracks;
   }
 
-  private void setTracks(Tracks tracks) {
+  private void setTracks(PlaylistTracks tracks) {
     this.tracks = tracks;
   }
 
@@ -47,11 +49,26 @@ public class Playlist {
     return tracks;
   }
 
+  public String getName() {
+    return name;
+  }
 
-  public class Tracks {
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    @Expose
-    private List<Item> items = new ArrayList<Item>();
+  public Owner getOwner() {
+    return owner;
+  }
+
+  public void setOwner(Owner owner) {
+    this.owner = owner;
+  }
+
+  public class PlaylistTracks {
+
+    @Expose private List<Item> items = new ArrayList<Item>();
+    @Expose private int total;
 
     public List<Item> getItems() {
       return items;
@@ -60,6 +77,13 @@ public class Playlist {
       this.items = items;
     }
 
+    public int getTotal() {
+      return total;
+    }
+
+    public void setTotal(int total) {
+      this.total = total;
+    }
   }
 
   public class Item {
@@ -75,5 +99,17 @@ public class Playlist {
       this.track = track;
     }
 
+  }
+
+  public class Owner {
+    @Expose String id;
+
+    public String getId() {
+      return id;
+    }
+
+    public void setId(String id) {
+      this.id = id;
+    }
   }
 }
