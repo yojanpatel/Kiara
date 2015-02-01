@@ -70,6 +70,8 @@ public class PlaylistListViewAdapter
     if(ALT_VIEW) {
       v = LayoutInflater.from(parent.getContext())
           .inflate(R.layout.playlist_alt_row, parent, false);
+
+      v.setMinimumHeight(width / 2);
       return new ViewHolder(v, width, height);
     } else {
       v = LayoutInflater.from(parent.getContext())

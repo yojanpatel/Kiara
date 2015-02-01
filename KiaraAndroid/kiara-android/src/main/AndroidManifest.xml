@@ -64,6 +64,11 @@
             android:label="@string/title_activity_browse_activity" >
         </activity>
 
+        <activity
+            android:name="uk.co.yojan.kiara.android.activities.BrowseTabActivity"
+            android:label="@string/title_activity_browse_activity" >
+        </activity>
+
         <service android:name="uk.co.yojan.kiara.android.background.MusicService" />
 
         <activity

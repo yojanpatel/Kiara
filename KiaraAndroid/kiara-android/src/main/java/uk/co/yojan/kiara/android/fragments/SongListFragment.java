@@ -26,9 +26,9 @@ import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.activities.BrowseTabActivity;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
-import uk.co.yojan.kiara.android.activities.SearchActivity;
 import uk.co.yojan.kiara.android.adapters.SongListViewAdapter;
 import uk.co.yojan.kiara.android.comparators.SongComparatorByArtist;
 import uk.co.yojan.kiara.android.events.SongAdded;
@@ -221,7 +221,8 @@ public class SongListFragment extends KiaraFragment {
 //        FragmentManager fm = getFragmentManager();
 //        AddSongDialog asd = AddSongDialog.newInstance(playlistId);
 //        asd.show(fm, "fragment_add_song");
-        Intent intent = new Intent(mContext, SearchActivity.class);
+//        Intent intent = new Intent(mContext, SearchActivity.class);
+        Intent intent = new Intent(mContext, BrowseTabActivity.class);
         intent.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
         startActivity(intent);
       }
