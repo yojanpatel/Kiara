@@ -2,14 +2,10 @@ package uk.co.yojan.kiara.client;
 
 
 import retrofit.Callback;
-import retrofit.http.GET;
-import retrofit.http.Headers;
-import retrofit.http.Path;
-import retrofit.http.Query;
-import uk.co.yojan.kiara.client.data.spotify.Pager;
-import uk.co.yojan.kiara.client.data.spotify.Playlist;
-import uk.co.yojan.kiara.client.data.spotify.SearchResult;
-import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
+import retrofit.http.*;
+import uk.co.yojan.kiara.client.data.spotify.*;
+
+import java.util.Map;
 
 public interface SpotifyApiInterface {
 
@@ -25,6 +21,9 @@ public interface SpotifyApiInterface {
                              @Query("limit") int limit,
                              @Query("offset") int offset,
                              Callback<SearchResult> cb);
+
+  @GET("/v1/artists/{id}/albums")
+  public void getArtistAlbums(@Path("id") String artistId, @QueryMap Map<String, String> options, Callback<Pager<Album>> cb);
 
 
   // Requires oAuth (interceptor adds additional header).

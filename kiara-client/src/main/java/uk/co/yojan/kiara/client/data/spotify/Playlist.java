@@ -9,6 +9,7 @@ public class Playlist {
 
   @Expose private String name;
   @Expose private Owner owner;
+  @Expose private String uri;
   @Expose private PlaylistTracks tracks;
   @Expose private List<Image> images = new ArrayList<Image>();
 
@@ -63,6 +64,14 @@ public class Playlist {
 
   public void setOwner(Owner owner) {
     this.owner = owner;
+  }
+
+  public String getUri() {
+    return uri;
+  }
+
+  public void setUri(String uri) {
+    this.uri = uri;
   }
 
   public class PlaylistTracks {
