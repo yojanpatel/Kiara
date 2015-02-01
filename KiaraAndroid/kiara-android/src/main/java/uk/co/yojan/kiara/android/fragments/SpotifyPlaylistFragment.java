@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.android.fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -11,9 +12,11 @@ import android.view.*;
 import android.widget.ProgressBar;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.faradaj.blurbehind.BlurBehind;
 import com.squareup.otto.Subscribe;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.activities.BrowseActivity;
 import uk.co.yojan.kiara.android.activities.KiaraActivity;
 import uk.co.yojan.kiara.android.adapters.SpotifyPlaylistAdapter;
 import uk.co.yojan.kiara.android.events.GetSpotifyPlaylistsForUser;
@@ -87,8 +90,22 @@ public class SpotifyPlaylistFragment extends KiaraFragment {
     mAdapter = new SpotifyPlaylistAdapter(mContext, width, height);
     mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {
       @Override
-      public void onItemClick(View view, int position) {
-        // TODO
+      public void onItemClick(View view, final int position) {
+        Runnable run = new Runnable() {
+          @Override
+          public void run() {
+
+            Playlist playlist = playlists.get(position);
+
+            Intent intent = new Intent(getKiaraActivity(), BrowseActivity.class);
+            intent.putExtra(Constants.ARG_PLAYLIST_SPOTIFY_ID, playlist.getUri());
+            intent.putExtra(Constants.ARG_PLAYLIST_SPOTIFY_NAME, playlist.getName());
+            intent.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(intent);
+          }
+        };
+        BlurBehind.getInstance().withAlpha(50).execute(getKiaraActivity(), run);
       }
     }));
     mRecyclerView.setAdapter(mAdapter);

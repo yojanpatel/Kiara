@@ -217,9 +217,7 @@ public class PlaylistListFragment extends KiaraFragment {
     getBus().post(new FetchPlaylistTracks(userId, spotifyPlaylistId));
 
     // Start the new Activity.
-    FragmentManager fm = getFragmentManager();
     Intent intent = new Intent(mContext, BrowseActivity.class);
-    intent.putExtra(Constants.ARG_CASE, c);
     intent.putExtra(Constants.ARG_PLAYLIST_SPOTIFY_ID, spotifyPlaylistId);
     intent.putExtra(Constants.ARG_PLAYLIST_SPOTIFY_NAME, playlistName);
     intent.putExtra(Constants.ARG_PLAYLIST_ID, playlists.get(position).getPlaylist().getId());

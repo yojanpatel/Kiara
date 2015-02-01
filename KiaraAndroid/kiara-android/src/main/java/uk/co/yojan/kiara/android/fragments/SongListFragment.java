@@ -205,6 +205,8 @@ public class SongListFragment extends KiaraFragment {
           this.songs.add(new SongParcelable(s));
         }
       }
+      getKiaraActivity().toast(songs.size() + " songs added.");
+      Collections.sort(this.songs, new SongComparatorByArtist());
       mAdapter.notifyDataSetChanged();
       activity.setProgressBarVisibility(View.GONE);
 

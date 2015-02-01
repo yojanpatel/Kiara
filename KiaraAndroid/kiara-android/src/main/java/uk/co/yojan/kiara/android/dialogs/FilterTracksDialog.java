@@ -13,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.squareup.otto.Subscribe;
@@ -25,7 +24,6 @@ import uk.co.yojan.kiara.android.adapters.FilterTracksAdapter;
 import uk.co.yojan.kiara.android.adapters.ParallaxRecyclerAdapter;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.listeners.SwipeDismissRecyclerViewTouchListener;
-import uk.co.yojan.kiara.android.views.FullImageView;
 import uk.co.yojan.kiara.client.data.spotify.Playlist;
 import uk.co.yojan.kiara.client.data.spotify.Track;
 
@@ -192,11 +190,6 @@ public class FilterTracksDialog extends DialogFragment {
     initParallax();
     tracksList.setAdapter(parallaxAdapter);
 //    tracksList.setAdapter(mAdapter);
-
-    View headerView = activity.getLayoutInflater().inflate(R.layout.header_image, null);
-    parallaxAdapter.setParallaxHeader(headerView, tracksList);
-    picasso.load(playlist.getImageUrl()).into((FullImageView)headerView.findViewById(R.id.header_image));
-    ((TextView)headerView.findViewById(R.id.playlist_name)).setText(playlistName.toUpperCase());
   }
 
   public void setPlaylistId(String playlistId) {

@@ -74,6 +74,10 @@ public class ParallaxRecyclerAdapter<T> extends RecyclerView.Adapter<RecyclerVie
     }
   }
 
+  public void disableHeader() {
+    mHeader = null;
+  }
+
   public void setParallaxHeader(View header, final RecyclerView view) {
     mRecyclerView = view;
     mHeader = new CustomRelativeWrapper(header.getContext());
@@ -106,7 +110,7 @@ public class ParallaxRecyclerAdapter<T> extends RecyclerView.Adapter<RecyclerVie
       throw new NullPointerException("You must call implementRecyclerAdapterMethods");
     if (i != 0 && mHeader != null)
       mRecyclerAdapterMethods.onBindViewHolder(viewHolder, i - 1);
-    else if (i != 0)
+    else
       mRecyclerAdapterMethods.onBindViewHolder(viewHolder, i);
     if (mOnClickEvent != null)
       viewHolder.itemView.setOnClickListener(new View.OnClickListener() {

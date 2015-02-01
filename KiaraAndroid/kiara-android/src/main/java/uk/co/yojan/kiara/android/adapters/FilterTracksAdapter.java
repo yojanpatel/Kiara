@@ -2,6 +2,7 @@ package uk.co.yojan.kiara.android.adapters;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,6 +38,9 @@ public class FilterTracksAdapter extends RecyclerView.Adapter<FilterTracksAdapte
   @Override
   public void onBindViewHolder(ViewHolder viewHolder, int position) {
     Track track = tracks.get(position);
+    if(position == 0) {
+      Log.d(".", "-");
+    }
 
     viewHolder.title.setText(track.getName());
 

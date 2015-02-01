@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.nispok.snackbar.Snackbar;
@@ -27,6 +26,7 @@ import uk.co.yojan.kiara.android.activities.PlaylistSongListActivity;
 import uk.co.yojan.kiara.android.adapters.FilterTracksAdapter;
 import uk.co.yojan.kiara.android.adapters.ParallaxRecyclerAdapter;
 import uk.co.yojan.kiara.android.events.BatchAddSongs;
+import uk.co.yojan.kiara.android.events.FetchPlaylistTracks;
 import uk.co.yojan.kiara.android.events.GetSongsForPlaylist;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
 import uk.co.yojan.kiara.android.listeners.SwipeDismissRecyclerViewTouchListener;
@@ -72,6 +72,8 @@ public class FilterTracksFragment extends KiaraFragment {
     return ftf;
   }
 
+
+
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     this.activity = (KiaraActivity)getActivity();
@@ -79,6 +81,10 @@ public class FilterTracksFragment extends KiaraFragment {
     View view = activity.getLayoutInflater().inflate(R.layout.filter_song_dialog, container, false);
     ButterKnife.inject(this, view);
     this.mContext = view.getContext();
+
+    String[] playlistUri = spotifyPlaylistId.split(":");
+    getBus().post(new FetchPlaylistTracks(getKiaraActivity().getUserId(), playlistUri[4]));
+
     picasso = Picasso.with(mContext);
     picasso.setIndicatorsEnabled(false);
     initRecyclerView();
@@ -94,7 +100,7 @@ public class FilterTracksFragment extends KiaraFragment {
           // Called to determine whether the given position can be dismissed.
           @Override
           public boolean canDismiss(int position) {
-            return position != 0;
+            return true;
           }
 
           /* Called when the user has indicated they she would like to dismiss one or more list item
@@ -102,7 +108,7 @@ public class FilterTracksFragment extends KiaraFragment {
           @Override
           public void onDismiss(RecyclerView recyclerView, int[] reverseSortedPositions) {
             for(int viewPosition : reverseSortedPositions) {
-              final int position = viewPosition - 1;
+              final int position = viewPosition;
               final Track removedTrack = tracks.get(position);
 
               mLayoutManager.removeView(mLayoutManager.getChildAt(position));
@@ -170,12 +176,8 @@ public class FilterTracksFragment extends KiaraFragment {
         return tracks.size();
       }
     });
-    parallaxAdapter.setOnParallaxScroll(new ParallaxRecyclerAdapter.OnParallaxScroll() {
-      @Override
-      public void onParallaxScroll(float percentage, float offset, View parallax) {
-        // TODO(yojan): change toolbar opacity
-      }
-    });
+
+    parallaxAdapter.disableHeader();
     this.parallaxAdapter.setSwipeDismissRecyclerViewTouchListener(touchListener);
   }
 
@@ -186,16 +188,8 @@ public class FilterTracksFragment extends KiaraFragment {
     tracksList.setVisibility(View.VISIBLE);
     this.tracks = playlist.getTrackList();
     initParallax();
-    tracksList.setAdapter(parallaxAdapter);
-
-    View headerView = activity.getLayoutInflater().inflate(R.layout.header_image, null);
-    parallaxAdapter.setParallaxHeader(headerView, tracksList);
-    Log.d("FilterTracks", playlist.getImageUrl());
-    if(playlist.getImageUrl() != null) {
-//      picasso.load(playlist.getImageUrl()).into((FullImageView) headerView.findViewById(R.id.header_image));
-    }
-    ((TextView)headerView.findViewById(R.id.playlist_name)).setText(spotifyPlaylistName.toUpperCase());
     setUpFab();
+    tracksList.setAdapter(parallaxAdapter);
   }
 
   private void setUpFab() {

@@ -5,37 +5,38 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="4dp"
-    android:paddingBottom="4dp">
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
+    android:layout_marginRight="16dp"
+    android:layout_marginLeft="16dp">
 
-  <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:id="@+id/title"
-      android:text="Song Name"
-      android:textStyle="bold"
-      android:textSize="16sp"
-      android:paddingTop="4dp"
-      android:paddingLeft="8dp"
-      android:paddingBottom="2dp"
-      android:textColor="@color/grey50"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/title"
+        android:textSize="16sp"
+        android:text="Song Name"
+        android:paddingTop="4dp"
+        android:singleLine="true"
+        android:layout_marginRight="8dp"
+        android:textColor="@color/grey50"/>
 
   <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:id="@+id/detail"
       android:text="Detail - More Detail"
+      android:singleLine="true"
       android:layout_below="@+id/title"
       android:layout_alignLeft="@id/title"
-      android:paddingLeft="8dp"
       android:paddingBottom="4dp"
       android:textColor="@color/grey200"/>
 
 
   <View
       android:layout_width="fill_parent"
-      android:layout_height="1dip"
+      android:layout_height="0.5dp"
       android:layout_below="@id/detail"
-      android:background="@color/pinkA100"/>
+      android:background="@color/grey800"/>
 
 </RelativeLayout>
