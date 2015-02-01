@@ -44,7 +44,7 @@
   <View
       android:layout_below="@id/toolbar"
       android:layout_width="match_parent"
-      android:layout_height="5dp"
+      android:layout_height="8dp"
       android:background="@drawable/opacity_gradient_half_empty"/>
 
   <com.getbase.floatingactionbutton.FloatingActionButton

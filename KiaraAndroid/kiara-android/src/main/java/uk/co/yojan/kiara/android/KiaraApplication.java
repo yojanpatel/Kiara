@@ -5,6 +5,10 @@ import android.content.Context;
 import android.util.Log;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyService;
+import retrofit.RequestInterceptor;
+import retrofit.RestAdapter;
 import uk.co.yojan.kiara.android.events.AuthCodeGrantResponse;
 import uk.co.yojan.kiara.android.events.RefreshAccessTokenResponse;
 import uk.co.yojan.kiara.android.services.KiaraService;
@@ -149,5 +153,19 @@ public class KiaraApplication extends Application implements AccessTokenCallback
 
   public String getUserId() {
     return sharedPreferences().getString(Constants.USER_ID, null);
+  }
+
+
+  private SpotifyService spotifyService() {
+    RestAdapter restAdapter = new RestAdapter.Builder()
+        .setEndpoint(SpotifyApi.SPOTIFY_WEB_API_ENDPOINT)
+        .setRequestInterceptor(new RequestInterceptor() {
+          @Override
+          public void intercept(RequestFacade request) {
+            request.addHeader("Authorization", "Bearer " + getAccessToken());
+          }
+        }).build();
+
+    return restAdapter.create(SpotifyService.class);
   }
 }

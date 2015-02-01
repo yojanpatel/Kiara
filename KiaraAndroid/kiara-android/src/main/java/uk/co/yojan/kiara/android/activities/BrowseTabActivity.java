@@ -21,10 +21,10 @@ public class BrowseTabActivity extends KiaraActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    setContentView(R.layout.fragment_add);
+    setContentView(R.layout.activity_browse);
     ButterKnife.inject(this);
 
-    getIntent().getLongExtra(Constants.ARG_PLAYLIST_ID, -1);
+    playlistId = getIntent().getLongExtra(Constants.ARG_PLAYLIST_ID, -1);
 
     mAdapter = new BrowseAdapter(getFragmentManager(), playlistId);
     pager.setAdapter(mAdapter);
@@ -35,6 +35,4 @@ public class BrowseTabActivity extends KiaraActivity {
 
     mSlidingTabLayout.setViewPager(pager);
   }
-
-
 }

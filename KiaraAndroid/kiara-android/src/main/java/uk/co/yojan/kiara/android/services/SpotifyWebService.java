@@ -6,10 +6,10 @@ import com.squareup.otto.Subscribe;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
-import uk.co.yojan.kiara.android.events.CurrentUserRequest;
-import uk.co.yojan.kiara.android.events.FetchPlaylistTracks;
-import uk.co.yojan.kiara.android.events.SearchRequest;
+import uk.co.yojan.kiara.android.events.*;
 import uk.co.yojan.kiara.client.SpotifyApiInterface;
+import uk.co.yojan.kiara.client.data.spotify.Pager;
+import uk.co.yojan.kiara.client.data.spotify.Playlist;
 import uk.co.yojan.kiara.client.data.spotify.SearchResult;
 import uk.co.yojan.kiara.client.data.spotify.SpotifyUser;
 
@@ -22,6 +22,8 @@ public class SpotifyWebService {
   private static final String log = SpotifyWebService.class.getName();
 
   private SpotifyApiInterface spotifyApi;
+
+
   private Bus bus;
 
   public SpotifyWebService(SpotifyApiInterface api, Bus bus) {
@@ -81,4 +83,28 @@ public class SpotifyWebService {
       }
     });
   }
+
+  @Subscribe
+  public void getSpotifyPlaylistsForUser(final GetSpotifyPlaylistsForUser request) {
+    Log.d(log, "getSpotifyPlaylistsForUser");
+    spotifyApi.getPlaylistsForUser(request.getUserId(), new Callback<Pager<Playlist>>() {
+      @Override
+      public void success(Pager<Playlist> playlistPager, Response response) {
+        SpotifyPlaylists spotifyPlaylists = new SpotifyPlaylists(request.getUserId());
+
+        for (Playlist playlist : playlistPager.items) {
+          spotifyPlaylists.addPlaylist(playlist);
+        }
+
+        bus.post(spotifyPlaylists);
+      }
+
+      @Override
+      public void failure(RetrofitError error) {
+        Log.e(log, error.getMessage());
+      }
+    });
+  }
+
+
 }

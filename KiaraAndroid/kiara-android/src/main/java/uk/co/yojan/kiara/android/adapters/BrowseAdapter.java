@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.support.v13.app.FragmentPagerAdapter;
 import uk.co.yojan.kiara.android.fragments.SearchFragment;
+import uk.co.yojan.kiara.android.fragments.SpotifyPlaylistFragment;
 
 
 public class BrowseAdapter extends FragmentPagerAdapter {
@@ -27,7 +28,7 @@ public class BrowseAdapter extends FragmentPagerAdapter {
 
     // ImportFragment
     if(position == 0) {
-      fragment = SearchFragment.newInstance(playlistId);
+      fragment = SpotifyPlaylistFragment.newInstance(playlistId);
     } // SearchFragment
     else if(position == 1) {
       fragment = SearchFragment.newInstance(playlistId);
