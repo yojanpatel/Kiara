@@ -136,10 +136,6 @@ public class MainActivity extends KiaraActivity
     Log.d(LOG, "Temporary error occurred.");
   }
 
-  @Override
-  public void onNewCredentials(String s) {
-    Log.d(LOG, "User credentials blob received.");
-  }
 
   @Override
   public void onConnectionMessage(String s) {

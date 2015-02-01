@@ -33,6 +33,7 @@ import uk.co.yojan.kiara.android.adapters.SongListViewAdapter;
 import uk.co.yojan.kiara.android.comparators.SongComparatorByArtist;
 import uk.co.yojan.kiara.android.events.SongAdded;
 import uk.co.yojan.kiara.android.listeners.RecyclerItemTouchListener;
+import uk.co.yojan.kiara.android.listeners.SwipeDismissRecyclerViewTouchListener;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.Song;
 
@@ -112,28 +113,9 @@ public class SongListFragment extends KiaraFragment {
     this.mAdapter = new SongListViewAdapter(songs, mContext);
     Log.d(log, "Using previous set of songs until network call returned. ");
 
-    mRecyclerView.setHasFixedSize(true);
-    mLayoutManager = new LinearLayoutManager(getActivity());
-    mRecyclerView.setLayoutManager(mLayoutManager);
-    mRecyclerView.setAdapter(mAdapter);
-    mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext,
-        new RecyclerItemTouchListener.OnItemClickListener() {
-          @Override
-          public void onItemClick(View view, int position) {
-            Log.d(log, "Item clicked at position " + position);
-            Intent i = new Intent(mContext, PlayerActivity.class);
-
-            ActivityOptionsCompat options =
-                ActivityOptionsCompat.makeSceneTransitionAnimation(activity,
-//                    new Pair<View, String>(view.findViewById(R.id.song_img), getString(R.string.transition_album_cover)),
-                    new Pair<View, String>(fab, getString(R.string.transition_fab)));
-
-            i.putExtra(Constants.ARG_SONG, new SongParcelable(songs.get(position)));
-            i.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
-            ActivityCompat.startActivity(activity, i, options.toBundle());
-          }
-        }));
+    initRecyclerView();
     progressBar.setVisibility(View.INVISIBLE);
+
 
     setUpFab();
 
@@ -157,6 +139,47 @@ public class SongListFragment extends KiaraFragment {
     super.onDetach();
     mListener = null;
   }
+
+  private void initRecyclerView() {
+    mRecyclerView.setHasFixedSize(true);
+    mLayoutManager = new LinearLayoutManager(getActivity());
+    mRecyclerView.setLayoutManager(mLayoutManager);
+    mRecyclerView.setAdapter(mAdapter);
+
+    SwipeDismissRecyclerViewTouchListener touchListener = new SwipeDismissRecyclerViewTouchListener(mRecyclerView,
+        new SwipeDismissRecyclerViewTouchListener.DismissCallbacks() {
+          @Override
+          public boolean canDismiss(int position) {
+            return true;
+          }
+
+          @Override
+          public void onDismiss(RecyclerView recyclerView, int[] reverseSortedPositions) {
+            Log.d(log, "onDismiss");
+          }
+        });
+    mRecyclerView.setOnTouchListener(touchListener);
+    mRecyclerView.setOnScrollListener(touchListener.makeScrollListener());
+
+    mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext,
+      new RecyclerItemTouchListener.OnItemClickListener() {
+        @Override
+        public void onItemClick(View view, int position) {
+          Log.d(log, "Item clicked at position " + position);
+          Intent i = new Intent(mContext, PlayerActivity.class);
+
+          ActivityOptionsCompat options =
+              ActivityOptionsCompat.makeSceneTransitionAnimation(activity,
+//                    new Pair<View, String>(view.findViewById(R.id.song_img), getString(R.string.transition_album_cover)),
+                  new Pair<View, String>(fab, getString(R.string.transition_fab)));
+
+          i.putExtra(Constants.ARG_SONG, new SongParcelable(songs.get(position)));
+          i.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
+          ActivityCompat.startActivity(activity, i, options.toBundle());
+        }
+      }));
+  }
+
 
   @Subscribe
   public void onSongAdded(final SongAdded song) {
@@ -184,6 +207,7 @@ public class SongListFragment extends KiaraFragment {
       }
       mAdapter.notifyDataSetChanged();
       activity.setProgressBarVisibility(View.GONE);
+
     }
   }
 

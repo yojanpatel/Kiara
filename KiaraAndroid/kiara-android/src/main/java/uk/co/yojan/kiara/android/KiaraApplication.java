@@ -138,4 +138,16 @@ public class KiaraApplication extends Application implements AccessTokenCallback
   public String getAccessToken() {
     return sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
   }
+
+  public boolean accessExpired() {
+    String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
+    if(accessToken == null) {
+      return true;
+    }
+    return (sharedPreferences().getLong(Constants.ACCESS_DEADLINE, 0L) < System.currentTimeMillis());
+  }
+
+  public String getUserId() {
+    return sharedPreferences().getString(Constants.USER_ID, null);
+  }
 }

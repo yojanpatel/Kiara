@@ -26,10 +26,7 @@ import uk.co.yojan.kiara.android.EncryptedSharedPreferences;
 import uk.co.yojan.kiara.android.KiaraApplication;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.activities.PlayerActivity;
-import uk.co.yojan.kiara.android.events.Favourite;
-import uk.co.yojan.kiara.android.events.PlaybackEvent;
-import uk.co.yojan.kiara.android.events.QueueSongRequest;
-import uk.co.yojan.kiara.android.events.SeekbarProgressChanged;
+import uk.co.yojan.kiara.android.events.*;
 import uk.co.yojan.kiara.android.fragments.PlayerFragment;
 import uk.co.yojan.kiara.android.parcelables.SongParcelable;
 import uk.co.yojan.kiara.client.data.ActionEvent;
@@ -42,7 +39,7 @@ import java.util.LinkedList;
  * callbacks to the UI threads.
  */
 public class MusicService extends Service
-    implements PlayerNotificationCallback, PlayerStateCallback, AudioManager.OnAudioFocusChangeListener {
+    implements PlayerNotificationCallback, PlayerStateCallback, AudioManager.OnAudioFocusChangeListener, ConnectionStateCallback {
 
   private static final String log = MusicService.class.getCanonicalName();
 
@@ -50,7 +47,8 @@ public class MusicService extends Service
   private PlayerFragment playerFragment;
 
   private Player player;
-//  private KiaraPlayer player;
+
+  //  private KiaraPlayer player;
   public enum RepeatState {FALSE, ONE, TRUE}
   private RepeatState repeating = RepeatState.FALSE;
   private boolean playing;
@@ -184,28 +182,12 @@ public class MusicService extends Service
       Spotify spotify = new Spotify();
       Config playerConfig = new Config(this, accessToken, Constants.CLIENT_ID);
 
-      Player kplayer = Player.create(playerConfig, new Player.InitializationObserver() {
-//      KiaraPlayer kplayer = KiaraPlayer.create(playerConfig, new Player.InitializationObserver() {
-
+      this.player = spotify.getPlayer(playerConfig, MusicService.this, new Player.InitializationObserver() {
         @Override
-        public void onInitialized() {
+        public void onInitialized(Player player) {
           Log.d(log, "OnInitialized");
-          player.addPlayerNotificationCallback(MusicService.this);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-          Log.d(log, "onError");
-        }
-      });
-
-      spotify.setPlayer(kplayer);
-      player = spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
-
-        @Override
-        public void onInitialized() {
-          Log.d(log, "OnInitialized");
-          player.addPlayerNotificationCallback(MusicService.this);
+          MusicService.this.player.addPlayerNotificationCallback(MusicService.this);
+          MusicService.this.player.addConnectionStateCallback(MusicService.this);
         }
 
         @Override
@@ -327,9 +309,45 @@ public class MusicService extends Service
         mHandler.postDelayed(this, 500);
       }
     };
-
-
   }
+
+
+  // ConnectionStateCallbacks
+  
+  @Override
+  public void onLoggedIn() {
+    Log.d("MusicService", "onLoggedIn");
+  }
+
+  @Override
+  public void onLoggedOut() {
+    Log.d("MusicService", "onLoggedOut, will try to reconnect.");
+    if (application.accessExpired()) {
+      // If refreshToken exists, we can use that to get another access token.
+      Log.d(log, "Access Token has expired.");
+      String refreshToken = sharedPreferences().getString(Constants.REFRESH_TOKEN, null);
+      if (refreshToken != null) {
+        Log.d(log, "Requesting Access Token refresh using the refresh token.");
+        application.getBus().post(new RefreshAccessTokenRequest(application.getUserId(), refreshToken));
+      }
+    }
+  }
+
+  @Override
+  public void onLoginFailed(Throwable throwable) {
+    Log.d("MusicService", "onLoginFailed: " + throwable.getMessage());
+  }
+
+  @Override
+  public void onTemporaryError() {
+    Log.d("MusicService", "onTemporaryError");
+  }
+
+  @Override
+  public void onConnectionMessage(String s) {
+    Log.d("MusicService", "onConnectionMessage: " + s);
+  }
+
   private void requestUpdatedRecommendation(final String id) {
     application.learningApi().recommend(application.userId(), playlistId, id, new Callback<Song>() {
       @Override
@@ -349,6 +367,13 @@ public class MusicService extends Service
     });
   }
 
+  @Subscribe
+  public void onRefreshTokenComplete(RefreshAccessTokenResponse credentials) {
+    if(player != null) {
+      Log.d(log, "onRefreshTokenComplete: logging back into player with updated access token.");
+      player.login(credentials.getAccessToken());
+    }
+  }
 
   // Music Playback Control Methods
 
@@ -670,6 +695,8 @@ public class MusicService extends Service
   public void setPlaylistId(long playlistId) {
     this.playlistId = playlistId;
   }
+
+
 
   /**
    * Class used for the client Binder.  Because we know this service always

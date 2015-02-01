@@ -281,11 +281,7 @@ public class KiaraActivity extends ActionBarActivity {
   }
 
   public boolean accessExpired() {
-    String accessToken = sharedPreferences().getString(Constants.ACCESS_TOKEN, null);
-    if(accessToken == null) {
-      return true;
-    }
-    return (sharedPreferences().getLong(Constants.ACCESS_DEADLINE, 0L) < getTimestamp());
+    return getKiaraApplication().accessExpired();
   }
 
   protected boolean loggedIn() {
@@ -294,7 +290,7 @@ public class KiaraActivity extends ActionBarActivity {
   }
 
   public String getUserId() {
-    return sharedPreferences().getString(Constants.USER_ID, null);
+    return getKiaraApplication().getUserId();
   }
 
 
