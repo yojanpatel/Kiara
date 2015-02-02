@@ -25,6 +25,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
+import uk.co.yojan.kiara.android.activities.BrowseTabActivity;
 import uk.co.yojan.kiara.android.adapters.SearchAdapter;
 import uk.co.yojan.kiara.android.events.AddSong;
 import uk.co.yojan.kiara.android.events.SearchRequest;
@@ -158,6 +159,7 @@ public class SearchFragment extends KiaraFragment {
   public void onSearchResultsReceived(final SearchResult result) {
     if(this.mAdapter == null) {
       this.mAdapter = new SearchAdapter(mContext, result);
+      this.mAdapter.setSelectionListener((BrowseTabActivity) getKiaraActivity());
       mRecyclerView.setAdapter(mAdapter);
       mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {
 

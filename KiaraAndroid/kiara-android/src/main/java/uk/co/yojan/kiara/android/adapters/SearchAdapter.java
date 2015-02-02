@@ -16,6 +16,7 @@ import butterknife.InjectView;
 import com.squareup.picasso.Picasso;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.Utils;
+import uk.co.yojan.kiara.android.activities.OnSongSelectionListener;
 import uk.co.yojan.kiara.android.utils.CircularCropTransformation;
 import uk.co.yojan.kiara.android.views.MultiLevelExpIndListAdapter;
 import uk.co.yojan.kiara.client.data.spotify.Album;
@@ -66,7 +67,9 @@ public class SearchAdapter extends MultiLevelExpIndListAdapter {
   /**
    * A set of track ids that have been checked, to be added as a batch add event.
    */
-  HashSet<String> toBeAdded;
+  HashSet<Track> toBeAdded;
+
+  OnSongSelectionListener selectionListener;
 
   public static class ViewHolderTrack extends RecyclerView.ViewHolder {
 
@@ -74,7 +77,6 @@ public class SearchAdapter extends MultiLevelExpIndListAdapter {
     @InjectView(R.id.song_img) ImageView albumArt;
     @InjectView(R.id.song_name) TextView songName;
     @InjectView(R.id.artist_name) TextView artistName;
-    @InjectView(R.id.album_name) TextView albumName;
     @InjectView(R.id.divider) View divider;
 
     public ViewHolderTrack(View itemView) {
@@ -176,10 +178,14 @@ public class SearchAdapter extends MultiLevelExpIndListAdapter {
     picasso = Picasso.with(mContext);
     picasso.setIndicatorsEnabled(false);
     data = new ArrayList();
-    toBeAdded = new HashSet<String>();
+    toBeAdded = new HashSet<Track>();
     robotoMedium = Typeface.createFromAsset(context.getAssets(), "fonts/Roboto-Medium.ttf");
 
     updateSearchResult(result);
+  }
+
+  public void setSelectionListener(OnSongSelectionListener listener) {
+    this.selectionListener = listener;
   }
 
   public void updateSearchResult(SearchResult result) {
@@ -287,24 +293,27 @@ public class SearchAdapter extends MultiLevelExpIndListAdapter {
         ViewHolderTrackChecked vhtc = (ViewHolderTrackChecked) viewHolder;
         Track trackc = (Track) data.get(position);
         vhtc.songName.setText(trackc.getName());
-        vhtc.checked.setTag(trackc.getId());
+        vhtc.checked.setTag(trackc);
 
-        if(toBeAdded.contains(trackc.getId())) {
+        if(toBeAdded.contains(trackc)) {
           vhtc.checked.setChecked(true);
         } else {
           vhtc.checked.setChecked(false);
         }
+
         vhtc.checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
           @Override
           public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            String id = (String) buttonView.getTag();
+            Track track = (Track) buttonView.getTag();
             if(isChecked) {
-              toBeAdded.add(id);
-              Log.d("SearchAdapter", id + " checked");
+              toBeAdded.add(track);
+              Log.d("SearchAdapter", track.getName() + " checked");
             } else {
-              toBeAdded.remove(id);
-              Log.d("SearchAdapter", id + " unchecked");
+              toBeAdded.remove(track);
+              Log.d("SearchAdapter", track.getName() + " unchecked");
             }
+
+            selectionListener.onSongSelectionChanged(toBeAdded);
           }
         });
         break;
