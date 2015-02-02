@@ -174,6 +174,7 @@ public class PlaylistListViewAdapter
       ButterKnife.inject(this, itemView);
       this.width = width;
       this.height = height;
+      itemView.setMinimumHeight(width / 2);
       image.setAdjustViewBounds(true);
       image.setMaxHeight(width/2);
       image.setMinimumHeight(width/2);

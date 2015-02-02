@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.android;
 
 import android.content.Context;
+import android.util.DisplayMetrics;
 
 public class Utils {
     /**
@@ -12,5 +13,10 @@ public class Utils {
         final float scale = context.getResources().getDisplayMetrics().density;
         // Convert the dps to pixels, based on density scale
         return (int) (dpValue * scale + 0.5f);
+    }
+
+    public static int dpToPixels(Context context, float dp) {
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        return (int) (metrics.density * dp + 0.5f);
     }
 }

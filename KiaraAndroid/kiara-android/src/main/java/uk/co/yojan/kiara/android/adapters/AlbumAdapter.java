@@ -33,7 +33,6 @@ public class AlbumAdapter extends RecyclerView.Adapter {
     SearchAdapter.ViewHolderAlbum vha = (SearchAdapter.ViewHolderAlbum) viewHolder;
 
     vha.albumName.setText(album.getName());
-    vha.artistName.setText(album.getArtists().getArtists().get(0).getName());
     picasso.load(album.getImages().get(0).getUrl()).into(vha.albumImg);
   }
 

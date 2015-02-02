@@ -18,7 +18,6 @@ public class KiaraFragment extends Fragment {
   public void onStart() {
     super.onStart();
     if(!registeredToBus) {
-      Log.d("KiaraFragment", "Registering to bus.");
       getBus().register(this);
     }
     registeredToBus = true;

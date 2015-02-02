@@ -153,49 +153,84 @@ public class SearchFragment extends KiaraFragment {
     getKiaraActivity().getBus().post(new SearchRequest(query, playlistId, 0, 3));
   }
 
-  private void search(String query) {
-
-  }
 
   @Subscribe
   public void onSearchResultsReceived(final SearchResult result) {
+    if(this.mAdapter == null) {
+      this.mAdapter = new SearchAdapter(mContext, result);
+      mRecyclerView.setAdapter(mAdapter);
+      mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext, new RecyclerItemTouchListener.OnItemClickListener() {
 
-    this.mAdapter = new SearchAdapter(mContext, result);
-    mRecyclerView.setAdapter(mAdapter);
-
-    mRecyclerView.addOnItemTouchListener(new RecyclerItemTouchListener(mContext,
-      new RecyclerItemTouchListener.OnItemClickListener() {
         @Override
         public void onItemClick(View view, final int position) {
-          List<Track> tracks = result.getTracks().getTracks();
-
 
           switch (mAdapter.getItemViewType(position)) {
+
             case SearchAdapter.VIEW_TRACK:
-              Track track = tracks.get(position - 1);
+              Track track = mAdapter.track(position);
               getKiaraActivity().getBus().post(new AddSong(playlistId, track.getId()));
               Crouton.makeText(getActivity(), "Adding " + track.getName(), Style.INFO, (ViewGroup) getView()).show();
               break;
-            case SearchAdapter.VIEW_ARTIST:
-              Artist a = mAdapter.artist(position);
-              Map<String, String> options = new HashMap<String, String>();
-              options.put("album_type", "album");
-              options.put("market", getKiaraActivity().sharedPreferences().getString(Constants.USER_COUNTRY, "GB"));
-              getKiaraApplication().spotifyApi().getArtistAlbums(a.getId(), options, new Callback<Pager<Album>>() {
-                @Override
-                public void success(Pager<Album> albumPager, Response response) {
-                  mAdapter.addAlbums(position, removeDuplicates(albumPager.items));
-                }
 
-                @Override
-                public void failure(RetrofitError error) {
-                  Log.e("SearchAdapter", error.getMessage());
-                }
-              });
+            case SearchAdapter.VIEW_ARTIST:
+              if(mAdapter.isExpanded(position)) {
+                mAdapter.closeArtist(position);
+              } else {
+                // get the corresponding Artist from the data
+                final Artist a = mAdapter.artist(position);
+
+                // Construct the web request query parameters
+                Map<String, String> options = new HashMap<String, String>();
+                options.put("album_type", "album");
+                options.put("market", getKiaraActivity().sharedPreferences().getString(Constants.USER_COUNTRY, "GB"));
+
+                // make the Spotify API request to get the Albums
+                getKiaraApplication().spotifyApi().getArtistAlbums(a.getId(), options, new Callback<Pager<Album>>() {
+                  @Override
+                  public void success(Pager<Album> albumPager, Response response) {
+                    if(albumPager.items.isEmpty()) {
+                      getKiaraActivity().toast("No albums found for " + a.getName());
+                    } else {
+                      mAdapter.addAlbums(position, removeDuplicates(albumPager.items));
+                    }
+                  }
+
+                  @Override
+                  public void failure(RetrofitError error) {
+                    Log.e("SearchAdapter", error.getMessage());
+                  }
+                });
+              }
+              break;
+
+            case SearchAdapter.VIEW_ALBUM:
+              if(mAdapter.isExpanded(position)) {
+                Log.d("BUS", "Album closed.");
+                mAdapter.closeAlbum(position);
+              } else {
+                Log.d("BUS", "Album opened.");
+                Album album = mAdapter.album(position);
+                getKiaraApplication().spotifyApi().getAlbumTracks(album.getId(), new Callback<Pager<Track>>() {
+                  @Override
+                  public void success(Pager<Track> trackPager, Response response) {
+                    mAdapter.addTracks(position, trackPager.items);
+                  }
+
+                  @Override
+                  public void failure(RetrofitError error) {
+                    Log.e("SearchAdapter", error.getMessage());
+                  }
+                });
+              }
               break;
           }
         }
       }));
+
+    // If the Adapter already exists, update the SearchResult in the adapter for the view changes to be reflected.
+    } else {
+      mAdapter.updateSearchResult(result);
+    }
   }
 
   private List<Album> removeDuplicates(List<Album> albums) {

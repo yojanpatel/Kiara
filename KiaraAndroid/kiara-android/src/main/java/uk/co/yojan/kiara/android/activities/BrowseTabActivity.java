@@ -1,9 +1,11 @@
 package uk.co.yojan.kiara.android.activities;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import uk.co.yojan.kiara.android.Constants;
@@ -21,6 +23,8 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
   private BrowseAdapter mAdapter;
   @InjectView(R.id.pager) ViewPager pager;
   @InjectView(R.id.sliding_tabs) SlidingTabLayout mSlidingTabLayout;
+
+  private InputMethodManager imm;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +44,9 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
     mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.pinkA200));
 
     mSlidingTabLayout.setViewPager(pager);
+
+    imm = (InputMethodManager)getSystemService(
+        Context.INPUT_METHOD_SERVICE);
   }
 
   @Override
@@ -56,6 +63,8 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
       toolbarLayout.findViewById(R.id.resetQueryButton).setVisibility(View.INVISIBLE);
       toolbarLayout.findViewById(R.id.search_icon).setVisibility(View.INVISIBLE);
       toolbarLayout.findViewById(R.id.titleBrowsePlaylists).setVisibility(View.VISIBLE);
+
+
     }
     else if(position == SEARCH) {
       toolbarLayout.findViewById(R.id.searchEditText).setVisibility(View.VISIBLE);
