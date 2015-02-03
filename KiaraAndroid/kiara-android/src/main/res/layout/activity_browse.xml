@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
-
 
   <uk.co.yojan.kiara.android.views.SlidingTabLayout
       android:id="@+id/sliding_tabs"
       android:layout_height="wrap_content"
-      android:layout_width="match_parent"
-      android:layout_below="@+id/toolbar"/>
+      android:layout_below="@+id/toolbar"
+      android:layout_width="match_parent"/>
 
   <android.support.v4.view.ViewPager
       android:id="@+id/pager"
       android:layout_below="@id/sliding_tabs"
       android:layout_width="match_parent"
-      android:layout_height="wrap_content"/>
+      android:layout_height="match_parent"
+      android:layout_alignParentBottom="true"/>
 
 
   <android.support.v7.widget.Toolbar
@@ -29,17 +30,6 @@
         android:id="@+id/toolbarLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-      <TextView
-          android:id="@+id/titleBrowsePlaylists"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:text="Browse"
-          android:textColor="@color/white"
-          android:layout_marginLeft="8dp"
-          android:layout_marginTop="24dp"
-          android:textSize="24sp"
-          android:visibility="invisible"/>
 
       <EditText
           android:id="@+id/searchEditText"
@@ -77,10 +67,54 @@
     </RelativeLayout>
   </android.support.v7.widget.Toolbar>
 
+
+  <!-- BOTTOM BAR -->
+  <android.support.v7.widget.Toolbar
+      android:layout_width="match_parent"
+      android:layout_height="?attr/actionBarSize"
+      android:background="?attr/colorPrimary"
+      android:layout_alignParentBottom="true"
+      android:visibility="gone"
+      android:id="@+id/bottombar">
+
+      <RelativeLayout
+          android:id="@+id/bottomBarLayout"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent">
+
+      <TextView
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:maxLines="2"
+          android:textSize="14sp"
+          android:text="18 songs selected"
+          android:layout_centerVertical="true"
+          android:layout_marginLeft="16sp"
+          android:layout_marginRight="16sp"
+          android:textColor="@color/white"
+          android:id="@+id/bottomBarText"/>
+
+      <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:id="@+id/addAllButton"
+          android:textColor="@color/pinkA200"
+          android:textAllCaps="true"
+          android:textSize="14sp"
+          android:textStyle="bold"
+          android:layout_marginRight="16sp"
+          android:text="@string/add_all"
+          android:layout_alignParentRight="true"
+          android:layout_centerVertical="true"/>
+      </RelativeLayout>
+  </android.support.v7.widget.Toolbar>
+
+
   <View
       android:layout_below="@id/sliding_tabs"
       android:layout_width="match_parent"
       android:layout_height="8dp"
+      android:id="@+id/shadow"
       android:background="@drawable/opacity_gradient_half_empty"/>
 
 </RelativeLayout>

@@ -40,9 +40,10 @@ public class SearchFragment extends KiaraFragment {
   private long playlistId;
 
   private Context mContext;
+  private BrowseTabActivity activity;
 
   @InjectView(R.id.results_list) RecyclerView mRecyclerView;
-  private RecyclerView.LayoutManager mLayoutManager;
+  private LinearLayoutManager mLayoutManager;
   private SearchAdapter mAdapter;
 
   private EditText searchEdit;
@@ -91,16 +92,12 @@ public class SearchFragment extends KiaraFragment {
     View rootView =  inflater.inflate(R.layout.fragment_search, container, false);
     ButterKnife.inject(this, rootView);
     this.mContext = rootView.getContext();
+    activity = (BrowseTabActivity) getKiaraActivity();
 
     mRecyclerView.setHasFixedSize(false);
 
     mLayoutManager = new LinearLayoutManager(getActivity());
     mRecyclerView.setLayoutManager(mLayoutManager);
-
-
-    // TODO: change
-//    mAdapter = new SearchResultAdapter(new SearchResult(), mContext);
-//    mRecyclerView.setAdapter(mAdapter);
 
     searchEdit.addTextChangedListener(new TextWatcher() {
       @Override

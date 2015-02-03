@@ -92,7 +92,12 @@ public class SongListFragment extends KiaraFragment {
     if (getArguments() != null) {
       // The values passed from the playlist with songs.
       songs = getArguments().getParcelableArrayList(Constants.ARG_PLAYLIST_SONG_LIST);
-      Collections.sort(songs, new SongComparatorByArtist());
+      if(songs != null) {
+        Collections.sort(songs, new SongComparatorByArtist());
+      } else {
+        songs = new ArrayList<SongParcelable>();
+      }
+
       playlistId = getArguments().getLong(Constants.ARG_PLAYLIST_ID);
       playlistName = getArguments().getString(Constants.ARG_PLAYLIST_NAME);
       Log.d(log, playlistName);
@@ -234,6 +239,7 @@ public class SongListFragment extends KiaraFragment {
 //        Intent intent = new Intent(mContext, SearchActivity.class);
         Intent intent = new Intent(mContext, BrowseTabActivity.class);
         intent.putExtra(Constants.ARG_PLAYLIST_ID, playlistId);
+        intent.putExtra(Constants.ARG_PLAYLIST_NAME, playlistName);
         startActivity(intent);
       }
     });

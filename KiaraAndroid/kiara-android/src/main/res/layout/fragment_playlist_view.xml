@@ -1,6 +1,5 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:fab="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="match_parent"
     tools:context="uk.co.yojan.kiara.android.fragments.PlaylistListFragment"
@@ -13,8 +12,7 @@
         android:id="@+id/playlist_recycler_view"
         android:scrollbars="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
     </android.support.v7.widget.RecyclerView>
 
   <ProgressBar

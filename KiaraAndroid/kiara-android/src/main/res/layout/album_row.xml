@@ -3,37 +3,29 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp">
+                android:paddingTop="16dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
 
   <ImageView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:id="@+id/album_img"
       android:contentDescription="@string/album_art"
-      android:padding="4dp"
       android:src="@android:drawable/ic_media_play"/>
-
-  <TextView
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:id="@+id/album_name"
-      android:textSize="16sp"
-      android:text="Song Name"
-      android:padding="4dp"
-      android:textColor="@color/grey50"
-      android:layout_toRightOf="@+id/album_img"/>
 
   <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:id="@+id/artist_name"
+      android:id="@+id/album_name"
       android:textSize="16sp"
-      android:text="Artist Name"
-      android:textColor="@color/grey400"
-      android:layout_below="@+id/album_name"
-      android:layout_alignLeft="@+id/album_name"
-      android:paddingLeft="4dp"/>
+      android:text="Album_name"
+      android:layout_centerVertical="true"
+      android:singleLine="true"
+      android:layout_marginLeft="16dp"
+      android:layout_marginRight="16dp"
+      android:textColor="@color/grey50"
+      android:layout_toRightOf="@+id/album_img"/>
 
 
 </RelativeLayout>

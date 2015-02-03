@@ -2,12 +2,15 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.animation.Animator;
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
+import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -22,6 +25,7 @@ import butterknife.InjectView;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.adapters.BrowseAdapter;
+import uk.co.yojan.kiara.android.fragments.SelectTracksFragment;
 import uk.co.yojan.kiara.android.views.SlidingTabLayout;
 import uk.co.yojan.kiara.client.data.spotify.Track;
 
@@ -30,6 +34,7 @@ import java.util.HashSet;
 public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPageChangeListener, OnSongSelectionListener {
 
   private long playlistId;
+  private String playlistName;
 
   public static final int SEARCH = 0;
   public static final int IMPORT = 1;
@@ -51,8 +56,9 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
   private TextView selectedText;
   private TextView addAllButton;
 
-  private InputMethodManager imm;
+  int width, height;
 
+  private InputMethodManager imm;
 
   // Animators
   ViewPropertyAnimator tbAnimatorUp, tabAnimatorUp, shAnimatorUp;
@@ -67,7 +73,17 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
     setContentView(R.layout.activity_browse);
     ButterKnife.inject(this);
 
+    // Get screen size for resizing
+    WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+    Display display = wm.getDefaultDisplay();
+    Point size = new Point();
+    display.getSize(size);
+    width = size.x;
+    height = size.y;
+
     playlistId = getIntent().getLongExtra(Constants.ARG_PLAYLIST_ID, -1);
+    playlistName = getIntent().getStringExtra(Constants.ARG_PLAYLIST_NAME);
+
     pager.setOnPageChangeListener(this);
     mSlidingTabLayout.setOnPageChangeListener(this);
     mAdapter = new BrowseAdapter(getFragmentManager(), playlistId);
@@ -82,13 +98,14 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
     reset = (ImageButton) toolbarLayout.findViewById(R.id.resetQueryButton);
     search = (ImageView) toolbarLayout.findViewById(R.id.search_icon);
 
+
     bottomBar = (Toolbar) findViewById(R.id.bottombar);
     View bottombarLayout = bottomBar.findViewById(R.id.bottomBarLayout);
     selectedText = (TextView) bottombarLayout.findViewById(R.id.bottomBarText);
     addAllButton = (TextView) bottombarLayout.findViewById(R.id.addAllButton);
 
     mSlidingTabLayout.setViewPager(pager);
-
+    initializeDialogButton();
     imm = (InputMethodManager)getSystemService(
         Context.INPUT_METHOD_SERVICE);
   }
@@ -122,6 +139,7 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
       if(bottomBarVisible) {
         animateBottomBarUp();
       }
+
       animateToolbarDown();
       // show the soft keyboard connected to the search
       imm.showSoftInputFromInputMethod(searchEdit.getWindowToken(), 0);
@@ -152,7 +170,6 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
     // keep a reference to the selected songs
     selectedSongs = songs;
   }
-
 
 
   public void animateToolbarUp() {
@@ -196,9 +213,15 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
           public void onAnimationStart(Animator animation) {
             toolbar.setVisibility(View.VISIBLE);
           }
-          public void onAnimationEnd(Animator animation) {}
-          public void onAnimationCancel(Animator animation) {}
-          public void onAnimationRepeat(Animator animation) {}
+
+          public void onAnimationEnd(Animator animation) {
+          }
+
+          public void onAnimationCancel(Animator animation) {
+          }
+
+          public void onAnimationRepeat(Animator animation) {
+          }
         });
 
     tabAnimatorDown = mSlidingTabLayout.animate().translationY(0)
@@ -228,12 +251,39 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
   private void animateBottomBarDown() {
     final Animation bottomDown = AnimationUtils.loadAnimation(this, R.anim.bottom_down);
     bottomDown.setAnimationListener(new Animation.AnimationListener() {
-      public void onAnimationStart(Animation animation) {}
+      public void onAnimationStart(Animation animation) {
+      }
+
       public void onAnimationEnd(Animation animation) {
         bottomBar.setVisibility(View.GONE);
       }
-      public void onAnimationRepeat(Animation animation) {}
+
+      public void onAnimationRepeat(Animation animation) {
+      }
     });
     bottomBar.startAnimation(bottomDown);
+  }
+
+  public HashSet<Track> selectedSongs() {
+    return selectedSongs;
+  }
+
+  private void initializeDialogButton() {
+    View.OnClickListener listener = new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        SelectTracksFragment.newInstance().show(getSupportFragmentManager(), "SelectDialog");
+      }
+    };
+    bottomBar.setOnClickListener(listener);
+
+  }
+
+  public long playlistId() {
+    return playlistId;
+  }
+
+  public String playlistName() {
+    return playlistName;
   }
 }

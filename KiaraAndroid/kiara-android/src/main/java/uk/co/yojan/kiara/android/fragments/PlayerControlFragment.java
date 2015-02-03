@@ -31,10 +31,6 @@ import uk.co.yojan.kiara.client.data.Song;
 
 
 public class PlayerControlFragment extends KiaraFragment {
-  // TODO: Rename parameter arguments, choose names that match
-  // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-  private static final String ARG_PARAM1 = "param1";
-  private static final String ARG_PARAM2 = "param2";
 
   private Context mContext;
 
@@ -57,10 +53,6 @@ public class PlayerControlFragment extends KiaraFragment {
    */
   public static PlayerControlFragment newInstance(/*String param1, String param2*/) {
     PlayerControlFragment fragment = new PlayerControlFragment();
-    Bundle args = new Bundle();
-//    args.putString(ARG_PARAM1, param1);
-//    args.putString(ARG_PARAM2, param2);
-    fragment.setArguments(args);
     return fragment;
   }
 
