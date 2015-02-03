@@ -2,6 +2,7 @@ package uk.co.yojan.kiara.android.activities;
 
 import android.animation.Animator;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
@@ -25,10 +26,13 @@ import butterknife.InjectView;
 import uk.co.yojan.kiara.android.Constants;
 import uk.co.yojan.kiara.android.R;
 import uk.co.yojan.kiara.android.adapters.BrowseAdapter;
-import uk.co.yojan.kiara.android.fragments.SelectTracksFragment;
+import uk.co.yojan.kiara.android.events.BatchAddSongs;
+import uk.co.yojan.kiara.android.events.GetSongsForPlaylist;
+import uk.co.yojan.kiara.android.fragments.SelectDialog;
 import uk.co.yojan.kiara.android.views.SlidingTabLayout;
 import uk.co.yojan.kiara.client.data.spotify.Track;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPageChangeListener, OnSongSelectionListener {
@@ -272,10 +276,29 @@ public class BrowseTabActivity extends KiaraActivity implements ViewPager.OnPage
     View.OnClickListener listener = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        SelectTracksFragment.newInstance().show(getSupportFragmentManager(), "SelectDialog");
+        SelectDialog dialog = SelectDialog.newInstance();
+        dialog.show(getSupportFragmentManager(), "SelectDialog");
       }
     };
     bottomBar.setOnClickListener(listener);
+    addAllButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        ArrayList<Track> tracks = new ArrayList<Track>();
+        for(Track t : selectedSongs()) {
+          tracks.add(t);
+        }
+        getBus().post(new BatchAddSongs(tracks, playlistId()));
+        toast(tracks.size() + " songs added.");
+
+        Intent i = new Intent(BrowseTabActivity.this, PlaylistSongListActivity.class);
+        i.putExtra(Constants.ARG_PLAYLIST_ID, playlistId());
+        i.putExtra(Constants.ARG_PLAYLIST_NAME, playlistName());
+        getBus().post(new GetSongsForPlaylist(playlistId()));
+        startActivity(i);
+        finish();
+      }
+    });
 
   }
 

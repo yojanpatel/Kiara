@@ -26,7 +26,7 @@ public class SelectAdapter extends RecyclerView.Adapter {
   private BrowseTabActivity activity;
   private HashSet<Track> selected;
 
-  int darkgrey;
+  int lightgrey;
 
   public SelectAdapter(BrowseTabActivity activity) {
 
@@ -43,7 +43,7 @@ public class SelectAdapter extends RecyclerView.Adapter {
       }
     });
 
-    darkgrey = activity.getResources().getColor(R.color.grey700);
+    lightgrey = activity.getResources().getColor(R.color.grey50);
 
   }
 
@@ -60,8 +60,9 @@ public class SelectAdapter extends RecyclerView.Adapter {
     ViewHolder vhtc = (ViewHolder) vh;
 
     vhtc.songName.setText(track.getName());
+    vhtc.artistName.setText(track.getArtists().get(0).getName());
     vhtc.checked.setTag(track);
-    vhtc.songName.setTextColor(darkgrey);
+    vhtc.songName.setTextColor(lightgrey);
 
     if(selected.contains(track)) {
       vhtc.checked.setChecked(true);
@@ -94,12 +95,14 @@ public class SelectAdapter extends RecyclerView.Adapter {
 
     String id;
     @InjectView(R.id.song_name) TextView songName;
+    @InjectView(R.id.artist_name) TextView artistName;
     @InjectView(R.id.song_checked) CheckBox checked;
 
     public ViewHolder(View itemView) {
       super(itemView);
       ButterKnife.inject(this, itemView);
       itemView.setTag(this);
+      artistName.setVisibility(View.VISIBLE);
     }
 
     public ViewHolder id(String id) {

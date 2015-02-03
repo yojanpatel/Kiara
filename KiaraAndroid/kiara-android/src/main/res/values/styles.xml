@@ -12,14 +12,14 @@
     </style>
 
     <style name="QueueSearchStyle" parent="Widget.AppCompat.SearchView">
-    <!-- Background for the search query section (e.g. EditText) -->
-    <item name="queryBackground">@color/eighth_transparent</item>
-    <!-- Background for the actions section (e.g. voice, submit) -->
-    <item name="submitBackground">@color/transparent</item>
-    <!-- Close button icon -->
-    <item name="closeIcon">@drawable/ic_close_grey600_24dp</item>
-    <!-- Search button icon -->
-    <item name="searchIcon">@drawable/ic_search_grey600_24dp</item>
-</style>
+        <!-- Background for the search query section (e.g. EditText) -->
+        <item name="queryBackground">@color/eighth_transparent</item>
+        <!-- Background for the actions section (e.g. voice, submit) -->
+        <item name="submitBackground">@color/transparent</item>
+        <!-- Close button icon -->
+        <item name="closeIcon">@drawable/ic_close_grey600_24dp</item>
+        <!-- Search button icon -->
+        <item name="searchIcon">@drawable/ic_search_grey600_24dp</item>
+    </style>
 
 </resources>

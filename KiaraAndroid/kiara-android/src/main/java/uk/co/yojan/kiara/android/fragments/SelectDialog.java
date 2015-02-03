@@ -9,7 +9,9 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.view.View;
+import android.view.Window;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import uk.co.yojan.kiara.android.Constants;
@@ -26,7 +28,7 @@ import java.util.ArrayList;
 /**
  * A fragment representing a list of Items.
  */
-public class SelectTracksFragment extends DialogFragment {
+public class SelectDialog extends DialogFragment {
 
   private Context mContext;
   private BrowseTabActivity activity;
@@ -35,8 +37,8 @@ public class SelectTracksFragment extends DialogFragment {
   private SelectAdapter mAdapter;
   private LinearLayoutManager mLayoutManager;
 
-  public static SelectTracksFragment newInstance() {
-    SelectTracksFragment fragment = new SelectTracksFragment();
+  public static SelectDialog newInstance() {
+    SelectDialog fragment = new SelectDialog();
     return fragment;
   }
 
@@ -44,7 +46,7 @@ public class SelectTracksFragment extends DialogFragment {
    * Mandatory empty constructor for the fragment manager to instantiate the
    * fragment (e.g. upon screen orientation changes).
    */
-  public SelectTracksFragment() {
+  public SelectDialog() {
   }
 
   @Override
@@ -52,10 +54,17 @@ public class SelectTracksFragment extends DialogFragment {
     super.onCreate(savedInstanceState);
   }
 
+
+
   @Override
   public void onResume() {
     super.onResume();
     activity.getBus().register(this);
+    DisplayMetrics metrics = getResources().getDisplayMetrics();
+    Window window = getDialog().getWindow();
+    window.setLayout(metrics.widthPixels, (int) (metrics.heightPixels / 1.6));
+    window.setBackgroundDrawableResource(R.color.grey900);
+    window.set
   }
 
   @Override
@@ -110,8 +119,12 @@ public class SelectTracksFragment extends DialogFragment {
       }
     });
 
-    return builder.create();
+    Dialog dialog =  builder.create();
+
+
+    return dialog;
   }
+
 
 
 
