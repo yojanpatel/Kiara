@@ -5,7 +5,10 @@ import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Serialize;
 import com.googlecode.objectify.annotation.Subclass;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
@@ -19,23 +22,25 @@ public class NodeCluster extends Cluster {
 //  @Id private String id;
   private int level;
 
-
-//  private Cluster parent;
-//  List<Cluster> children;
+  private int K;
 
   private Key<NodeCluster> parent;
   private ArrayList<String> children;
   private HashSet<String> leaves; // contains ids of children that are leaves
 
+  // normalized based on the last clustering
   private double[] centroidValues;
+  // to allow normalizing for possible new songs to be added
+  private Double[] mean;
+  private Double[] stddev;
 
   // shadow - all songs this cluster encompasses in a dendrogram.
   List<String> songIds;
 
-  // Q-learning matrix
-  // Each row contains the Q-values for a given state (one of the child clusters).
-  // The value Q(s, a) represents the expected sum of rewards the agent expects to receive by
-  // executing the action a from. state s.
+  /* Q-learning matrix
+   * Each row contains the Q-values for a given state (one of the child clusters).
+   * The value Q(s, a) represents the expected sum of rewards the agent expects to receive by
+   * executing the action a from. state s.*/
   @Serialize List<List<Double>> Q;
 
   public NodeCluster() {
@@ -50,7 +55,9 @@ public class NodeCluster extends Cluster {
   }
 
   public void addSongId(String songId) {
-    songIds.add(songId);
+    if(!songIds.contains(songId)) {
+      songIds.add(songId);
+    }
   }
 
   public void removeSongId(String songId) {
@@ -100,7 +107,6 @@ public class NodeCluster extends Cluster {
     this.level = level;
   }
 
-
   public Key<NodeCluster> getParent() {
     return parent;
   }
@@ -111,16 +117,12 @@ public class NodeCluster extends Cluster {
 
   public void setParent(NodeCluster parent) {
     this.parent = Key.create(NodeCluster.class, parent.getId());
-  }
-/*
-  public HashMap<String, Key> getChildrenMap() {
-    return children;
+    setLevel(parent.getLevel() + 1);
   }
 
-  public void setChildrenMap(HashMap<String, Key> children) {
-    this.children = children;
-  } */
 
+
+  /* Must ensure consistency in ordering with the other methods */
   public ArrayList<Cluster> getChildren() {
 
     ArrayList<Key<NodeCluster>> nodeKeys = new ArrayList<>();
@@ -161,6 +163,11 @@ public class NodeCluster extends Cluster {
     leaves.add(c.getId());
     children.add(c.getId());
 
+    // update state for the child to be added, c
+    c.setLevel(getLevel() + 1);
+    c.setParent(Key.create(NodeCluster.class, getId()));
+    c.setId(playlistId() + "-" + c.getSongId());
+
     // Add a 0.0 entry for all other existing children to this new child
     for(List<Double> stateRow : Q) {
       stateRow.add(0.0);
@@ -174,8 +181,14 @@ public class NodeCluster extends Cluster {
     Q.add(stateRow);
   }
 
-  public void addChild(NodeCluster c ) {
+  public void addChild(NodeCluster c) {
     children.add(c.getId());
+
+    // update state for the child to be added, c
+    c.setLevel(getLevel() + 1);
+    c.setParent(Key.create(NodeCluster.class, getId()));
+    c.setId(clusterId(this, children.indexOf(c.getId()), getK()));
+    c.setK(getK());
 
     // Add a 0.0 entry for all other existing children to this new child
     for(List<Double> stateRow : Q) {
@@ -191,7 +204,7 @@ public class NodeCluster extends Cluster {
   }
 
   // return the cluster index in the children list that contains songId in the shadow.
-  public int clusterIndex(String songId) {
+  public int songClusterIndex(String songId) {
     for(int clusterIndex = 0; clusterIndex < getChildren().size(); clusterIndex++) {
       Cluster cluster = getChildren().get(clusterIndex);
 
@@ -229,6 +242,15 @@ public class NodeCluster extends Cluster {
     int index = children.indexOf(existing.getId());
     children.set(index, replacement.getId());
 
+
+    if(existing instanceof LeafCluster) {
+      leaves.remove(existing.getId());
+    }
+
+    if(replacement instanceof LeafCluster) {
+      leaves.add(replacement.getId());
+    }
+
     // update Q
     ArrayList<Double> stateRow = new ArrayList<>();
     for(int j = 0; j < children.size(); j++) stateRow.add(0.0);
@@ -248,11 +270,38 @@ public class NodeCluster extends Cluster {
   }
 
   public double[] getCentroidValues() {
+    assert centroidValues.length == 103;
     return centroidValues;
   }
 
   public void setCentroidValues(double[] centroidValues) {
+    assert centroidValues.length == 103;
     this.centroidValues = centroidValues;
+
+  }
+
+  public void setMeanStdDev(Double[] mean, Double[] stddev) {
+    assert mean.length == stddev.length;
+    this.mean = mean;
+    this.stddev = stddev;
+  }
+
+  /**
+   * Normalize a point on the feature space relative to the songs
+   * that are already members of the cluster from the last time an
+   * actual clustering run took place.
+   *
+   * Z = (X - mean)/stddev
+   *
+   * @param point point to normalise (103 dimensions)
+   * @return scaled point as a double array
+   */
+  public double[] normalizePoint(double[] point) {
+    double[] scaled = new double[point.length];
+    for(int i = 0; i < point.length; i++) {
+      scaled[i] = (point[i] - mean[i]) / stddev[i];
+    }
+    return scaled;
   }
 
   public int getSize() {
@@ -269,5 +318,34 @@ public class NodeCluster extends Cluster {
 
   public void addLeaf(String leafId) {
     leaves.add(leafId);
+  }
+
+  public int getK() {
+    return K;
+  }
+
+  public void setK(int k) {
+    K = k;
+  }
+
+  public Double[] getMean() {
+    return mean;
+  }
+
+  public Double[] getStddev() {
+    return stddev;
+  }
+
+  /**
+   * Constructs the cluster id in the form <playlist id>-<level>-<index in level>
+   *
+   * @param parent the predecessor of the cluster node in the hierarchy
+   * @param index  the child index for the parent, not the entire level
+   * @param k  the number of clusters for K-Means for level-wide index approximation
+   * @return  a String in the above format representing the id of the ClusterNode
+   */
+  public static String clusterId(NodeCluster parent, int index, int k) {
+    String[] s = parent.getId().split("-");
+    return s[0] + "-" + (Integer.parseInt(s[1]) + 1) + "-" + (index + Integer.parseInt(s[2]) * k);
   }
 }

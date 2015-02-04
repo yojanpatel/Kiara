@@ -2,9 +2,7 @@ package uk.co.yojan.kiara.analysis.cluster;
 
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
-
-import java.util.ArrayList;
-import java.util.List;
+import uk.co.yojan.kiara.analysis.OfyUtils;
 
 /**
  * Base leaf node in the hierarchically constructed tree. It represents the song.
@@ -14,35 +12,16 @@ import java.util.List;
 @Entity
 public class LeafCluster extends Cluster {
 
-//  @Id private String id;
   private int level;
-//  private Cluster parent;
   private Key<NodeCluster> parent;
 
   // Spotify id
   private String songId;
 
-  public LeafCluster() { }
-
   public LeafCluster(String songId) {
     this.songId = songId;
   }
 
-  public List<String> getSongIds() {
-    List<String> ids = new ArrayList<>();
-    ids.add(songId);
-    return ids;
-  }
-
-  /*
-  public String getId() {
-    return id;
-  }
-
-  public void setId(String id) {
-    this.id = id;
-  }
-  */
 
   public int getLevel() {
     return level;
@@ -52,13 +31,6 @@ public class LeafCluster extends Cluster {
     this.level = level;
   }
 
-  /* public Cluster getParent() {
-    return parent;
-  }
-
-  public void setParent(Cluster parent) {
-    this.parent = parent;
-  } */
 
   public Key<NodeCluster> getParent() {
     return parent;
@@ -74,5 +46,25 @@ public class LeafCluster extends Cluster {
 
   public void setSongId(String songId) {
     this.songId = songId;
+  }
+
+  public Double[] getNormalizedPoint() throws IllegalAccessException {
+    NodeCluster parent = OfyUtils.loadNodeCluster(this.parent.getName()).now();
+    Double[] means = parent.getMean();
+    Double[] stddevs = parent.getStddev();
+
+    assert  means.length == stddevs.length;
+    return getNormalizedPoint(means, stddevs);
+  }
+
+  public Double[] getNormalizedPoint(Double[] means, Double[] stddevs) throws IllegalAccessException {
+    double[] point = OfyUtils.loadFeature(songId).now().getFeatureValues();
+    Double[] normalized = new Double[means.length];
+
+    for(int i = 0; i < means.length; i++) {
+      normalized[i] = (point[i] - means[i]) / stddevs[i];
+    }
+
+    return normalized;
   }
 }

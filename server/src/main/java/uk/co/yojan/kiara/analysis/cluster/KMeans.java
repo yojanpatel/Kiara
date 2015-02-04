@@ -1,6 +1,5 @@
 package uk.co.yojan.kiara.analysis.cluster;
 
-import uk.co.yojan.kiara.analysis.features.scaling.FeatureScaler;
 import uk.co.yojan.kiara.analysis.features.scaling.ZNormaliser;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import weka.clusterers.SimpleKMeans;
@@ -63,7 +62,7 @@ public class KMeans {
 
   SimpleKMeans kMeans;
 
-  FeatureScaler featureScaler = new ZNormaliser();
+  ZNormaliser featureScaler = new ZNormaliser();
 
   private List<SongFeature> features;
   private int k;
@@ -95,27 +94,6 @@ public class KMeans {
     kMeans.setPreserveInstancesOrder(true);
   }
 
-  public KMeans(int k, List<SongFeature> features, ArrayList<Double> weights) throws Exception {
-    kMeans = new SimpleKMeans();
-
-    this.k = k;
-    this.features = features;
-    // Scale features
-    if(featureScaler != null) {
-      this.instances = featureScaler.scale(constructDataSet(features));
-    } else {
-      this.instances = constructDataSet(features);
-    }
-
-    kMeans.setNumClusters(k);
-    kMeans.setPreserveInstancesOrder(true);
-
-    if(weights != null) {
-      WeightedEuclideanDistance distanceFunction = new WeightedEuclideanDistance(weights);
-      kMeans.setDistanceFunction(distanceFunction);
-    }
-  }
-
 
   public int[] run() throws Exception {
     kMeans.buildClusterer(instances);
@@ -123,12 +101,24 @@ public class KMeans {
     return assignments;
   }
 
+
+  public Instances getInstances() {
+    return instances;
+  }
+
+  // centroid of the whole dataset
+  public ArrayList<Double> getMeans() {
+    return featureScaler.getMeans();
+  }
+
+  // spread of the whole dataset
+  public ArrayList<Double> getStdDev() {
+    return featureScaler.getStdDev();
+  }
+
   public Instances getCentroids() {
     return kMeans.getClusterCentroids();
   }
-
-
-
 
   public static Instances constructDataSet(List<SongFeature> data) throws IllegalAccessException {
     FastVector attInfo = new FastVector();

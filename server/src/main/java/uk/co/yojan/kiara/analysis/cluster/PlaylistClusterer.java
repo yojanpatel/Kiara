@@ -5,10 +5,12 @@ import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.OfyUtils;
+import uk.co.yojan.kiara.analysis.features.scaling.ZNormaliser;
 import uk.co.yojan.kiara.analysis.tasks.KMeansClusterTask;
 import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.SongFeature;
+import weka.core.Instances;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,10 +18,31 @@ import java.util.List;
 import java.util.Stack;
 import java.util.logging.Logger;
 
+import static uk.co.yojan.kiara.analysis.cluster.KMeans.constructDataSet;
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
 /**
  * PlaylistClusterer clusters a playlist given an id, and stores the results in the DataStore.
+ *
+ * * * * * * * * * *
+ *   CONTRACT
+ * * * * * * * * * *
+ *   At the moment, there is a contract that must be followed regarding the feature scaling, addition of new tracks
+ *   and centroid values for the different situations.
+ *
+ *   1. The creator of a NodeCluster must set its centroidValues since these are computed
+ *      relative to the creator. I.e. the parent must set these values at the time of adding as a child.
+ *      If a NodeCluster is created as a result of a hierarchical round of clustering, these can be gathered
+ *      from the KMeans class on which the .run() method was invoked.
+ *
+ *   2. NodeClusters must set their own mean and stddev and set them when clustering their
+ *      songs hierarchically. This is because this is an independent computation that results as
+ *      a side effect of the clustering by calling .getMean() and .getStdDev() on the KMeans object.
+ *
+ *   3. When comparing for the closest child to a certain point in the feature space:
+ *      - use the centroid value point for a NodeCluster as this is a representative point for its members.
+ *      - use a normalized point for a LeafCluster by calling .getNormalizedPoint() on the LeafCluster.
+ *
  */
 public class PlaylistClusterer {
 
@@ -36,10 +59,10 @@ public class PlaylistClusterer {
     final Playlist p = r.now();
     p.setClusterReady(false);
     Collection<String> songIds = p.getAllSongIds();
-    System.out.println(songIds.size() + " songs");
 
     // Initialise the root node for the hierarchy
     NodeCluster root = new NodeCluster();
+    root.setK(k);
     root.setId(clusterId(playlistId, 0, 0));
     root.setLevel(0);
     root.setSongIds(new ArrayList<>(songIds));
@@ -64,51 +87,59 @@ public class PlaylistClusterer {
   public static void cluster(NodeCluster cluster, int k) throws Exception {
     log.warning("Clustering " + cluster.getId() + " with  " + k + " clusters.");
 
-    Key<NodeCluster> clusterKey = Key.create(NodeCluster.class, cluster.getId());
-    String[] s = cluster.getId().split("-");
-    if(cluster.getSongIds().size() <= k) {
-      // Base case, construct the appropriate LeafClusters and assign as children
+    // Fetch the relevant SongFeature entities
+    List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(cluster.getSongIds())).values());
+
+    // BASE CASE (less children than K)
+    // construct the appropriate LeafClusters and assign as children
+    if(cluster.getSize() <= k) {
+      // collect LeafClusters for batch saving
       ArrayList<LeafCluster> leafChildren = new ArrayList<>();
       for(String songId : cluster.getSongIds()) {
         LeafCluster child = new LeafCluster(songId);
-        child.setParent(clusterKey);
-        child.setId(s[0] + "-" + child.getSongId());
-        child.setLevel(cluster.getLevel() + 1);
         leafChildren.add(child);
         cluster.addChild(child);
       }
+
+      // set the mean and stddev for the songs as per the contract
+      Instances instances = constructDataSet(features);
+      ZNormaliser normaliser = new ZNormaliser();
+      normaliser.computeMeansAndStddev(instances);
+      setMeanStdDev(cluster, normaliser.getMeans(), normaliser.getStdDev());
+
       ofy().save().entities(cluster).now();
       ofy().save().entities(leafChildren).now();
       return;
     }
 
-    Result<Playlist> pr = ofy().load().key(Key.create(Playlist.class, cluster.playlistId()));
-    // Fetch the relevant SongFeature entities
-    List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(cluster.getSongIds())).values());
-    Playlist playlist = pr.now();
 
     // Perform K-Means using Weka on the feature set returning a mapping
     KMeans kMeans = new KMeans(k, features);
     int[] assignments = kMeans.run();
 
-    // Initialise the child clusters
+    // keep record of the mean and std dev. of the entire dataset for this round of clustering.
+    // Store this along with the root NodeCluster responsible for this clustering
+    // (cf. Contract above)
+    setMeanStdDev(cluster, kMeans.getMeans(), kMeans.getStdDev());
+
+
+    // Initialise the child clusters, with its centroid value as per the contract
     List<Cluster> clusters = new ArrayList<>();
     for(int i = 0; i < k; i++) {
       NodeCluster nc = new NodeCluster();
-      nc.setParent(cluster);
-      nc.setLevel(cluster.getLevel() + 1);
-      nc.setId(clusterId(cluster, i, k));
-      Logger.getLogger(kMeans.getCentroids().instance(0).toString());
-
 
       // if there are as many clusters, as the current child index, update the centroid position
       if(i < kMeans.getCentroids().numInstances()) {
+        double[] clusterCentroid = kMeans.getCentroids().instance(i).toDoubleArray();
+        assert clusterCentroid.length == 103;
         nc.setCentroidValues(kMeans.getCentroids().instance(i).toDoubleArray());
       }
 
       clusters.add(nc);
     }
 
+
+    // boolean map to keep track of which clusters have been assigned to
     boolean[] assigned  = new boolean[k];
 
     // Add the Spotify id associated with songIndex to the assigned cluster given by assignments[songIndex]
@@ -142,7 +173,6 @@ public class PlaylistClusterer {
     // Assign the clusters to the children of root
     cluster.setChildren(clusters);
 
-
     // Save to the DataStore.
     ofy().save().entity(cluster).now();
     ofy().save().entities(clusters).now();
@@ -162,7 +192,9 @@ public class PlaylistClusterer {
         TaskOptions.Builder
             .withPayload(new KMeansClusterTask(clusterId, k))
             .taskName("Cluster-" + clusterId+ "-" + System.currentTimeMillis()));
+
   }
+
 
   private static void queueDelayedUpdate(final Long playlistId) {
     TaskManager.clusterQueue().add(
@@ -186,6 +218,7 @@ public class PlaylistClusterer {
             .taskName("Transaction-" + playlistId + "-" + System.currentTimeMillis()));
   }
 
+
   public static Collection<Key<SongFeature>> featureKeys(Collection<String> songIds) {
     Collection<Key<SongFeature>> featureKeys = new ArrayList<>();
     for(String id : songIds) {
@@ -194,9 +227,11 @@ public class PlaylistClusterer {
     return featureKeys;
   }
 
+
   private static String clusterId(Long playlistId, int level, int index) {
     return playlistId + "-" + level + "-" + index;
   }
+
 
   /**
    * Constructs the cluster id in the form <playlist id>-<level>-<index in level>
@@ -239,12 +274,7 @@ public class PlaylistClusterer {
     Logger.getLogger("").warning("deleting " + counter + " took " + (l2 - l1) + "ms.");
   }
 
-  public static void main(String[] args) {
-    NodeCluster p = new NodeCluster();
-    p.setId("23233-1-2");
-    System.out.println(clusterId(p, 0, 4));
-    System.out.println(clusterId(p, 1, 4));
-    System.out.println(clusterId(p, 2, 4));
-    System.out.println(clusterId(p, 3, 4));
+  private static void setMeanStdDev(NodeCluster cluster, List<Double> means, List<Double> stddevs) {
+    cluster.setMeanStdDev((Double[]) means.toArray(), (Double[]) stddevs.toArray());
   }
 }
