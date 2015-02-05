@@ -3,10 +3,10 @@ package uk.co.yojan.kiara.analysis.tasks;
 import com.google.appengine.api.taskqueue.DeferredTask;
 import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
+import uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer;
 
 import java.util.logging.Logger;
 
-import static uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer.cluster;
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
 
@@ -27,7 +27,7 @@ public class KMeansClusterTask implements DeferredTask {
     NodeCluster node = ofy().load().key(Key.create(NodeCluster.class, clusterId)).now();
     log.warning(node.getId());
     try {
-      cluster(node, k);
+      new PlaylistClusterer().cluster(node, k);
     } catch (Exception e) {
       e.printStackTrace();
       log.warning(e.getMessage());

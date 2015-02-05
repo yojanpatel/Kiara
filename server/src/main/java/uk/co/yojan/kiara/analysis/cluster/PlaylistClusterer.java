@@ -14,6 +14,7 @@ import weka.core.Instances;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.analysis.cluster.ClusterUtils.*;
@@ -47,8 +48,12 @@ public class PlaylistClusterer {
 
   private static final Logger log = Logger.getLogger(PlaylistClusterer.class.getName());
 
+  // Fetch the relevant SongFeature entities
+//  List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(cluster.getSongIds())).values());
 
-  public static NodeCluster cluster(Long playlistId, int k) {
+  Map<Key<SongFeature>, SongFeature> features;
+
+  public NodeCluster cluster(Long playlistId, int k) {
 
     // Fetch the playlist from persistent DataStore
     Result<Playlist> r = ofy().load().key(Key.create(Playlist.class, playlistId));
@@ -68,7 +73,10 @@ public class PlaylistClusterer {
 
     ofy().save().entity(root).now();
 
-    queueClusterTask(root.getId(), k);
+    // Load all the song features once for each hierarchical clustering run.
+    features = ofy().load().keys(featureKeys(songIds));
+
+    queueClusterTask(root, k);
     queueDelayedUpdate(p.getId());
 
     return root;
@@ -83,11 +91,10 @@ public class PlaylistClusterer {
    * @param k number of clusters to use during K-Means
    * @throws Exception
    */
-  public static void cluster(NodeCluster cluster, int k) throws Exception {
+  public void cluster(NodeCluster cluster, int k) throws Exception {
     log.warning("Clustering " + cluster.getId() + " with  " + k + " clusters.");
 
-    // Fetch the relevant SongFeature entities
-    List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(cluster.getSongIds())).values());
+    List<SongFeature> relevantFeatures = loadSongFeatures(cluster.getSongIds());
 
     // BASE CASE (less children than K)
     // construct the appropriate LeafClusters and assign as children
@@ -100,8 +107,9 @@ public class PlaylistClusterer {
         cluster.addChild(child);
       }
 
+
       // set the mean and stddev for the songs as per the contract
-      Instances instances = constructDataSet(features);
+      Instances instances = constructDataSet(relevantFeatures);
       ZNormaliser normaliser = new ZNormaliser();
       normaliser.computeMeansAndStddev(instances);
       setMeanStdDev(cluster, normaliser.getMeans(), normaliser.getStdDev());
@@ -113,7 +121,7 @@ public class PlaylistClusterer {
 
 
     // Perform K-Means using Weka on the feature set returning a mapping
-    KMeans kMeans = new KMeans(k, features);
+    KMeans kMeans = new KMeans(k, relevantFeatures);
     int[] assignments = kMeans.run();
 
     // keep record of the mean and std dev. of the entire dataset for this round of clustering.
@@ -143,7 +151,7 @@ public class PlaylistClusterer {
 
     // Add the Spotify id associated with songIndex to the assigned cluster given by assignments[songIndex]
     for(int songIndex = 0; songIndex < assignments.length; songIndex++) {
-      SongFeature song = features.get(songIndex);
+      SongFeature song = relevantFeatures.get(songIndex);
       NodeCluster assignedCluster = (NodeCluster) clusters.get(assignments[songIndex]);
       assignedCluster.addSongId(song.getId());
       assigned[assignments[songIndex]] = true;
@@ -180,7 +188,7 @@ public class PlaylistClusterer {
     for(Cluster c : clusters) {
       if(c instanceof NodeCluster) {
         log.warning("Adding Cluster Task for " + c.getId());
-        queueClusterTask(c.getId(), k);
+        queueClusterTask((NodeCluster) c, k);
       }
     }
   }
@@ -193,7 +201,14 @@ public class PlaylistClusterer {
 //            .taskName("Cluster-" + clusterId+ "-" + System.currentTimeMillis()));
 
     new KMeansClusterTask(clusterId, k).run();
+  }
 
+  private void queueClusterTask(NodeCluster node, int k) {
+    try {
+      cluster(node, k);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
 
@@ -219,6 +234,14 @@ public class PlaylistClusterer {
             .taskName("Transaction-" + playlistId + "-" + System.currentTimeMillis()));
   }
 
+
+  public List<SongFeature> loadSongFeatures(List<String> songIds) {
+    List<SongFeature> featureList = new ArrayList<>();
+    for(String songId : songIds) {
+      featureList.add(features.get(Key.create(SongFeature.class, songId)));
+    }
+    return featureList;
+  }
 
   public static Collection<Key<SongFeature>> featureKeys(Collection<String> songIds) {
     Collection<Key<SongFeature>> featureKeys = new ArrayList<>();

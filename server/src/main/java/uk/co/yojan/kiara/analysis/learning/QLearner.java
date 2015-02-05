@@ -101,13 +101,13 @@ public class QLearner {
     }
 
     // assert: ancestor is the lowest common ancestor of cluster nodes previousSong and currentSong
-    if(ancestor.clusterIndex(previousSong.getSongId()) == -1)
+    if(ancestor.songClusterIndex(previousSong.getSongId()) == -1)
       Logger.getLogger("").warning("LOOK: " + previousSong.getSongId());
 
     learn(
         ancestor,
-        ancestor.clusterIndex(previousSong.getSongId()),
-        ancestor.clusterIndex(currentSong.getSongId()),
+        ancestor.songClusterIndex(previousSong.getSongId()),
+        ancestor.songClusterIndex(currentSong.getSongId()),
         reward,
         previousSong.getLevel(),
         currentSong.getLevel());
@@ -118,12 +118,12 @@ public class QLearner {
 
       ancestor = ofy().load().key(ancestor.getParent()).now();
 
-      // assert: clusterIndex(previousSong) == clusterIndex(currentSong)
+      // assert: songClusterIndex(previousSong) == songClusterIndex(currentSong)
 
       learn(
           ancestor,
-          ancestor.clusterIndex(previousSong.getSongId()),
-          ancestor.clusterIndex(currentSong.getSongId()),
+          ancestor.songClusterIndex(previousSong.getSongId()),
+          ancestor.songClusterIndex(currentSong.getSongId()),
           reward,
           previousSong.getLevel(),
           currentSong.getLevel());
@@ -143,13 +143,13 @@ public class QLearner {
     }
 
     // assert: ancestor is the lowest common ancestor of cluster nodes previousSong and currentSong
-    if(ancestor.clusterIndex(previousSong.getSongId()) == -1)
+    if(ancestor.songClusterIndex(previousSong.getSongId()) == -1)
       Logger.getLogger("").warning("LOOK: " + previousSong.getSongId());
 
     basicLearn(
         ancestor,
-        ancestor.clusterIndex(previousSong.getSongId()),
-        ancestor.clusterIndex(currentSong.getSongId()),
+        ancestor.songClusterIndex(previousSong.getSongId()),
+        ancestor.songClusterIndex(currentSong.getSongId()),
         reward,
         previousSong.getLevel(),
         currentSong.getLevel());
@@ -160,14 +160,14 @@ public class QLearner {
 
       ancestor = nodes.get(ancestor.getParent());
 
-      // assert: clusterIndex(previousSong) == clusterIndex(currentSong)
-      if(ancestor.clusterIndex(previousSong.getSongId()) == -1)
+      // assert: songClusterIndex(previousSong) == songClusterIndex(currentSong)
+      if(ancestor.songClusterIndex(previousSong.getSongId()) == -1)
         Logger.getLogger("").warning("LOOK: " + previousSong.getSongId());
 
       basicLearn(
           ancestor,
-          ancestor.clusterIndex(previousSong.getSongId()),
-          ancestor.clusterIndex(currentSong.getSongId()),
+          ancestor.songClusterIndex(previousSong.getSongId()),
+          ancestor.songClusterIndex(currentSong.getSongId()),
           reward,
           previousSong.getLevel(),
           currentSong.getLevel());

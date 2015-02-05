@@ -29,7 +29,7 @@ public class RemoveSongTask implements DeferredTask {
 
     while(true) {
 
-      int indexToDelete = root.clusterIndex(songId);
+      int indexToDelete = root.songClusterIndex(songId);
 
       // degglomerate
       if(root.getChildIds().size() == 2) {

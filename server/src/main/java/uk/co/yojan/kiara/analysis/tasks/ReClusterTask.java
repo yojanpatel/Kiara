@@ -61,15 +61,8 @@ public class ReClusterTask implements DeferredTask {
     p.setChangesSinceLastCluster(0);
     p.setClusterReady(false);
     Result r0 = ofy().save().entity(p);
-    PlaylistClusterer.cluster(playlistId, 9);
+    new PlaylistClusterer().cluster(playlistId, 9);
     r0.now();
-
-//    try {
-//      int timeToSleep = p.size()  > 100 ? ((p.size() / 100) * 10 * 1000) : 10 * 1000;
-//      Thread.sleep(timeToSleep);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
 
     p.setClusterReady(true);
     ofy().save().entities(p);
