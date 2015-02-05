@@ -187,10 +187,12 @@ public class PlaylistClusterer {
 
 
   private static void queueClusterTask(String clusterId, int k) {
-    TaskManager.clusterQueue().add(
-        TaskOptions.Builder
-            .withPayload(new KMeansClusterTask(clusterId, k))
-            .taskName("Cluster-" + clusterId+ "-" + System.currentTimeMillis()));
+//    TaskManager.clusterQueue().add(
+//        TaskOptions.Builder
+//            .withPayload(new KMeansClusterTask(clusterId, k))
+//            .taskName("Cluster-" + clusterId+ "-" + System.currentTimeMillis()));
+
+    new KMeansClusterTask(clusterId, k).run();
 
   }
 

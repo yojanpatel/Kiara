@@ -31,6 +31,10 @@ public class ClusterUtils {
     return s[0] + "-" + (Integer.parseInt(s[1]) + 1) + "-" + (index + Integer.parseInt(s[2]) * k);
   }
 
+  public static String clusterId(Long playlistId, String songId) {
+    return playlistId + "-" + songId;
+  }
+
   public static void deleteClusterHierarchy(Long playlistId) {
     Stack<NodeCluster> s = new Stack<>();
     Logger.getLogger("").warning("Deleting hierarchy");

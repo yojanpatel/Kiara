@@ -4,10 +4,7 @@ import com.google.appengine.api.taskqueue.DeferredTask;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.OfyUtils;
-import uk.co.yojan.kiara.analysis.cluster.Cluster;
-import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
-import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
-import uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer;
+import uk.co.yojan.kiara.analysis.cluster.*;
 import uk.co.yojan.kiara.analysis.learning.ActionEvent;
 import uk.co.yojan.kiara.analysis.learning.QLearner;
 import uk.co.yojan.kiara.analysis.learning.rewards.RewardFunction;
@@ -67,12 +64,12 @@ public class ReClusterTask implements DeferredTask {
     PlaylistClusterer.cluster(playlistId, 9);
     r0.now();
 
-    try {
-      int timeToSleep = p.size()  > 100 ? ((p.size() / 100) * 10 * 1000) : 10 * 1000;
-      Thread.sleep(timeToSleep);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+//    try {
+//      int timeToSleep = p.size()  > 100 ? ((p.size() / 100) * 10 * 1000) : 10 * 1000;
+//      Thread.sleep(timeToSleep);
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
 
     p.setClusterReady(true);
     ofy().save().entities(p);
@@ -88,8 +85,12 @@ public class ReClusterTask implements DeferredTask {
 
     for(String event : events) {
       ActionEvent action = action(event);
-      LeafCluster previous = leaves.get(Key.create(LeafCluster.class, action.getPreviousSongId()));
-      LeafCluster current = leaves.get(Key.create(LeafCluster.class, action.getStartedSongId()));
+      LeafCluster previous = leaves.get(Key.create(LeafCluster.class,
+          ClusterUtils.clusterId(playlistId, action.getPreviousSongId())));
+      LeafCluster current = leaves.get(Key.create(LeafCluster.class,
+          ClusterUtils.clusterId(playlistId, action.getStartedSongId())));
+
+      if(previous == null || current == null) continue;
 
       double r;
       if(action.isFavourited()) {
@@ -103,7 +104,6 @@ public class ReClusterTask implements DeferredTask {
       }
       qLearner.optimizedUpdate(nodes, leaves, previous, current, r);
     }
-
 
 
     Result r1 = ofy().save().entities(nodes.values());
@@ -125,7 +125,7 @@ public class ReClusterTask implements DeferredTask {
       e.setSkipped(false);
     } else if(action.equals("SKIP")) {
       e.setSkipped(true);
-      e.setPercentage(Integer.parseInt(eventSections[3]));
+      e.setPercentage((int) Double.parseDouble(eventSections[3]));
     } else if(action.equals("FAVOURITE")) {
       e.setFavourited(true);
     } else if(action.equals("QUEUE")) {
