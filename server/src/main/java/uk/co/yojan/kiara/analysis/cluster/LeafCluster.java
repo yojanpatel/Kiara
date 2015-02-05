@@ -1,6 +1,5 @@
 package uk.co.yojan.kiara.analysis.cluster;
 
-import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 
@@ -13,7 +12,6 @@ import uk.co.yojan.kiara.analysis.OfyUtils;
 public class LeafCluster extends Cluster {
 
   private int level;
-  private Key<NodeCluster> parent;
 
   // Spotify id
   private String songId;
@@ -43,7 +41,7 @@ public class LeafCluster extends Cluster {
   }
 
   public double[] getNormalizedPoint() throws IllegalAccessException {
-    NodeCluster parent = OfyUtils.loadNodeCluster(this.parent.getName()).now();
+    NodeCluster parent = OfyUtils.loadNodeCluster(getParent().getName()).now();
     Double[] means = parent.getMean();
     Double[] stddevs = parent.getStddev();
 

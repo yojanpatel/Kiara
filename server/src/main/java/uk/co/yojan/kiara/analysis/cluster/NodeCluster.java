@@ -148,6 +148,9 @@ public class NodeCluster extends Cluster {
 
     leaves.add(c.getId());
     children.add(c.getId());
+    if(!songIds.contains(c.getSongId())) {
+      songIds.add(c.getSongId());
+    }
 
     // Add a 0.0 entry for all other existing children to this new child
     for(List<Double> stateRow : Q) {
@@ -170,6 +173,11 @@ public class NodeCluster extends Cluster {
     c.setK(getK());
 
     children.add(c.getId());
+    for(String songId : c.getSongIds()) {
+      if(!songIds.contains(songId)) {
+        songIds.add(songId);
+      }
+    }
 
     // Add a 0.0 entry for all other existing children to this new child
     for(List<Double> stateRow : Q) {
@@ -186,8 +194,9 @@ public class NodeCluster extends Cluster {
 
   // return the cluster index in the children list that contains songId in the shadow.
   public int songClusterIndex(String songId) {
-    for(int clusterIndex = 0; clusterIndex < getChildren().size(); clusterIndex++) {
-      Cluster cluster = getChildren().get(clusterIndex);
+    ArrayList<Cluster> children = getChildren();
+    for(int clusterIndex = 0; clusterIndex < children.size(); clusterIndex++) {
+      Cluster cluster = children.get(clusterIndex);
 
       if (cluster instanceof LeafCluster) {
         if(((LeafCluster) cluster).getSongId().equals(songId)) {
@@ -224,8 +233,6 @@ public class NodeCluster extends Cluster {
   // than at the end as an additional child
   public int replaceChild(Cluster existing, Cluster replacement) {
     int index = children.indexOf(existing.getId());
-    children.set(index, replacement.getId());
-
     replacement.setLevel(getLevel() + 1);
     replacement.setParent(this);
 
@@ -243,6 +250,9 @@ public class NodeCluster extends Cluster {
     if(replacement instanceof LeafCluster) {
       leaves.add(replacement.getId());
     }
+
+    children.set(index, replacement.getId());
+
 
     // update Q
     ArrayList<Double> stateRow = new ArrayList<>();

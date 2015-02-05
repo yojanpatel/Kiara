@@ -10,14 +10,14 @@ import java.util.logging.Logger;
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
 
-public class KMeansClusterTask implements DeferredTask {
+public class PlaylistClusterTask implements DeferredTask {
 
-  private static final Logger log = Logger.getLogger(KMeansClusterTask.class.getName());
+  private static final Logger log = Logger.getLogger(PlaylistClusterTask.class.getName());
 
   private String clusterId;
   private int k;
 
-  public KMeansClusterTask(String clusterId, int k) {
+  public PlaylistClusterTask(String clusterId, int k) {
     this.clusterId = clusterId;
     this.k = k;
   }
@@ -27,7 +27,7 @@ public class KMeansClusterTask implements DeferredTask {
     NodeCluster node = ofy().load().key(Key.create(NodeCluster.class, clusterId)).now();
     log.warning(node.getId());
     try {
-      new PlaylistClusterer().cluster(node, k);
+      new PlaylistClusterer().cluster(node.playlistId(), k);
     } catch (Exception e) {
       e.printStackTrace();
       log.warning(e.getMessage());

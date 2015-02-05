@@ -5,7 +5,6 @@ import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.features.scaling.ZNormaliser;
-import uk.co.yojan.kiara.analysis.tasks.KMeansClusterTask;
 import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.SongFeature;
@@ -91,8 +90,8 @@ public class PlaylistClusterer {
    * @param k number of clusters to use during K-Means
    * @throws Exception
    */
-  public void cluster(NodeCluster cluster, int k) throws Exception {
-    log.warning("Clustering " + cluster.getId() + " with  " + k + " clusters.");
+  private void cluster(NodeCluster cluster, int k) throws Exception {
+    log.warning("Clustering " + cluster.getId() + " with  " + k + " clusters on " + cluster.getSongIds().size() + " songs" + " (v1)");
 
     List<SongFeature> relevantFeatures = loadSongFeatures(cluster.getSongIds());
 
@@ -119,10 +118,12 @@ public class PlaylistClusterer {
       return;
     }
 
-
+    log.warning(relevantFeatures.size() + " " + features.size() + " Starting Clustering..");
     // Perform K-Means using Weka on the feature set returning a mapping
     KMeans kMeans = new KMeans(k, relevantFeatures);
     int[] assignments = kMeans.run();
+
+    log.warning(features.size() + " Finished Clustering..");
 
     // keep record of the mean and std dev. of the entire dataset for this round of clustering.
     // Store this along with the root NodeCluster responsible for this clustering
@@ -194,15 +195,6 @@ public class PlaylistClusterer {
   }
 
 
-  private static void queueClusterTask(String clusterId, int k) {
-//    TaskManager.clusterQueue().add(
-//        TaskOptions.Builder
-//            .withPayload(new KMeansClusterTask(clusterId, k))
-//            .taskName("Cluster-" + clusterId+ "-" + System.currentTimeMillis()));
-
-    new KMeansClusterTask(clusterId, k).run();
-  }
-
   private void queueClusterTask(NodeCluster node, int k) {
     try {
       cluster(node, k);
@@ -236,10 +228,15 @@ public class PlaylistClusterer {
 
 
   public List<SongFeature> loadSongFeatures(List<String> songIds) {
+    if(features == null) log.warning("FEATURES ARE NULL");
     List<SongFeature> featureList = new ArrayList<>();
+    Logger.getLogger("loadSongFeatures: " + songIds.size());
     for(String songId : songIds) {
-      featureList.add(features.get(Key.create(SongFeature.class, songId)));
+      Key<SongFeature> k = Key.create(SongFeature.class, songId);
+      if(features.containsKey(k))
+        featureList.add(features.get(k));
     }
+
     return featureList;
   }
 

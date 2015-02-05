@@ -10,6 +10,7 @@ import weka.core.Instances;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /***************************************************************************************
  *  WEKA K-MEANS http://weka.sourceforge.net/doc.dev/weka/clusterers/SimpleKMeans.html *
@@ -97,6 +98,7 @@ public class KMeans {
 
   public int[] run() throws Exception {
     kMeans.buildClusterer(instances);
+    Logger.getLogger("").warning("run");
     assignments = kMeans.getAssignments();
     return assignments;
   }
@@ -108,11 +110,13 @@ public class KMeans {
 
   // centroid of the whole dataset
   public ArrayList<Double> getMeans() {
+    Logger.getLogger("").warning("getMeans");
     return featureScaler.getMeans();
   }
 
   // spread of the whole dataset
   public ArrayList<Double> getStdDev() {
+    Logger.getLogger("").warning("getStdDev");
     return featureScaler.getStdDev();
   }
 
@@ -122,7 +126,7 @@ public class KMeans {
 
   public static Instances constructDataSet(List<SongFeature> data) throws IllegalAccessException {
     FastVector attInfo = new FastVector();
-
+    Logger.getLogger("").warning("constructDataSet");
     /* Get all the feature names, from the annotated variables in the encapsulating
      * SongFeature class.
      */
@@ -134,6 +138,7 @@ public class KMeans {
     Instances instances = new Instances("Features", attInfo, data.size());
 
     for (SongFeature sf : data) {
+      if(sf == null) Logger.getLogger("").warning("NULL SF");
       instances.add(new Instance(1.0, sf.getFeatureValues()));
     }
 
