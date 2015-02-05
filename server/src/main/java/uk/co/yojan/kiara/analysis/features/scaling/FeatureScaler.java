@@ -9,6 +9,8 @@ public interface FeatureScaler {
 
   public Instances scale(Instances unscaled);
 
+  public Instances unscale(Instances unscaled);
+
   public double[][] scale(double[][] unscaled);
 
 }

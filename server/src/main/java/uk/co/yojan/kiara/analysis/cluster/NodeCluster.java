@@ -24,7 +24,6 @@ public class NodeCluster extends Cluster {
 
   private int K;
 
-  private Key<NodeCluster> parent;
   private ArrayList<String> children;
   private HashSet<String> leaves; // contains ids of children that are leaves
 
@@ -67,13 +66,6 @@ public class NodeCluster extends Cluster {
   public LeafCluster convertToLeaf() {
     if(songIds.size() == 1) {
       LeafCluster lc = new LeafCluster(songIds.get(0));
-
-      // create leaf id as <playlistId>-<songId>
-      String playlistId = getId().split("-")[0];
-      lc.setId(playlistId + "-" + lc.getSongId());
-
-      lc.setLevel(getLevel());
-      lc.setParent(getParent());
       return lc;
     } else {
       return null;
@@ -107,20 +99,6 @@ public class NodeCluster extends Cluster {
     this.level = level;
   }
 
-  public Key<NodeCluster> getParent() {
-    return parent;
-  }
-
-  public void setParent(Key<NodeCluster> parent) {
-    this.parent = parent;
-  }
-
-  public void setParent(NodeCluster parent) {
-    this.parent = Key.create(NodeCluster.class, parent.getId());
-    setLevel(parent.getLevel() + 1);
-  }
-
-
 
   /* Must ensure consistency in ordering with the other methods */
   public ArrayList<Cluster> getChildren() {
@@ -129,6 +107,7 @@ public class NodeCluster extends Cluster {
     ArrayList<Key<LeafCluster>> leafKeys = new ArrayList<>();
 
     for(String childId : children) {
+      if(childId == null) continue;
       if(leaves.contains(childId)) {
         leafKeys.add(Key.create(LeafCluster.class, childId));
       } else {
@@ -141,6 +120,7 @@ public class NodeCluster extends Cluster {
     Map<Key<LeafCluster>, LeafCluster> leafNodes = ofy().load().keys(leafKeys);
 
     for(String id : children) {
+      if(id == null) continue;
       if(leaves.contains(id)) {
         childNodes.add(leafNodes.get(Key.create(LeafCluster.class, id)));
       } else {
@@ -160,13 +140,14 @@ public class NodeCluster extends Cluster {
   }
 
   public void addChild(LeafCluster c) {
-    leaves.add(c.getId());
-    children.add(c.getId());
-
     // update state for the child to be added, c
     c.setLevel(getLevel() + 1);
-    c.setParent(Key.create(NodeCluster.class, getId()));
+//    c.setParent(Key.create(NodeCluster.class, getId()));
+    c.setParent(this);
     c.setId(playlistId() + "-" + c.getSongId());
+
+    leaves.add(c.getId());
+    children.add(c.getId());
 
     // Add a 0.0 entry for all other existing children to this new child
     for(List<Double> stateRow : Q) {
@@ -182,13 +163,13 @@ public class NodeCluster extends Cluster {
   }
 
   public void addChild(NodeCluster c) {
-    children.add(c.getId());
-
     // update state for the child to be added, c
     c.setLevel(getLevel() + 1);
     c.setParent(Key.create(NodeCluster.class, getId()));
-    c.setId(clusterId(this, children.indexOf(c.getId()), getK()));
+    c.setId(clusterId(this, children.size(), getK()));
     c.setK(getK());
+
+    children.add(c.getId());
 
     // Add a 0.0 entry for all other existing children to this new child
     for(List<Double> stateRow : Q) {
@@ -238,10 +219,22 @@ public class NodeCluster extends Cluster {
     }
   }
 
+
+  // Essentially, addChild(replacement) but takes existing's place rather
+  // than at the end as an additional child
   public int replaceChild(Cluster existing, Cluster replacement) {
     int index = children.indexOf(existing.getId());
     children.set(index, replacement.getId());
 
+    replacement.setLevel(getLevel() + 1);
+    replacement.setParent(this);
+
+    if(replacement instanceof LeafCluster) {
+      replacement.setId(playlistId() + "-" + ((LeafCluster) replacement).getSongId());
+    } else if(replacement instanceof NodeCluster) {
+      ((NodeCluster) replacement).setK(getK());
+      replacement.setId(clusterId(this, index, getK()));
+    }
 
     if(existing instanceof LeafCluster) {
       leaves.remove(existing.getId());

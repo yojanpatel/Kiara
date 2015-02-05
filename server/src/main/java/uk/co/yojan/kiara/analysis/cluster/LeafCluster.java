@@ -18,6 +18,8 @@ public class LeafCluster extends Cluster {
   // Spotify id
   private String songId;
 
+  public LeafCluster() {}
+
   public LeafCluster(String songId) {
     this.songId = songId;
   }
@@ -32,14 +34,6 @@ public class LeafCluster extends Cluster {
   }
 
 
-  public Key<NodeCluster> getParent() {
-    return parent;
-  }
-
-  public void setParent(Key<NodeCluster> parent) {
-    this.parent = parent;
-  }
-
   public String getSongId() {
     return songId;
   }
@@ -48,7 +42,7 @@ public class LeafCluster extends Cluster {
     this.songId = songId;
   }
 
-  public Double[] getNormalizedPoint() throws IllegalAccessException {
+  public double[] getNormalizedPoint() throws IllegalAccessException {
     NodeCluster parent = OfyUtils.loadNodeCluster(this.parent.getName()).now();
     Double[] means = parent.getMean();
     Double[] stddevs = parent.getStddev();
@@ -57,9 +51,9 @@ public class LeafCluster extends Cluster {
     return getNormalizedPoint(means, stddevs);
   }
 
-  public Double[] getNormalizedPoint(Double[] means, Double[] stddevs) throws IllegalAccessException {
+  public double[] getNormalizedPoint(Double[] means, Double[] stddevs) throws IllegalAccessException {
     double[] point = OfyUtils.loadFeature(songId).now().getFeatureValues();
-    Double[] normalized = new Double[means.length];
+    double[] normalized = new double[means.length];
 
     for(int i = 0; i < means.length; i++) {
       normalized[i] = (point[i] - means[i]) / stddevs[i];

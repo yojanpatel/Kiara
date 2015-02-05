@@ -44,6 +44,29 @@ public class ZNormaliser implements FeatureScaler {
   }
 
   @Override
+  public Instances unscale(Instances instances) {
+    assert !means.isEmpty();
+    assert !stddev.isEmpty();
+    int num = instances.numInstances();
+    int atts = instances.numAttributes();
+
+    Instances unscaled = new Instances(instances.relationName(), KMeans.getAttributeNames(), num);
+
+    for(int i = 0; i < num; i++) {
+
+      double[] scaledFeatures = instances.instance(i).toDoubleArray();
+      double[] unscaledFeatures = new double[atts];
+
+      for(int j = 0; j < atts; j++) {
+        unscaledFeatures[j] = scaledFeatures[j] * stddev.get(j) + means.get(j);
+      }
+
+      unscaled.add(new Instance(1.0, unscaledFeatures));
+    }
+    return unscaled;
+  }
+
+  @Override
   public double[][] scale(double[][] unscaled) {
 
     computeMeansAndStddev(unscaled);
@@ -67,7 +90,7 @@ public class ZNormaliser implements FeatureScaler {
   }
 
 
-  private void computeMeansAndStddev(Instances instances) {
+  public void computeMeansAndStddev(Instances instances) {
     int atts = instances.numAttributes();
     int num = instances.numInstances();
 
@@ -135,5 +158,13 @@ public class ZNormaliser implements FeatureScaler {
       // take away the mean squared, divide by n and take square-root
       stddev.set(j, Math.sqrt(stddev.get(j) - Math.pow(means.get(j), 2)));
     }
+  }
+
+  public ArrayList<Double> getMeans() {
+    return means;
+  }
+
+  public ArrayList<Double> getStdDev() {
+    return stddev;
   }
 }

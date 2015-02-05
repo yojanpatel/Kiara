@@ -1,6 +1,6 @@
 package uk.co.yojan.kiara.analysis.features.scaling;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import org.apache.commons.lang.NotImplementedException;
 import uk.co.yojan.kiara.analysis.cluster.KMeans;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -33,11 +33,17 @@ public class MinMaxScaler implements FeatureScaler {
 
       for(int j = 0; j < atts; j++) {
         scaledFeatures[j] = (unscaledFeatures[j] - mins.get(j))/(maxs.get(j) - mins.get(j));
+        assert scaledFeatures[j] <= 1 && scaledFeatures[j] >= 0;
       }
 
       scaled.add(new Instance(1.0, scaledFeatures));
     }
     return scaled;
+  }
+
+  @Override
+  public Instances unscale(Instances unscaled) {
+    throw new NotImplementedException();
   }
 
   @Override
@@ -62,7 +68,7 @@ public class MinMaxScaler implements FeatureScaler {
       for(int j = 0; j < atts; j++) {
         double val = curr.value(j);
         mins.set(j, Math.min(mins.get(j), val));
-        maxs.set(j, Math.max(mins.get(j), val));
+        maxs.set(j, Math.max(maxs.get(j), val));
       }
     }
   }
