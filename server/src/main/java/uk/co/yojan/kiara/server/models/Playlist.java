@@ -58,9 +58,13 @@ public class Playlist {
 
 //  private ArrayList<String> similarSongs;
 
+  private int historySize() {
+    return (int) Math.sqrt(songIdKeyMap.size());
+  }
+
   public void nowPlaying(String songId) {
     if(history == null) history = new LinkedList<>();
-    if(history.size() >= Constants.HISTORY_SIZE) {
+    if(history.size() >= historySize()) {
       history.poll();
     }
     history.add(songId);

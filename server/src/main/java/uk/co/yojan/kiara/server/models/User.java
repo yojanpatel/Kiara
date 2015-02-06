@@ -36,6 +36,10 @@ public class User {
   private String email;
   private String imageURL;
 
+
+  // FLAG that decides if the user is a test/control subject
+  private boolean test;
+
   private HashMap<String, Key<Playlist>> playlistKeyMap = new HashMap<String, Key<Playlist>>();
   private HashMap<String, Key<Song>> songKeyMap = new HashMap<String, Key<Song>>();
 //  private HashMap<String, Long> songSpotifyIdMap = new HashMap<>();
@@ -261,5 +265,13 @@ public class User {
   /* Spotify --(songSpotifyIdMap)--> Id --(songIdKeyMap)--> Key  */
   public Key<Song> getSongKeyFromSpotifyId(String spotifyId) {
     return songKeyMap.get(songSpotifyIdMap.get(spotifyId).toString());
+  }
+
+  public boolean isTest() {
+    return test;
+  }
+
+  public void setTest(boolean test) {
+    this.test = test;
   }
 }

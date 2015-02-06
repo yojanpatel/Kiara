@@ -7,7 +7,6 @@ import com.googlecode.objectify.annotation.Id;
 import com.wrapper.spotify.Api;
 import com.wrapper.spotify.methods.TrackRequest;
 import com.wrapper.spotify.models.Track;
-import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.SpotifyApi;
 import uk.co.yojan.kiara.server.serializers.SongSerializer;
 
@@ -45,9 +44,6 @@ public class Song {
       .setAlbumName(track.getAlbum().getName())
       .setImageURL(track.getAlbum().getImages().get(0).getUrl())
       .setAnalysisKey(Key.create(SongAnalysis.class, spotifyId));
-
-    // Add a new task to the TaskQueue fetch analysis from EchoNest and persist.
-    TaskManager.fetchAnalysis(spotifyId, sm.getArtist(), sm.getSongName());
 
     return sm;
   }
