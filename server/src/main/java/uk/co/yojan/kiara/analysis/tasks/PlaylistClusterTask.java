@@ -1,33 +1,27 @@
 package uk.co.yojan.kiara.analysis.tasks;
 
 import com.google.appengine.api.taskqueue.DeferredTask;
-import com.googlecode.objectify.Key;
-import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
 import uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer;
 
 import java.util.logging.Logger;
-
-import static uk.co.yojan.kiara.server.OfyService.ofy;
 
 
 public class PlaylistClusterTask implements DeferredTask {
 
   private static final Logger log = Logger.getLogger(PlaylistClusterTask.class.getName());
 
-  private String clusterId;
+  private Long playlistId;
   private int k;
 
-  public PlaylistClusterTask(String clusterId, int k) {
-    this.clusterId = clusterId;
+  public PlaylistClusterTask(Long playlistId, int k) {
     this.k = k;
+    this.playlistId = playlistId;
   }
 
   @Override
   public void run() {
-    NodeCluster node = ofy().load().key(Key.create(NodeCluster.class, clusterId)).now();
-    log.warning(node.getId());
     try {
-      new PlaylistClusterer().cluster(node.playlistId(), k);
+      new PlaylistClusterer().cluster(playlistId, k);
     } catch (Exception e) {
       e.printStackTrace();
       log.warning(e.getMessage());

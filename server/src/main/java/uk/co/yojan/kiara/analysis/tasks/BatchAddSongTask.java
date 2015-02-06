@@ -97,6 +97,10 @@ public class BatchAddSongTask implements DeferredTask {
         if(children.size() < currentCluster.getK()) {
           LeafCluster newLeaf = new LeafCluster(songId);
           currentCluster.addChild(newLeaf);
+
+          assert newLeaf.getParent() != null;
+          assert  currentCluster.getChildIds().contains(newLeaf.getId());
+
           leaves.put(Key.create(LeafCluster.class, newLeaf.getId()), newLeaf);
           break; // while loop, done with this track, add the next one.
         }
@@ -155,7 +159,6 @@ public class BatchAddSongTask implements DeferredTask {
 
           // update the clusters along the path's shadow, check if key exists in root's ids.
           nodes.put(Key.create(NodeCluster.class, currentCluster.getId()), currentCluster);
-
           // recursively add to the child cluster
           currentCluster = (NodeCluster) closestCluster;
         }
@@ -221,6 +224,12 @@ public class BatchAddSongTask implements DeferredTask {
     // TODO: consider options
     // Borrow parent's mean and stddev.
     agglomerated.setMeanStdDev(parent.getMean(), parent.getStddev());
+
+    assert newLeaf.getParent() != null;
+    assert newLeaf.getParent().getName().equals(agglomerated.getId());
+    assert leaf.getParent().getName().equals(agglomerated.getId());
+    assert  agglomerated.getChildIds().contains(newLeaf.getId());
+    assert agglomerated.getChildIds().contains(leaf.getId());
 
     nodes.put(Key.create(NodeCluster.class, parent.getId()), parent);
     nodes.put(Key.create(NodeCluster.class, agglomerated.getId()), agglomerated);

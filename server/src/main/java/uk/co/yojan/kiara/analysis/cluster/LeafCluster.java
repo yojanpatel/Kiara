@@ -11,8 +11,6 @@ import uk.co.yojan.kiara.analysis.OfyUtils;
 @Entity
 public class LeafCluster extends Cluster {
 
-  private int level;
-
   // Spotify id
   private String songId;
 
@@ -20,15 +18,6 @@ public class LeafCluster extends Cluster {
 
   public LeafCluster(String songId) {
     this.songId = songId;
-  }
-
-
-  public int getLevel() {
-    return level;
-  }
-
-  public void setLevel(int level) {
-    this.level = level;
   }
 
 

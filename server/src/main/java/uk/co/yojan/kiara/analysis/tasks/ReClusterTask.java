@@ -14,11 +14,13 @@ import uk.co.yojan.kiara.server.models.Playlist;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Stack;
+import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
 public class ReClusterTask implements DeferredTask {
 
+  Logger log = Logger.getLogger("ReClusterTask");
   RewardFunction reward;
 
   NodeCluster root;
@@ -61,7 +63,10 @@ public class ReClusterTask implements DeferredTask {
     p.setChangesSinceLastCluster(0);
     p.setClusterReady(false);
     Result r0 = ofy().save().entity(p);
+    long start = System.currentTimeMillis();
     new PlaylistClusterer().cluster(playlistId, 9);
+    long end = System.currentTimeMillis();
+    log.warning((end - start) + "ms taken to recluster " + p.getAllSongIds().size() + " songs.");
     r0.now();
 
     p.setClusterReady(true);
