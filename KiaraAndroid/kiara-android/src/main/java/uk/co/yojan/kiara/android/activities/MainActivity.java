@@ -24,7 +24,7 @@ import java.util.Random;
 
 
 public class MainActivity extends KiaraActivity
-  implements ConnectionStateCallback, AuthenticationCallback {
+  implements ConnectionStateCallback, AuthenticationCallback, WelcomeDialog.OnAcceptPressed {
 
   private String LOG = MainActivity.class.getName();
 
@@ -62,9 +62,7 @@ public class MainActivity extends KiaraActivity
           boolean termsAgreed = sharedPreferences().getBoolean(Constants.TERMS_AGREED, false);
 
           if(termsAgreed) {
-            Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
-            SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
-                new String[]{"user-read-private", "streaming"}, null, MainActivity.this);
+            showSpotifyLogin();
           } else {
             showWelcomeDialog();
           }
@@ -99,9 +97,15 @@ public class MainActivity extends KiaraActivity
     // as you specify a parent activity in AndroidManifest.xml.
     int id = item.getItemId();
     if (id == R.id.action_settings) {
-        return true;
+      return true;
     }
     return super.onOptionsItemSelected(item);
+  }
+
+  private void showSpotifyLogin() {
+    Log.d(LOG, "Authenticating via Authenticate Code Grant Flow with Spotify.");
+    SpotifyAuthentication.openAuthWindow(Constants.CLIENT_ID, "code", Constants.REDIRECT_URI,
+        new String[]{"user-read-private", "streaming"}, null, MainActivity.this);
   }
 
   @Override
@@ -174,5 +178,10 @@ public class MainActivity extends KiaraActivity
       pos.setTextColor(getResources().getColor(R.color.pinkA200));
       neg.setTextColor(getResources().getColor(R.color.pinkA200));
     }
+  }
+
+  @Override
+  public void onAcceptPressed() {
+    showSpotifyLogin();
   }
 }

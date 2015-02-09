@@ -6,10 +6,7 @@ import com.squareup.otto.Subscribe;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
-import uk.co.yojan.kiara.android.events.AuthCodeGrantRequest;
-import uk.co.yojan.kiara.android.events.AuthCodeGrantResponse;
-import uk.co.yojan.kiara.android.events.RefreshAccessTokenRequest;
-import uk.co.yojan.kiara.android.events.RefreshAccessTokenResponse;
+import uk.co.yojan.kiara.android.events.*;
 import uk.co.yojan.kiara.client.SpotifyAuthInterface;
 import uk.co.yojan.kiara.client.data.AuthorizationCodeGrant;
 import uk.co.yojan.kiara.client.data.RefreshAccessToken;
@@ -83,6 +80,10 @@ public class SpotifyAuthService {
       @Override
       public void failure(RetrofitError error) {
         Log.d(getClass().getName(), error.getMessage());
+        if(error.getResponse().getStatus() == 403) {
+          Log.d("SpotifyAuthService", "Refresh Token did not match that on the server, must relogin.");
+          bus.post(new ForceRelogin());
+        }
       }
     });
   }
