@@ -151,18 +151,17 @@ public class KiaraActivity extends ActionBarActivity {
 
   private void showLogin() {
     // go to main activity and prompt to log in.
-    if(!getClass().equals(MainActivity.class)) {
-      Intent main = new Intent(this, MainActivity.class);
-      main.setAction(Constants.AUTHENTICATE);
-      main.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-      startActivity(main);
-    }
+    Intent main = new Intent(this, MainActivity.class);
+    main.setAction(Constants.AUTHENTICATE);
+    main.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+    startActivity(main);
   }
 
   private final Object authEventHandler = new Object() {
 
     @Subscribe
     public void onForceLogin(ForceRelogin event) {
+      Log.d("KiaraActivity", "showForceRelogin");
       showLogin();
     }
 
