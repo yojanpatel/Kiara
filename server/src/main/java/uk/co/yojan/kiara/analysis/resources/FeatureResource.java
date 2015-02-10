@@ -37,7 +37,7 @@ public class FeatureResource {
     SongAnalysis songAnalysis = EchoNestApi.getSongAnalysis(id);
     // As a fallback, search EchoNest with the artist and title name of the song.
     // This often works for obscure or new tracks.
-    if(songAnalysis == null) {
+    if(songAnalysis == null && !artist.isEmpty() && !title.isEmpty()) {
       log.info("Failed to search with the Spotify Id, trying to search using artist name and title.");
       songAnalysis = EchoNestApi.getSongAnalysis(artist, title);
     }
@@ -185,6 +185,16 @@ public class FeatureResource {
       sb.append("</tr>");
     }
     sb.append("</table>");
+
+    sb.append("<br>");
+    sb.append("<b>Timbre Area 2D Moments</b><br>");
+    ArrayList<Double> tam = songFeature.getTimbreAreaMoments();
+    if(tam != null) {
+      for (int i = 0; i < tam.size(); i++) {
+        sb.append(i + " " + tam.get(i) + "<br>");
+      }
+    }
+
     return Response.ok().entity(sb.toString()).build();
   }
 

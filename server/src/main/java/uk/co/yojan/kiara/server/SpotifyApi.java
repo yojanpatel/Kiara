@@ -22,8 +22,8 @@ public class SpotifyApi {
   public static Api clientCredentialsApi() {
     if(clientCredentialsApi == null) {
       clientCredentialsApi = Api.builder()
-          .clientId(ApiConstants.CLIENT_ID)
-          .clientSecret(ApiConstants.CLIENT_SECRET)
+          .clientId(Constants.CLIENT_ID)
+          .clientSecret(Constants.CLIENT_SECRET)
           .build();
     }
 
@@ -53,8 +53,7 @@ public class SpotifyApi {
 
 
   public static Api spotifyApi() throws IOException, WebApiException {
-    clientCredentialsApi().setAccessToken(
-        "BQD5fML6MvTzRt2NFgQy1xbpaKfY6siKM-3xn_VvbTL0ZNvQeY2xyyXnHWOi6UsSIXRFQ7awn3nFLk7MFv5giawrgUr51lDIUQoFoWp_vowS_ps-sI_S_b6369hlg3va6cjNqxE-az9kVKszGmMoCUKJF5-r71PktCOaaafjuHqpyKnByFQ");
+    clientCredentialsApi().setAccessToken("BQCxnvsO7-V3_sCEAM9VbWMqazT4rBIUGOcCUbgyIrJCexOel58W8sAclqjFsRV2pA-B9AqmlXGkt0xbSi9KUqRoHkHVirAHRCeFxXB52KLzJI2LqfcetwGphjBHRqKV1NbV11OTutdA_9HBvfueRG7irjcWHco4FHkxLuCMlmNETc7BIYo");
     return clientCredentialsApi();
   }
 

@@ -1,6 +1,6 @@
 package uk.co.yojan.kiara.analysis.learning;
 
-import javafx.util.Pair;
+import uk.co.yojan.kiara.analysis.features.metric.IndexPair;
 import uk.co.yojan.kiara.server.Constants;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class EventHistory {
       eventHistory.removeFirst();
     }
 
-    eventHistory.addLast(previousSongId + "-" + endedSongId + "-" + PlayerEvent.END);
+    eventHistory.addLast(previousSongId + "-" + endedSongId + "-" + PlayerEvent.END + "-" + System.currentTimeMillis());
   }
 
   public static void addSkipped(LinkedList<String> eventHistory, String previousSongId, String skippedSongId, double proportion) {
@@ -46,7 +46,7 @@ public class EventHistory {
       eventHistory.removeFirst();
     }
     // rough round to 2dp
-    eventHistory.addLast(previousSongId + "-" + skippedSongId + "-" + PlayerEvent.SKIP + "-" + round2dp(proportion));
+    eventHistory.addLast(previousSongId + "-" + skippedSongId + "-" + PlayerEvent.SKIP + "-" + round2dp(proportion) + "-" + System.currentTimeMillis());
   }
 
   public static void addQueued(LinkedList<String> eventHistory, String previousSongId, String queuedSongId) {
@@ -57,7 +57,7 @@ public class EventHistory {
       eventHistory.removeFirst();
     }
 
-    eventHistory.add(previousSongId + "-" + queuedSongId + "-" + PlayerEvent.QUEUE);
+    eventHistory.add(previousSongId + "-" + queuedSongId + "-" + PlayerEvent.QUEUE + "-" + System.currentTimeMillis());
   }
 
   public static void addFavourite(LinkedList<String> eventHistory, String previousSongId, String favSongId) {
@@ -67,7 +67,7 @@ public class EventHistory {
     if(eventHistory.size() >= size()) {
       eventHistory.removeFirst();
     }
-    eventHistory.add(previousSongId + "-" + favSongId + "-" + PlayerEvent.FAVOURITE);
+    eventHistory.add(previousSongId + "-" + favSongId + "-" + PlayerEvent.FAVOURITE + "-" + System.currentTimeMillis());
   }
 
   public static int getEventHistorySize() {
@@ -78,25 +78,25 @@ public class EventHistory {
     EVENT_HISTORY_SIZE = eventHistorySize;
   }
 
-  public static ArrayList<Pair<Integer, Integer>> similar(LinkedList<String> eventHistory, HashMap<String, Integer> index) {
+  public static ArrayList<IndexPair> similar(LinkedList<String> eventHistory, HashMap<String, Integer> index) {
 
-    ArrayList<Pair<Integer, Integer>> similar = new ArrayList<>();
+    ArrayList<IndexPair> similar = new ArrayList<>();
     for(String event : eventHistory) {
       if(event.contains("FAVOURITE")) {
         String[] s = event.split("-");
-        similar.add(new Pair<>(index.get(s[0]), index.get(s[1])));
+        similar.add(new IndexPair(index.get(s[0]), index.get(s[1])));
       }
     }
     return similar;
   }
 
-  public static  ArrayList<Pair<Integer, Integer>> different(LinkedList<String> eventHistory, HashMap<String, Integer> index) {
-    ArrayList<Pair<Integer, Integer>> different = new ArrayList<>();
+  public static  ArrayList<IndexPair> different(LinkedList<String> eventHistory, HashMap<String, Integer> index) {
+    ArrayList<IndexPair> different = new ArrayList<>();
     for(String event : eventHistory) {
       if(event.contains("SKIP")) {
         String[] s = event.split("-");
         if(Integer.parseInt(s[3]) < 10) {
-          different.add(new Pair<>(index.get(s[0]), index.get(s[1])));
+          different.add(new IndexPair(index.get(s[0]), index.get(s[1])));
         }
       }
     }

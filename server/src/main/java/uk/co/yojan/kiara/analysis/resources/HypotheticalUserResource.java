@@ -2,11 +2,10 @@ package uk.co.yojan.kiara.analysis.resources;
 
 import com.google.appengine.repackaged.com.google.common.base.Pair;
 import com.googlecode.objectify.Key;
+import uk.co.yojan.kiara.analysis.cluster.FeaturesNotReadyException;
 import uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer;
-import uk.co.yojan.kiara.analysis.users.BeatLover;
-import uk.co.yojan.kiara.analysis.users.ErraticEarl;
-import uk.co.yojan.kiara.analysis.users.HypotheticalUser;
-import uk.co.yojan.kiara.analysis.users.MrTimbre;
+import uk.co.yojan.kiara.analysis.features.Statistics;
+import uk.co.yojan.kiara.analysis.users.*;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.User;
@@ -60,19 +59,25 @@ public class HypotheticalUserResource {
 
   @GET
   @Path("/cluster")
-  public Response cluster(@DefaultValue("3") @QueryParam("k") int k) {
+  public Response cluster(@DefaultValue("3") @QueryParam("k") int k) throws FeaturesNotReadyException {
     Playlist t = loadPlaylist(loadHypotheticalUser("t"));
     Playlist e = loadPlaylist(loadHypotheticalUser("e"));
     Playlist b = loadPlaylist(loadHypotheticalUser("b"));
+    Playlist a = loadPlaylist(loadHypotheticalUser("a"));
+
+    PlaylistClusterer clusterer = new PlaylistClusterer();
 
     if(t != null)
-      PlaylistClusterer.cluster(t.getId(), k);
+      clusterer.cluster(t.getId(), k);
 
     if(e != null)
-      PlaylistClusterer.cluster(e.getId(), k);
+      clusterer.cluster(e.getId(), k);
 
     if(b != null)
-      PlaylistClusterer.cluster(b.getId(), k);
+      clusterer.cluster(b.getId(), k);
+
+    if(a != null)
+      clusterer.cluster(b.getId(), k);
 
     return Response.ok().entity("Clustering all hypothetical users...").build();
   }
@@ -85,10 +90,11 @@ public class HypotheticalUserResource {
     User e = new ErraticEarl().user();
     User t = new MrTimbre().user();
     User b = new BeatLover().user();
+    User a = new AlbumListener().user();
 
-    ofy().save().entities(t, e, b).now();
+//    ofy().save().entities(a).now();
 
-    User[] us = {t, e, b};
+    User[] us = {a};
     return Response.ok().entity(us).build();
   }
 
@@ -103,14 +109,16 @@ public class HypotheticalUserResource {
       u = new ErraticEarl();
     } else if(userId.toLowerCase().equals("b")) {
       u = new BeatLover();
+    } else if(userId.toLowerCase().equals("a")) {
+      u = new AlbumListener();
     } else {
       return null;
     }
 
-    Pair<Double, ArrayList<Integer>> results = u.play(seedSongId);
-    Double averageReward = results.getFirst();
+    Pair<ArrayList<Double>, ArrayList<Integer>> results = u.play(seedSongId);
+    ArrayList<Double> rewards = results.getFirst();
     ArrayList<Integer> skips = results.getSecond();
-    return Response.ok().entity("Ave Reward: " + averageReward + " Skips: " + skips.size()).build();
+    return Response.ok().entity("Ave Reward: " + new Statistics(rewards).mean() + " Skips: " + skips.size()).build();
   }
 
   private User loadHypotheticalUser(String userId) {
@@ -120,6 +128,8 @@ public class HypotheticalUserResource {
       return ofy().load().key(Key.create(User.class, new ErraticEarl().userId())).now();
     } else if(userId.toLowerCase().equals("b")) {
       return ofy().load().key(Key.create(User.class, new BeatLover().userId())).now();
+    } else if(userId.toLowerCase().equals("a")) {
+      return ofy().load().key(Key.create(User.class, new AlbumListener().userId())).now();
     } else {
       return null;
     }

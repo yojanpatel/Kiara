@@ -1,9 +1,13 @@
 package uk.co.yojan.kiara.server.resources;
 
+import com.google.appengine.api.taskqueue.RetryOptions;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
-import uk.co.yojan.kiara.analysis.tasks.*;
+import uk.co.yojan.kiara.analysis.tasks.BatchAddSongTask;
+import uk.co.yojan.kiara.analysis.tasks.ReClusterTask;
+import uk.co.yojan.kiara.analysis.tasks.RemoveSongTask;
+import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.User;
@@ -43,21 +47,6 @@ public class PlaylistSongResource {
     return builder.cacheControl(cc).build();
   }
 
-  @GET
-  @Path("/try")
-  public Response get() {
-    String spotifyId = "5dHpbFmZjWucrol0M7aNGU";
-    Song created = null;
-    try {
-      created = Song.newInstanceFromSpotify(spotifyId);
-    } catch (Exception e) {
-      log.info(e.toString());
-      e.printStackTrace();
-      return Response.serverError().entity(e.getMessage()).build();
-    }
-    return Response.ok().entity(created).build();
-  }
-
   @POST
   public Response addSong(String spotifyId,
                           @PathParam("user_id") String userId,
@@ -65,51 +54,66 @@ public class PlaylistSongResource {
 
     User u = ofy().load().key(Key.create(User.class, userId)).now();
     u.incrementCounter();
-    Result us = ofy().save().entity(u);
+    ofy().save().entity(u);
 
     if(!u.hasPlaylist(playlistId)) {
       return Response.notModified().build();
     }
 
     spotifyId = spotifyId.replace("\"", "").replace("spotify:track:", "");
+    Playlist p = u.getPlaylist(playlistId);
+    String[] singleton = {spotifyId};
 
     Song created;
-    Result save = null;
     if(!Song.exists(spotifyId)) {
       try {
         created = Song.newInstanceFromSpotify(spotifyId);
+        p.addSong(spotifyId).now();
+
+        // Add a new task to the TaskQueue fetch analysis from EchoNest and persist.
+        // don't fetch analysis if the user is control since there is no point
+        if(u.isTest()) {
+          TaskManager.fetchAnalysis(spotifyId, created.getArtist(), created.getSongName());
+          updateClusters(p, singleton, 15 * 1000);
+        }
       } catch (Exception e) {
         e.printStackTrace();
         return Response.serverError().entity(e.getMessage()).build();
       }
-      save = ofy().save().entity(created);
+      ofy().save().entity(created);
     } else {
+      // song already exists in the database.
+      p.addSong(spotifyId).now();
       created = ofy().load().key(Key.create(Song.class, spotifyId)).now();
+      if(u.isTest()) {
+        updateClusters(p, singleton, 0);
+      }
     }
 
     assert created.getSpotifyId().equals(spotifyId);
 
-    Playlist p = u.getPlaylist(playlistId);
-    p.addSong(spotifyId).now();
-
-    us.now();
-    if(save != null)
-      save.now();
-
-    if(p.needToRecluster()) {
-      TaskManager.clusterQueue().add(TaskOptions.Builder
-          .withPayload(new ReClusterTask(playlistId))
-          .countdownMillis(10 * 1000)
-          .taskName("ReCluster-" + playlistId));
-    } else {
-      // ad-hoc: update the playlist cluster representation
-      TaskManager.featureQueue().add(TaskOptions.Builder
-          .withPayload(new AddSongTask(spotifyId, playlistId))
-          .countdownMillis(10 * 1000)
-          .taskName("AddSong-" + spotifyId + "-" + playlistId + "-" + System.currentTimeMillis()));
-    }
 
     return Response.ok().entity(created).build();
+  }
+
+  public void updateClusters(Playlist p, String[] ids, long delay) {
+    Long playlistId = p.getId();
+    if (p.needToRecluster()) {
+      log.warning("Playlist has to be reclustered. Task added to the cluster queue.");
+      TaskManager.clusterQueue().add(TaskOptions.Builder
+          .withPayload(new ReClusterTask(playlistId))
+//          .countdownMillis(delay)
+          .retryOptions(RetryOptions.Builder.withTaskRetryLimit(4).minBackoffSeconds(30))
+          .taskName("ReCluster-" + playlistId + "-" + System.currentTimeMillis()));
+    } else {
+      log.warning("Adding based on a greedy approach.");
+      // ad-hoc: update the playlist cluster representation
+      TaskManager.clusterQueue().add(TaskOptions.Builder
+          .withPayload(new BatchAddSongTask(ids, playlistId))
+//          .countdownMillis(delay)
+          .retryOptions(RetryOptions.Builder.withTaskRetryLimit(4).minBackoffSeconds(30))
+          .taskName("AddSong-" + playlistId + "-" + System.currentTimeMillis()));
+    }
   }
 
   @POST
@@ -119,27 +123,27 @@ public class PlaylistSongResource {
                                 @PathParam("playlist_id") Long playlistId) {
     // Format the spotify ids so they consist only of the string id for the tracks.
     formatSpotifyTrackIds(spotifyIds);
-
-    // Load the user and playlist from the datastore.
+//
+//    // Load the user and playlist from the datastore.
     User u = ofy().load().key(Key.create(User.class, userId)).now();
     u.incrementCounter();
-    Result us = ofy().save().entity(u);
+    ofy().save().entity(u);
 
     if(!u.hasPlaylist(playlistId)) {
       return Response.notModified().build();
     }
     Playlist p = u.getPlaylist(playlistId);
 
-
     ArrayList<Result> songSaveResults = new ArrayList<>();
     ArrayList<String> errorTracks = new ArrayList<>();
     ArrayList<Song> createdSongs = new ArrayList<>();
+
+    boolean fetchFlag = false;
 
     // Either download meta-data from Spotify and add to the datastore, or load from datastore
     // if it already exists.
     for(String trackId : spotifyIds) {
       Song created = null;
-      Result save = null;
 
       /*
        * Check if the song already exists in the Datastore.
@@ -149,6 +153,11 @@ public class PlaylistSongResource {
       if(!Song.exists(trackId)) {
         try {
           created = Song.newInstanceFromSpotify(trackId);
+          // Add a new task to the TaskQueue fetch analysis from EchoNest and persist.
+          if(u.isTest()) {
+            TaskManager.fetchAnalysis(trackId, created.getArtist(), created.getSongName());
+            fetchFlag = true;
+          }
           log.info(created.getSongName() + " did not exist. adding.");
         } catch (Exception e) {
           log.warning(e.getMessage());
@@ -156,6 +165,8 @@ public class PlaylistSongResource {
         }
         if(created != null)
           songSaveResults.add(ofy().save().entity(created));
+
+      // i.e. Song exists in the database, can just load it.
       } else {
         created = ofy().load().key(Key.create(Song.class, trackId)).now();
         log.info(created.getSongName() + " did exist. loading.");
@@ -167,21 +178,17 @@ public class PlaylistSongResource {
       }
     }
 
-    us.now();
-    p.addSongs(createdSongs).now();
-    for(Result r : songSaveResults) r.now();
     // Update the HashMap for playlist.
-    if(p.needToRecluster()) {
-      TaskManager.clusterQueue().add(TaskOptions.Builder
-          .withPayload(new ReClusterTask(playlistId))
-          .countdownMillis(10 * 1000)
-          .taskName("ReCluster-" + playlistId + "-" + System.currentTimeMillis()));
-    } else {
-      // ad-hoc: update the playlist cluster representation
-      TaskManager.featureQueue().add(TaskOptions.Builder
-          .withPayload(new BatchAddSongTask(spotifyIds, playlistId))
-          .countdownMillis(10 * 1000)
-          .taskName("BatchAddSongs-" + playlistId + "-" + System.currentTimeMillis()));
+    p.addSongs(createdSongs).now();
+
+    if(u.isTest()) {
+      if (fetchFlag) {
+        log.warning("There were some songs with no features, will fetch them and try updating the clusters in 15 seconds.");
+        updateClusters(p, spotifyIds, 15 * 1000);
+      } else {
+        log.warning("All songs had features, will try to update the clusters now.");
+        updateClusters(p, spotifyIds, 0);
+      }
     }
 
     return Response.ok().entity(createdSongs).build();
@@ -194,7 +201,6 @@ public class PlaylistSongResource {
                              @PathParam("playlist_id") Long playlistId) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
     u.incrementCounter();
-    Result us = ofy().save().entity(u);
 
     if(!u.hasPlaylist(playlistId)) {
       return Response.notModified().build();

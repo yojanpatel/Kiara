@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.analysis.tasks;
 
 import com.google.appengine.api.taskqueue.DeferredTask;
+import com.google.appengine.api.taskqueue.DeferredTaskContext;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.OfyUtils;
@@ -64,6 +65,13 @@ public class BatchAddSongTask implements DeferredTask {
     // 1. Song can be inserted as an extra child
     // 2. Song can be agglomerated with another Leaf.
     NodeCluster root = OfyUtils.loadRootCluster(playlistId).now();
+
+    // Root null means the cluster is not ready, throw exception and retry later.
+    if(root == null) {
+      Logger.getLogger("").warning("Cluster is not ready, will retry again");
+      DeferredTaskContext.markForRetry();
+      return;
+    }
 
 
     // Add each song sequentially
@@ -167,7 +175,8 @@ public class BatchAddSongTask implements DeferredTask {
 
     saveAll();
     if(incomplete) {
-      throw new NullPointerException("No analysis found for some songs. Will retry later.");
+      Logger.getLogger("").warning("No analysis found for some songs. Will retry later.");
+      DeferredTaskContext.markForRetry();
     }
   }
 

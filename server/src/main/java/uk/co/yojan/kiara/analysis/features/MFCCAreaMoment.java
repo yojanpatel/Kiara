@@ -117,14 +117,4 @@ public class MFCCAreaMoment {
 
     return averages;
   }
-
-  public static void main(String[] args) throws Exception {
-
-    double[] samples = DownloadPreview.download("4wDbvn1vjigw0s6Swkb83X");
-    MFCCAreaMoment mfcc = new MFCCAreaMoment(samples);
-    ArrayList<Double> averages = mfcc.averageMoments();
-    ArrayList<ArrayList<Double>> windows = mfcc.getWindowMoments();
-    System.out.println(averages);
-  }
-
 }

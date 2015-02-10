@@ -5,6 +5,7 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Serialize;
+import uk.co.yojan.kiara.analysis.cluster.FeaturesNotReadyException;
 import uk.co.yojan.kiara.analysis.cluster.KMeans;
 import uk.co.yojan.kiara.analysis.cluster.PlaylistClusterer;
 import uk.co.yojan.kiara.analysis.learning.QLearner;
@@ -44,6 +45,7 @@ public class Experiment {
   /** Learning experiments **/
   @Serialize(zip = true) HashMap<String, ArrayList<Integer>> skips;
   @Serialize(zip = true) HashMap<String, Double> rewards;
+  @Serialize(zip = true) HashMap<String, ArrayList<Double>> rewardMap;
   private int currentK;
   private Key<Playlist> playlistKey;
 
@@ -58,6 +60,7 @@ public class Experiment {
     resultsMap = new HashMap<>();
     skips = new HashMap<>();
     rewards = new HashMap<>();
+    rewardMap = new HashMap<>();
 
     Playlist p = new Playlist();
     p.setName("Experiment-" + id);
@@ -72,12 +75,13 @@ public class Experiment {
   public void init() {
     if(skips == null) skips = new HashMap<>();
     if(rewards == null) rewards = new HashMap<>();
+    if(rewardMap == null) rewardMap = new HashMap<>();
   }
 
   /** Cluster experiment **/
   public void runNewExperiment(ArrayList<Double> featureWeights) throws Exception {
     List<SongFeature> features = new ArrayList<>(ofy().load().keys(featureKeys(playlistMap.keySet())).values());
-    KMeans kMeans = new KMeans(K, features, featureWeights);
+    KMeans kMeans = new KMeans(K, features);
     int[] assignments = kMeans.run();
     Instances centroids = kMeans.getCentroids();
     Logger.getLogger("s").warning(centroids.toString());
@@ -89,9 +93,9 @@ public class Experiment {
 
   /** Cluster the associated playlist.
    *  (should be called before each learning experiment) **/
-  public void cluster(int K) {
+  public void cluster(int K) throws FeaturesNotReadyException {
     currentK = K;
-    PlaylistClusterer.cluster(playlistKey.getId(), K);
+    new PlaylistClusterer().cluster(playlistKey.getId(), K);
     ofy().save().entities(this);
   }
 
@@ -103,7 +107,7 @@ public class Experiment {
     // No need to perform simulation for existing results. For repeated simulations
     // use RunX suffix to the label parameter.
     if(skips.containsKey(l)) {
-      return;
+//      return;
     }
 
     init();
@@ -118,15 +122,15 @@ public class Experiment {
     List<String> ids = new ArrayList<>(playlist.getAllSongIds());
     String seedId = ids.get(new Random().nextInt(ids.size()));
     try {
-      Pair<Double, ArrayList<Integer>> experimentResult = user.play(playlist, seedId);
+      Pair<ArrayList<Double>, ArrayList<Integer>> experimentResult = user.play(playlist, seedId);
       skips.put(l, experimentResult.getSecond());
-      rewards.put(l, experimentResult.getFirst());
+      rewardMap.put(l, experimentResult.getFirst());
     } catch(Exception e) {
       e.printStackTrace();
       return;
     }
 
-    Logger.getLogger("").warning("SKIPS " + skips.get(l) + " REWARD " + rewards.get(l));
+    Logger.getLogger("").warning("SKIPS " + skips.size() + " REWARD " + rewards.get(l));
 
     ofy().save().entities(this).now();
   }
@@ -247,5 +251,13 @@ public class Experiment {
 
   public void setRewards(HashMap<String, Double> rewards) {
     this.rewards = rewards;
+  }
+
+  public HashMap<String, ArrayList<Double>> getRewardMap() {
+    return rewardMap;
+  }
+
+  public void setRewardMap(HashMap<String, ArrayList<Double>> rewardMap) {
+    this.rewardMap = rewardMap;
   }
 }

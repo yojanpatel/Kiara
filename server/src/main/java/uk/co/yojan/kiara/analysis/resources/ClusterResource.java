@@ -1,8 +1,11 @@
 package uk.co.yojan.kiara.analysis.resources;
 
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Key;
 import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.*;
+import uk.co.yojan.kiara.analysis.tasks.PlaylistClusterTask;
+import uk.co.yojan.kiara.analysis.tasks.TaskManager;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.Song;
 import uk.co.yojan.kiara.server.models.SongFeature;
@@ -88,7 +91,12 @@ public class ClusterResource {
   public Response hierarchical(@PathParam("playlistId") Long playlistId,
                            @DefaultValue("9") @QueryParam("k") int k) {
 
-    return Response.ok().entity(PlaylistClusterer.cluster(playlistId, k).getId()).build();
+
+    TaskManager.clusterQueue().add(
+        TaskOptions.Builder
+            .withPayload(new PlaylistClusterTask(playlistId, k))
+            .taskName("Cluster-" + playlistId+ "-" + System.currentTimeMillis()));
+    return Response.ok().entity(playlistId).build();
   }
 
   @GET

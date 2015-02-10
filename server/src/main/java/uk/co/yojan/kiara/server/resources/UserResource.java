@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.server.resources;
 
 import com.googlecode.objectify.Key;
+import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.server.echonest.EchoNestApi;
 import uk.co.yojan.kiara.server.models.SongAnalysis;
 import uk.co.yojan.kiara.server.models.User;
@@ -8,6 +9,7 @@ import uk.co.yojan.kiara.server.models.User;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
@@ -71,9 +73,26 @@ public class UserResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   public Response create(@Context UriInfo uri, User item) {
+
+    Random r = new Random();
+    double p = r.nextDouble();
+    boolean test;
+    test = (0.4 < p);
+    item.setTest(test);
+
+
     ofy().save().entity(item).now();
     URI userURI = UriBuilder.fromUri(uri.getRequestUri()).path(item.getId()).build();
     log.info("Created new user at " + userURI.getRawPath());
     return Response.created(userURI).build();
+  }
+
+  @POST
+  @Path("/{id}/test/{bool}")
+  public Response setTest(@PathParam("id") String userId, @PathParam("bool") int test) {
+    User user = OfyUtils.loadUser(userId).now();
+    user.setTest(test == 37);
+    ofy().save().entity(user).now();
+    return Response.ok().build();
   }
 }

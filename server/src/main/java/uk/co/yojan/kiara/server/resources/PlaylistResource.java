@@ -39,6 +39,11 @@ public class PlaylistResource {
                          @DefaultValue("false") @QueryParam("detail") boolean detail,
                          @Context Request request) {
     User u = ofy().load().key(Key.create(User.class, userId)).now();
+    if(u == null) {
+      u = new User();
+      u.setId(userId);
+      ofy().save().entity(u);
+    }
 
     EntityTag etag = new EntityTag(u.v());
     Response.ResponseBuilder builder = request.evaluatePreconditions(etag);

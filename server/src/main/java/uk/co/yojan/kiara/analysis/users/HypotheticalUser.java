@@ -7,12 +7,14 @@ import uk.co.yojan.kiara.analysis.learning.EventHistory;
 import uk.co.yojan.kiara.analysis.learning.QLearner;
 import uk.co.yojan.kiara.analysis.learning.recommendation.Recommender;
 import uk.co.yojan.kiara.analysis.learning.rewards.RewardFunction;
+import uk.co.yojan.kiara.server.Constants;
 import uk.co.yojan.kiara.server.models.Playlist;
 import uk.co.yojan.kiara.server.models.SongFeature;
 import uk.co.yojan.kiara.server.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
@@ -20,7 +22,6 @@ public abstract class HypotheticalUser {
 
   Playlist playlist;
 
-  private static int LISTENING_SESSION_SIZE = 500;
 
   abstract String userId();
   abstract User construct();
@@ -45,7 +46,7 @@ public abstract class HypotheticalUser {
   }
 
   // Start playing the playlist using spotifyId as the seed song.
-  public Pair<Double, ArrayList<Integer>> play(String spotifyId) {
+  public Pair<ArrayList<Double>, ArrayList<Integer>> play(String spotifyId) {
     User u = user();
     List<Playlist> playlists = new ArrayList<>(u.getAllPlaylists());
     playlist = playlists.get(0);
@@ -53,7 +54,7 @@ public abstract class HypotheticalUser {
   }
 
   // Start playing the playlist using spotifyId as the seed song with playlist given.
-  public Pair<Double, ArrayList<Integer>> play(Playlist playlist, String spotifyId) {
+  public Pair<ArrayList<Double>, ArrayList<Integer>> play(Playlist playlist, String spotifyId) {
     assert playlist.getAllSongIds().contains(spotifyId);
     this.playlist = playlist;
     SongFeature previous;
@@ -61,7 +62,8 @@ public abstract class HypotheticalUser {
     start(spotifyId);
     SongFeature current = OfyUtils.loadFeature(playlist.previousSong()).now();
 
-    String nextSongId = recommender().recommend(userId(), playlist.getId());
+
+    String nextSongId = recommender().recommend(userId(), playlist, playlist.previousSong());
     SongFeature recommended = OfyUtils.loadFeature(nextSongId).now();
 
     finish(current.getId());
@@ -71,13 +73,13 @@ public abstract class HypotheticalUser {
     current = recommended;
 
     ArrayList<Integer> skips = new ArrayList<>();
-    double reward = 0.0;
+    ArrayList<Double> rewards = new ArrayList<>();
 
     // Repeat for LISTENING_SESSION_SIZE episodes
-    for(int i = 0; i < LISTENING_SESSION_SIZE; i++) {
+    for(int i = 0; i < Constants.LISTENING_SESSION_SIZE; i++) {
 
       // load the next recommendation
-      nextSongId = recommender().recommend(userId(), playlist.getId());
+      nextSongId = recommender().recommend(userId(), playlist, playlist.lastFinished());
       recommended = OfyUtils.loadFeature(nextSongId).now();
 
       // Behave based on the hypothetical users personality.
@@ -85,19 +87,21 @@ public abstract class HypotheticalUser {
       // e.g. BeatLover skips if current and previous' tempo are not similar enough.
 
       double r = behave(current, previous);
+      rewards.add(r);
       if(r < 0) {
         skips.add(i);
       }
 
-      reward += r;
-
       // prepare for next iter
       previous = current;
+      if(recommended == null) {
+        Logger.getLogger("").warning(nextSongId);
+
+      }
       start(recommended.getId());
       current = recommended;
     }
-    reward /= LISTENING_SESSION_SIZE;
-    return new Pair<>(reward, skips);
+    return new Pair<>(rewards, skips);
   }
 
 

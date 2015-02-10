@@ -30,7 +30,6 @@ public class Playlist {
   private boolean playing;
   private long lastViewedTimestamp;
   private Map<String, Key<Song>> songIdKeyMap = new HashMap<String, Key<Song>>(); // spotifyId ---> Key(spotifyId)
-
 //  @Serialize(zip = true)
 //  private ArrayList<Double> weights;
 
@@ -46,7 +45,7 @@ public class Playlist {
   private boolean relearning;
 
   // A sliding window of the songs played recently.
-  private LinkedList<String> history;
+  private LinkedList<String> history = new LinkedList<>();
 
   // last successful song and timestamp
   private String lastFinished;
@@ -54,7 +53,7 @@ public class Playlist {
 
   // A sliding window of the user's events caused affected the learning algorithms.
   // also allows training of Q based on different reward functions/strategies
-  private LinkedList<String> events;
+  private LinkedList<String> events = new LinkedList<>();
 
 //  private ArrayList<String> similarSongs;
 
@@ -77,6 +76,9 @@ public class Playlist {
 
   // Should return the id of the last successfully completed song.
   public String previousSong() {
+    if(history == null) {
+      history = new LinkedList<>();
+    }
     if(history.size() > 0)
       return history.getLast();
     else return null;
@@ -194,7 +196,9 @@ public class Playlist {
 
   public Result addSongs(Song... songs) {
     ArrayList<Song> ss = new ArrayList<Song>();
-    for (Song s : songs) ss.add(s);
+    for (Song s : songs) {
+      ss.add(s);
+    }
 
     // add additional constraints to help recluster
 //    for(int i = 0; i < songs.length - 1; i++) {

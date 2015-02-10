@@ -52,16 +52,29 @@ public class PlaylistClusterer {
 
   Map<Key<SongFeature>, SongFeature> features;
 
-  public NodeCluster cluster(Long playlistId, int k) {
+  public NodeCluster cluster(Long playlistId, int k) throws FeaturesNotReadyException {
 
     // Fetch the playlist from persistent DataStore
     Result<Playlist> r = ofy().load().key(Key.create(Playlist.class, playlistId));
 
-    deleteClusterHierarchy(playlistId);
 
     final Playlist p = r.now();
-    p.setClusterReady(false);
     Collection<String> songIds = p.getAllSongIds();
+
+    // Load all the song features once for each hierarchical clustering run.
+    features = ofy().load().keys(featureKeys(songIds));
+    if(features.size() < songIds.size()) {
+      log.warning("All SongFeatures weren't available for clustering, will retry later.");
+      throw new FeaturesNotReadyException();
+    }
+
+    deleteClusterHierarchy(playlistId);
+
+    // Set intermediate playlist state (cluster is not ready for a minute or so)
+    // also reset changes made since last recluster
+    p.setChangesSinceLastCluster(0);
+    p.setClusterReady(false);
+    ofy().save().entity(p);
 
     // Initialise the root node for the hierarchy
     NodeCluster root = new NodeCluster();
@@ -72,11 +85,11 @@ public class PlaylistClusterer {
 
     ofy().save().entity(root).now();
 
-    // Load all the song features once for each hierarchical clustering run.
-    features = ofy().load().keys(featureKeys(songIds));
-
     queueClusterTask(root, k);
     queueDelayedUpdate(p.getId());
+
+    p.setClusterReady(true);
+    ofy().save().entities(p);
 
     return root;
   }

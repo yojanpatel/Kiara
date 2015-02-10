@@ -140,14 +140,14 @@ public class Statistics {
    * decline rapidly and have heavy tails. It is the fourth standardised moment about the mean.
    */
   public Double kurtosis() {
-    double coefficient = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3));
-    double offset = (3 * (n - 1) * (n - 1)) / ((n - 2) * (n - 3));
+    double coefficient = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3.0));
+    double offset = (3.0 * (n - 1) * (n - 1)) / ((n - 2) * (n - 3.0));
     double varSquared = variance() * variance();
 
     double nsum = 0;
     for(Double s : samples) {
       double diffFromMean = s - mean;
-      nsum += (Math.pow(diffFromMean, 4) / varSquared) - offset;
+      nsum += (Math.pow(diffFromMean, 4.0) / varSquared) - offset;
     }
     return coefficient * nsum;
   }

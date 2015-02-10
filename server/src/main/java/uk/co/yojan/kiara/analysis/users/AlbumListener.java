@@ -21,7 +21,7 @@ public class AlbumListener extends HypotheticalUser {
   private static Recommender recommender = new TopDownRecommender();
 
   @Override
-  String userId() {
+  public String userId() {
     return "albumlistener-hypothetical";
   }
 

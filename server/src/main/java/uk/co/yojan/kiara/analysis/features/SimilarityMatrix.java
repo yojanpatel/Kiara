@@ -9,9 +9,6 @@ import java.util.*;
 
 import static uk.co.yojan.kiara.server.OfyService.ofy;
 
-/**
- * Created by yojan on 1/17/15.
- */
 public class SimilarityMatrix {
   private HashMap<String, HashMap<String, Double>> similarityMatrix = new HashMap<>();
   private Playlist p;

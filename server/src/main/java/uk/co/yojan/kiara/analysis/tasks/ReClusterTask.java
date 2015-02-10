@@ -1,6 +1,7 @@
 package uk.co.yojan.kiara.analysis.tasks;
 
 import com.google.appengine.api.taskqueue.DeferredTask;
+import com.google.appengine.api.taskqueue.DeferredTaskContext;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import uk.co.yojan.kiara.analysis.OfyUtils;
@@ -20,7 +21,7 @@ import static uk.co.yojan.kiara.server.OfyService.ofy;
 
 public class ReClusterTask implements DeferredTask {
 
-  Logger log = Logger.getLogger("ReClusterTask");
+  Logger log;
   RewardFunction reward;
 
   NodeCluster root;
@@ -48,6 +49,7 @@ public class ReClusterTask implements DeferredTask {
    */
   @Override
   public void run() {
+    log = Logger.getLogger("ReClusterTask");
     reward = new VariedSkipReward();
 
     nodes = new HashMap<>();
@@ -57,20 +59,15 @@ public class ReClusterTask implements DeferredTask {
     root = OfyUtils.loadRootCluster(playlistId).now();
     this.events = p.events();
 
-    // Set intermediate playlist state (cluster is not ready for a minute or so)
-    // also reset changes made since last recluster
-    p.setLastClusterSize(p.getAllSongIds().size());
-    p.setChangesSinceLastCluster(0);
-    p.setClusterReady(false);
-    Result r0 = ofy().save().entity(p);
-    long start = System.currentTimeMillis();
-    new PlaylistClusterer().cluster(playlistId, 9);
-    long end = System.currentTimeMillis();
-    log.warning((end - start) + "ms taken to recluster " + p.getAllSongIds().size() + " songs.");
-    r0.now();
-
-    p.setClusterReady(true);
-    ofy().save().entities(p);
+    try {
+      long start = System.currentTimeMillis();
+      new PlaylistClusterer().cluster(playlistId, 9);
+      long end = System.currentTimeMillis();
+      log.warning((end - start) + "ms taken to recluster " + p.getAllSongIds().size() + " songs.");
+    } catch (FeaturesNotReadyException e) {
+      DeferredTaskContext.markForRetry();
+      return;
+    }
 
     if(events.size() < 10) {
       ofy().save().entity(p).now();
@@ -107,7 +104,6 @@ public class ReClusterTask implements DeferredTask {
     Result r1 = ofy().save().entities(nodes.values());
     Result r2 = ofy().save().entities(leaves.values());
 
-    r0.now();
     r1.now();
     r2.now();
   }

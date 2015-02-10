@@ -70,7 +70,7 @@ public class AreaMomentTimbre {
   }
 
   private void computeAreaMoments() {
-    for(int startIndex = 0; startIndex < segments.size() - window_len; startIndex++) {
+    for(int startIndex = window_len - 1; startIndex < segments.size(); startIndex++) {
       areaMoments.add(areaMomentforWindow(startIndex));
     }
   }
@@ -93,14 +93,14 @@ public class AreaMomentTimbre {
     // calculate normalizing coefficient
     for (int i = 0; i < window_len; i++) {
       for (int j = 0; j < timbreLen; j++) {
-        sum += segments.get(startIndex + i).getTimbre().get(j);
+        sum += segments.get(startIndex - i).getTimbre().get(j);
       }
     }
 
 
     for (int i = 0; i < window_len; i++) {
 
-      Segment segment = segments.get(startIndex + i);
+      Segment segment = segments.get(startIndex - i);
 
       for (int j = 0; j < timbreLen; j++) {
 

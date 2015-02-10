@@ -6,7 +6,11 @@ import com.wrapper.spotify.methods.PlaylistRequest;
 import com.wrapper.spotify.models.Playlist;
 import com.wrapper.spotify.models.PlaylistTrack;
 import uk.co.yojan.kiara.analysis.OfyUtils;
+import uk.co.yojan.kiara.analysis.cluster.KMeans;
+import uk.co.yojan.kiara.analysis.features.scaling.MinMaxScaler;
 import uk.co.yojan.kiara.server.models.SongFeature;
+import weka.core.Instance;
+import weka.core.Instances;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,14 +23,12 @@ import java.util.logging.Logger;
 
 import static uk.co.yojan.kiara.server.SpotifyApi.spotifyApi;
 
-/**
- * Created by yojan on 12/29/14.
- */
+
 public class ARFFCreator {
-  public static String fileName = "hiphop-focus-rock.arff";
-  public static String[] spotifyPlaylistIds = {"spotify:user:spotify:playlist:4jONxQje1Fmw9AFHT7bCp8",
-                                               "spotify:user:spotify:playlist:67nMZWgcUxNa5uaiyLDR2x",
-                                               "spotify:user:spotify:playlist:2Qi8yAzfj1KavAhWz1gaem"};
+  public static String fileName = "edm-jazz-rnb.arff";
+  public static String[] spotifyPlaylistIds = {"spotify:user:spotify:playlist:2ujjMpFriZ2nayLmrD1Jgl",
+      "spotify:user:spotify:playlist:7ECmf74Ey57LAYulSxhL9w",
+      "spotify:user:spotify:playlist:04MJzJlzOoy5bTytJwDsVL"};
 
 
   public static HashMap<String, Integer> nomMap= new HashMap<>();
@@ -107,9 +109,22 @@ public class ARFFCreator {
     return sb.toString();
   }
 
+  private static String getInstanceLine2(String id, Instance instance) {
+    double[] vals = instance.toDoubleArray();
+    StringBuilder sb = new StringBuilder();
+    for(double d : vals) {
+      sb.append(d).append(",");
+    }
+    sb.append(nomMap.get(id));
+    // remove last comma
+    return sb.toString();
+  }
+
   public static String constructInstances() throws FileNotFoundException, UnsupportedEncodingException, IllegalAccessException {
     List<String> attrnames = SongFeature.getFeatureNames();
-
+    List<SongFeature> features = loadPlaylist();
+    Instances instances = KMeans.constructDataSet(features);
+    Instances normalized = new MinMaxScaler().scale(instances);
 
 //    PrintWriter writer = new PrintWriter(fileName, "UTF-8");
     StringBuilder sb = new StringBuilder();
@@ -121,7 +136,7 @@ public class ARFFCreator {
       sb.append("@attribute " + attName + " numeric\n");
     }
     sb.append("@attribute playlist {");
-    for(int i = 0; i < clusterId; i++) {
+    for(int i = 0; i < spotifyPlaylistIds.length; i++) {
       sb.append(i + ", ");
     }
     sb.deleteCharAt(sb.length() - 1);
@@ -129,12 +144,13 @@ public class ARFFCreator {
 //    writer.println();
     sb.append("\n");
 
-    List<SongFeature> features = loadPlaylist();
 //    writer.println("@data");
     sb.append("@data\n");
-    for(SongFeature f : features) {
+    for(int i = 0; i < normalized.numInstances(); i++) {
+      Instance instance = normalized.instance(i);
+      SongFeature f = features.get(i);
 //      writer.println(getInstanceLine(f));
-      sb.append(getInstanceLine2(f) + "\n");
+      sb.append(getInstanceLine2(f.getId(), instance) + "\n");
     }
 //    writer.close();
 

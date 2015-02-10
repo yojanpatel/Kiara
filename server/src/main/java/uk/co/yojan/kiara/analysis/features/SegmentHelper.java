@@ -12,14 +12,17 @@ import java.util.List;
  */
 public class SegmentHelper {
 
-  private ArrayList<Segment> segments;
+  private List<Segment> segments;
 
   private ArrayList<ArrayList<Double>> pitches;
   private ArrayList<ArrayList<Double>> timbres;
+  private ArrayList<Double> loudness;
+  private ArrayList<Double> lengths;
+  private ArrayList<Double> loudnessProportion;
 
   private boolean sliced = false;
 
-  public SegmentHelper(ArrayList<Segment> segments) {
+  public SegmentHelper(List<Segment> segments) {
     this.segments = segments;
     this.pitches = new ArrayList<>();
     for(int i = 0; i < 12; i++) pitches.add(new ArrayList<Double>());
@@ -48,6 +51,10 @@ public class SegmentHelper {
       for(int i = 0; i < timbreSegment.size(); i++) {
         timbres.get(i).add(timbreSegment.get(i));
       }
+
+//      loudness.add(segment.getLoudnessMax());
+//      lengths.add(segment.getDuration());
+//      loudnessProportion.add(segment.getLoudnessMaxTime() / segment.getDuration());
     }
     sliced = true;
   }
@@ -60,5 +67,31 @@ public class SegmentHelper {
   public ArrayList<ArrayList<Double>> getTimbres() {
     if(!sliced) slice();
     return timbres;
+  }
+
+  public ArrayList<Double> getLoudness() {
+    if(!sliced) slice();
+    return loudness;
+  }
+
+  public void setLoudness(ArrayList<Double> loudness) {
+    this.loudness = loudness;
+  }
+
+  public ArrayList<Double> getLengths() {
+    if(!sliced) slice();
+    return lengths;
+  }
+
+  public void setLengths(ArrayList<Double> lengths) {
+    this.lengths = lengths;
+  }
+
+  public ArrayList<Double> getLoudnessProportion() {
+    return loudnessProportion;
+  }
+
+  public void setLoudnessProportion(ArrayList<Double> loudnessProportion) {
+    this.loudnessProportion = loudnessProportion;
   }
 }

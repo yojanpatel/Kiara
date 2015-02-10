@@ -42,7 +42,7 @@ public class TopDownRecommender implements Recommender {
     NodeCluster current = OfyUtils.loadRootCluster(playlist.getId()).now();
 
     // child index for the cluster that contained the song just played
-    int clusterIndex = current.clusterIndex(recentSongId);
+    int clusterIndex = current.songClusterIndex(recentSongId);
     while (clusterIndex >= 0) {
       // choose the Q-chosen cluster with probability p = 1 - epsilon(level)
       List<List<Double>> Q = current.getQ();
@@ -113,11 +113,11 @@ public class TopDownRecommender implements Recommender {
         current = OfyUtils.loadNodeCluster(nextClusterId).now();
 
         // -1 if source is from a different branch of the tree, will break from while loop.
-        clusterIndex = current.clusterIndex(recentSongId);
+        clusterIndex = current.songClusterIndex(recentSongId);
       }
     }
     // assert: current is a NodeCluster
-    // assert: either clusterIndex == -1 (different path from source song) or recommended song has been played recently
+    // assert: either songClusterIndex == -1 (different path from source song) or recommended song has been played recently
     return selectSong(current, recentSongId, history);
   }
 

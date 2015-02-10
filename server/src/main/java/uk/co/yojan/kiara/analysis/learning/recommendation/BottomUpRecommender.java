@@ -47,7 +47,7 @@ public class
 
     LeafCluster currentSongLeafCluster = OfyUtils.loadLeafCluster(p.getId(), recentSongId).now();
     NodeCluster parentNodeCluster = ofy().load().key(currentSongLeafCluster.getParent()).now();
-    int leafClusterIndex = parentNodeCluster.clusterIndex(currentSongLeafCluster.getSongId());
+    int leafClusterIndex = parentNodeCluster.songClusterIndex(currentSongLeafCluster.getSongId());
 
     while(true) {
       // compute actions to be excluded
@@ -212,7 +212,7 @@ public class
    *   Prob(a) = exp(Q(s,a) / T) / Sum(exp(Q(s,i) / T))
    *   http://en.wikipedia.org/wiki/Softmax_function
    *
-   * @param cluster the parent cluster for which to recommend the next clusterIndex
+   * @param cluster the parent cluster for which to recommend the next songClusterIndex
    * @param clusterIndex the child cluster index of the state currently in
    *
    * @return  the action to be taken, i.e. the index of the cluster in cluster to go to.
@@ -271,7 +271,7 @@ public class
   /**
    * Greedy Epsilon strategy with the epsilon function.
    *
-   * @param cluster the parent cluster for which to recommend the next clusterIndex
+   * @param cluster the parent cluster for which to recommend the next songClusterIndex
    * @param clusterIndex the child cluster index of the state currently in
    * @param t time into the learning i.e. number of prior events/tracks played etc.
    *

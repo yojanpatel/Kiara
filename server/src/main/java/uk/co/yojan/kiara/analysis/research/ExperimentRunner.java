@@ -6,8 +6,8 @@ import uk.co.yojan.kiara.analysis.OfyUtils;
 import uk.co.yojan.kiara.analysis.cluster.Cluster;
 import uk.co.yojan.kiara.analysis.cluster.LeafCluster;
 import uk.co.yojan.kiara.analysis.cluster.NodeCluster;
-import uk.co.yojan.kiara.analysis.learning.recommendation.TopDownRecommender;
 import uk.co.yojan.kiara.analysis.learning.QLearner;
+import uk.co.yojan.kiara.analysis.learning.recommendation.TopDownRecommender;
 import uk.co.yojan.kiara.analysis.learning.rewards.VariedSkipReward;
 import uk.co.yojan.kiara.analysis.users.HypotheticalUser;
 import uk.co.yojan.kiara.server.models.Playlist;
@@ -28,9 +28,9 @@ public class ExperimentRunner {
   public static void run(HypotheticalUser u, Experiment experiment) {
 
     // Currently testing various alpha values
-    int REPEATS = 5;
-    double start = 0.1;
-    double end = 0.5;
+    int REPEATS = 2;
+    double start = 0.2;
+    double end = 0.4;
     double step = 0.1;
     Playlist p;
     try {
@@ -41,14 +41,17 @@ public class ExperimentRunner {
       return;
     }
 
+    start = 0.4;
+    end = 0.5;
+    step = 0.1;
+
     for (int r = 0; r < REPEATS; r++) {
       for(double currVal = start; currVal <= end; currVal += step) {
         try {
-          String label = "8BPM-K9-VariedSkipReward-LearnedRecommender-Epsilon0.5-Alpha" + currVal + "-Gammma0.2-Run" + r;
+          String label = "8BPM-K9'-H50-GreedyEpsilon0.2-VariedSkip-TopDown-ShiftAlphaDecay"+currVal+"-Gamma0-Distance-Run" + r;
 
           // Reset learning probability weights.
           resetQ(p.getId());
-
 
           // Override parameters based on
           final double finalCurrVal = currVal;
@@ -58,16 +61,22 @@ public class ExperimentRunner {
                 @Override
                 public double epsilon(int level, int t) {
 //                  epsilon = epsilon0 * exp(- lambda * t)
-                              return 0.5 * Math.exp(-0.01 * t);
+//                    return 0.1 + 0.4 * Math.exp(-0.001 * t);
+                  return 0.05 + 0.2 * Math.exp(-0.001 * t);
 //                              return super.epsilon(level, t);
 //                  return 0.0;
                 }
+
+//                @Override
+//                public double temperature(int level, int t) {
+//                  return 1 +  finalCurrVal * Math.exp(-0.05 * t);
+//                }
               },
               new QLearner() {
                 @Override
-                public double alpha(int from, int to, int node) {
+                public double alpha(int from, int to, int node, int t) {
                   int closestLevel = Math.min(from, to);
-                  double a = Math.pow(finalCurrVal, closestLevel - node);
+                  double a = 0.1 + Math.exp(-0.001 * t) * Math.pow(finalCurrVal, closestLevel - node);
 
                   assert a <= 1.0;
                   assert a >= 0.0;
@@ -77,7 +86,7 @@ public class ExperimentRunner {
 
                 @Override
                 public double gamma() {
-                  return 0.2;
+                  return 0.1;
                 }
               });
         } catch (Exception e) {
@@ -125,4 +134,6 @@ public class ExperimentRunner {
     }
     ofy().save().entities(p).now();
   }
+
+
 }
